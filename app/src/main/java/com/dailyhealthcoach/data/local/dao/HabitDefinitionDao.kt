@@ -1,0 +1,20 @@
+package com.dailyhealthcoach.data.local.dao
+
+import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
+import com.dailyhealthcoach.data.local.entity.HabitDefinitionEntity
+import kotlinx.coroutines.flow.Flow
+
+@Dao
+interface HabitDefinitionDao {
+    @Query("SELECT * FROM habit_definitions WHERE isActive = 1 ORDER BY sortOrder ASC")
+    fun observeActiveHabits(): Flow<List<HabitDefinitionEntity>>
+
+    @Query("SELECT COUNT(*) FROM habit_definitions")
+    suspend fun countHabits(): Int
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertAll(habits: List<HabitDefinitionEntity>)
+}
