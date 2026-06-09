@@ -169,7 +169,10 @@ private fun MainShellContent(
                 val workoutViewModel: WorkoutViewModel = viewModel(
                     factory = WorkoutViewModelFactory(
                         exerciseRepository = appContainer.exerciseRepository,
-                        workoutRepository = appContainer.workoutRepository
+                        workoutRepository = appContainer.workoutRepository,
+                        dailyRecommendationRepository = appContainer.dailyRecommendationRepository,
+                        generateWorkoutPlanUseCase = appContainer.generateWorkoutPlanUseCase,
+                        today = LocalDate.now().toString()
                     )
                 )
                 PremiumWorkoutRoute(viewModel = workoutViewModel)

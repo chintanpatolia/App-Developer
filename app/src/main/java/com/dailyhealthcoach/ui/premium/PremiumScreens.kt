@@ -56,6 +56,7 @@ import com.dailyhealthcoach.ui.workout.ExerciseOptionUiState
 import com.dailyhealthcoach.ui.workout.SelectedExerciseUiState
 import com.dailyhealthcoach.ui.workout.WorkoutDetailUiState
 import com.dailyhealthcoach.ui.workout.WorkoutHistoryUiState
+import com.dailyhealthcoach.ui.workout.WorkoutPlanUiState
 import com.dailyhealthcoach.ui.workout.WorkoutUiState
 import com.dailyhealthcoach.ui.workout.WorkoutViewModel
 
@@ -83,6 +84,10 @@ fun PremiumWorkoutRoute(viewModel: WorkoutViewModel) {
         showActiveWorkout = showActiveWorkout,
         onStartWorkout = {
             viewModel.startWorkout()
+            showActiveWorkout = true
+        },
+        onStartWorkoutWithPlan = { exerciseIds ->
+            viewModel.startWorkoutWithPlan(exerciseIds)
             showActiveWorkout = true
         },
         onBackToPlan = {
@@ -117,6 +122,7 @@ private fun PremiumWorkoutScreen(
     uiState: WorkoutUiState,
     showActiveWorkout: Boolean,
     onStartWorkout: () -> Unit,
+    onStartWorkoutWithPlan: (List<Long>) -> Unit,
     onBackToPlan: () -> Unit,
     onWorkoutSelected: (Long) -> Unit,
     onClearWorkout: () -> Unit,
@@ -136,7 +142,7 @@ private fun PremiumWorkoutScreen(
     onRemoveSet: (Long, Int) -> Unit,
     onSaveWorkout: () -> Unit
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(18.dp)) {
+    Column(modifier = Modifier.padding(bottom = 40.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
         when {
             showActiveWorkout -> ActiveWorkoutScreen(
                 uiState = uiState,
@@ -162,7 +168,11 @@ private fun PremiumWorkoutScreen(
                 onBack = onClearWorkout
             )
             else -> {
-                PremiumWorkoutPlanCard(onStartWorkout = onStartWorkout)
+                PremiumWorkoutPlanCard(
+                    workoutPlan = uiState.workoutPlan,
+                    onStartWorkout = onStartWorkout,
+                    onStartWorkoutWithPlan = onStartWorkoutWithPlan
+                )
                 WorkoutHistoryCard(workouts = uiState.recentWorkouts, onWorkoutSelected = onWorkoutSelected)
             }
         }
@@ -170,7 +180,11 @@ private fun PremiumWorkoutScreen(
 }
 
 @Composable
-private fun PremiumWorkoutPlanCard(onStartWorkout: () -> Unit) {
+private fun PremiumWorkoutPlanCard(
+    workoutPlan: WorkoutPlanUiState?,
+    onStartWorkout: () -> Unit,
+    onStartWorkoutWithPlan: (List<Long>) -> Unit
+) {
     Box(modifier = Modifier.fillMaxWidth()) {
         MainFeatureCard(modifier = Modifier.padding(top = 22.dp)) {
             Column(
@@ -178,27 +192,102 @@ private fun PremiumWorkoutPlanCard(onStartWorkout: () -> Unit) {
                 verticalArrangement = Arrangement.spacedBy(18.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(text = "Next workout", color = MutedText, style = MaterialTheme.typography.bodyMedium)
-                Text(
-                    text = "Buttocks & Hamstrings",
-                    color = PrimaryText,
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center
-                )
-                PlaceholderVisual(label = "Muscle\nfocus", size = 168.dp)
-                Surface(shape = RoundedCornerShape(24.dp), color = SecondaryCard.copy(alpha = 0.75f)) {
+                if (workoutPlan == null) {
+                    Text(text = "Next workout", color = MutedText, style = MaterialTheme.typography.bodyMedium)
                     Text(
-                        text = "Target area: Glutes, hamstrings, posterior chain",
-                        color = MutedText,
-                        modifier = Modifier.padding(horizontal = 18.dp, vertical = 10.dp)
+                        text = "Log today's recovery to unlock your plan",
+                        color = PrimaryText,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        textAlign = TextAlign.Center
                     )
+                    PlaceholderVisual(label = "Muscle\nfocus", size = 168.dp)
+                    PrimaryBlueButton(text = "Start Workout", onClick = onStartWorkout, modifier = Modifier.fillMaxWidth())
+                } else {
+                    Text(text = "Today's plan", color = MutedText, style = MaterialTheme.typography.bodyMedium)
+                    Text(
+                        text = workoutPlan.focus,
+                        color = PrimaryText,
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center
+                    )
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(18.dp))
+                            .background(SecondaryCard.copy(alpha = 0.6f))
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        workoutPlan.reasons.forEach { reason ->
+                            Text(
+                                text = "· $reason",
+                                color = MutedText,
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
+                    }
+                    if (workoutPlan.isStrengthDay) {
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                            StatTile(label = "Duration", value = "${workoutPlan.durationMinutes} min", modifier = Modifier.weight(1f))
+                            StatTile(label = "Exercises", value = "${workoutPlan.suggestedExercises.size}", modifier = Modifier.weight(1f))
+                        }
+                        Surface(shape = RoundedCornerShape(14.dp), color = SecondaryCard.copy(alpha = 0.75f)) {
+                            Text(
+                                text = "${workoutPlan.setsPerExercise} sets · ${workoutPlan.repsRange} reps · RPE ${workoutPlan.rpeTarget}",
+                                color = CyanAccent,
+                                fontWeight = FontWeight.SemiBold,
+                                modifier = Modifier.padding(horizontal = 18.dp, vertical = 10.dp)
+                            )
+                        }
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(18.dp))
+                                .background(SecondaryCard.copy(alpha = 0.45f))
+                                .padding(horizontal = 16.dp, vertical = 12.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            workoutPlan.suggestedExercises.forEach { ex ->
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(text = ex.name, color = PrimaryText, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, modifier = Modifier.weight(1f))
+                                    Text(text = ex.muscleGroup, color = CyanAccent, style = MaterialTheme.typography.labelSmall)
+                                }
+                            }
+                        }
+                        PrimaryBlueButton(
+                            text = "Start Workout",
+                            onClick = { onStartWorkoutWithPlan(workoutPlan.suggestedExercises.map { it.exerciseId }) },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    } else {
+                        StatTile(label = "Duration", value = "${workoutPlan.durationMinutes} min", modifier = Modifier.fillMaxWidth())
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(18.dp))
+                                .background(SecondaryCard.copy(alpha = 0.6f))
+                                .padding(horizontal = 16.dp, vertical = 12.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            workoutPlan.nonStrengthActivities.forEach { activity ->
+                                Text(text = "· $activity", color = MutedText, style = MaterialTheme.typography.bodySmall)
+                            }
+                        }
+                        val nonStrengthLabel = when (workoutPlan.focus) {
+                            "Active Recovery" -> "Start Recovery"
+                            "Walking & Mobility" -> "Start Mobility"
+                            "Rest Day" -> "Log Rest Day"
+                            else -> "Start Workout"
+                        }
+                        PrimaryBlueButton(text = nonStrengthLabel, onClick = onStartWorkout, modifier = Modifier.fillMaxWidth())
+                    }
                 }
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                    StatTile(label = "Duration", value = "34 min", modifier = Modifier.weight(1f))
-                    StatTile(label = "Exercises", value = "4", modifier = Modifier.weight(1f))
-                }
-                PrimaryBlueButton(text = "Start Workout", onClick = onStartWorkout, modifier = Modifier.fillMaxWidth())
             }
         }
         FloatingTitlePill(text = "Workout Plan", modifier = Modifier.align(Alignment.TopCenter))

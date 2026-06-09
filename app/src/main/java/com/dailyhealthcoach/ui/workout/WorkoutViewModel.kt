@@ -3,13 +3,16 @@ package com.dailyhealthcoach.ui.workout
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.dailyhealthcoach.domain.model.DailyRecommendation
 import com.dailyhealthcoach.domain.model.Exercise
 import com.dailyhealthcoach.domain.model.Workout
 import com.dailyhealthcoach.domain.model.WorkoutExercise
 import com.dailyhealthcoach.domain.model.WorkoutSetInput
 import com.dailyhealthcoach.domain.model.WorkoutStatus
+import com.dailyhealthcoach.domain.repository.DailyRecommendationRepository
 import com.dailyhealthcoach.domain.repository.ExerciseRepository
 import com.dailyhealthcoach.domain.repository.WorkoutRepository
+import com.dailyhealthcoach.domain.usecase.GenerateWorkoutPlanUseCase
 import java.time.LocalDate
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -21,7 +24,10 @@ import kotlinx.coroutines.launch
 
 class WorkoutViewModel(
     private val exerciseRepository: ExerciseRepository,
-    private val workoutRepository: WorkoutRepository
+    private val workoutRepository: WorkoutRepository,
+    private val dailyRecommendationRepository: DailyRecommendationRepository,
+    private val generateWorkoutPlanUseCase: GenerateWorkoutPlanUseCase,
+    private val today: String
 ) : ViewModel() {
     private val draftState = MutableStateFlow(WorkoutDraftState())
 
@@ -29,9 +35,10 @@ class WorkoutViewModel(
         exerciseRepository.observeExercises(),
         workoutRepository.observeWorkouts(),
         workoutRepository.observeWorkoutSets(),
-        draftState
-    ) { exercises, workouts, workoutSets, draft ->
-        buildUiState(exercises, workouts, workoutSets, draft)
+        draftState,
+        dailyRecommendationRepository.observeForDate(today)
+    ) { exercises, workouts, workoutSets, draft, recommendation ->
+        buildUiState(exercises, workouts, workoutSets, draft, recommendation, generateWorkoutPlanUseCase, today)
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
@@ -159,6 +166,15 @@ class WorkoutViewModel(
         draftState.update { it.copy(selectedWorkoutId = null) }
     }
 
+    fun startWorkoutWithPlan(exerciseIds: List<Long>) {
+        draftState.update { draft ->
+            draft.copy(
+                isWorkoutStarted = true,
+                selectedExercises = exerciseIds.map { DraftExerciseState(exerciseId = it, isExpanded = false) }
+            )
+        }
+    }
+
     fun saveWorkout() {
         val draft = draftState.value
         viewModelScope.launch {
@@ -235,7 +251,10 @@ private fun buildUiState(
     exercises: List<Exercise>,
     workouts: List<Workout>,
     workoutSets: List<WorkoutExercise>,
-    draft: WorkoutDraftState
+    draft: WorkoutDraftState,
+    recommendation: DailyRecommendation?,
+    generateWorkoutPlanUseCase: GenerateWorkoutPlanUseCase,
+    today: String
 ): WorkoutUiState {
     val exerciseById = exercises.associateBy { it.id }
     val setsByWorkoutId = workoutSets.groupBy { it.workoutId }
@@ -289,6 +308,29 @@ private fun buildUiState(
         )
     }
 
+    val workoutPlan = if (recommendation != null) {
+        val plan = generateWorkoutPlanUseCase.generate(
+            recommendationType = recommendation.recommendationType,
+            exercises = exercises,
+            recentWorkouts = workouts,
+            recentSets = workoutSets,
+            today = today
+        )
+        WorkoutPlanUiState(
+            focus = plan.focus,
+            setsPerExercise = plan.setsPerExercise,
+            repsRange = plan.repsRange,
+            rpeTarget = plan.rpeTarget,
+            durationMinutes = plan.durationMinutes,
+            suggestedExercises = plan.suggestedExercises.map {
+                SuggestedExerciseUiState(it.exerciseId, it.name, it.muscleGroup)
+            },
+            isStrengthDay = plan.isStrengthDay,
+            reasons = plan.reasons,
+            nonStrengthActivities = plan.nonStrengthActivities
+        )
+    } else null
+
     return WorkoutUiState(
         isWorkoutStarted = draft.isWorkoutStarted,
         workoutName = draft.workoutName,
@@ -332,7 +374,8 @@ private fun buildUiState(
             )
         },
         recentWorkouts = historyList,
-        selectedWorkoutDetail = selectedDetail
+        selectedWorkoutDetail = selectedDetail,
+        workoutPlan = workoutPlan
     )
 }
 
@@ -364,14 +407,20 @@ private fun String.filterWeightInput(): String {
 
 class WorkoutViewModelFactory(
     private val exerciseRepository: ExerciseRepository,
-    private val workoutRepository: WorkoutRepository
+    private val workoutRepository: WorkoutRepository,
+    private val dailyRecommendationRepository: DailyRecommendationRepository,
+    private val generateWorkoutPlanUseCase: GenerateWorkoutPlanUseCase,
+    private val today: String
 ) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(WorkoutViewModel::class.java)) {
             return WorkoutViewModel(
                 exerciseRepository = exerciseRepository,
-                workoutRepository = workoutRepository
+                workoutRepository = workoutRepository,
+                dailyRecommendationRepository = dailyRecommendationRepository,
+                generateWorkoutPlanUseCase = generateWorkoutPlanUseCase,
+                today = today
             ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")

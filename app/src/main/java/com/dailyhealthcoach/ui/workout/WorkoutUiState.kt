@@ -12,7 +12,26 @@ data class WorkoutUiState(
     val exercises: List<ExerciseOptionUiState> = emptyList(),
     val selectedExercises: List<SelectedExerciseUiState> = emptyList(),
     val recentWorkouts: List<WorkoutHistoryUiState> = emptyList(),
-    val selectedWorkoutDetail: WorkoutDetailUiState? = null
+    val selectedWorkoutDetail: WorkoutDetailUiState? = null,
+    val workoutPlan: WorkoutPlanUiState? = null
+)
+
+data class SuggestedExerciseUiState(
+    val exerciseId: Long,
+    val name: String,
+    val muscleGroup: String
+)
+
+data class WorkoutPlanUiState(
+    val focus: String,
+    val setsPerExercise: Int,
+    val repsRange: String,
+    val rpeTarget: String,
+    val durationMinutes: String,
+    val suggestedExercises: List<SuggestedExerciseUiState>,
+    val isStrengthDay: Boolean,
+    val reasons: List<String>,
+    val nonStrengthActivities: List<String>
 )
 
 data class ExerciseOptionUiState(
