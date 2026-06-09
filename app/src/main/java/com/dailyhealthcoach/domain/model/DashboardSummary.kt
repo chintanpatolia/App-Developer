@@ -9,6 +9,8 @@ data class DashboardSummary(
     val steps: Int,
     val stepGoal: Int,
     val sleepHours: Double,
-    val recoveryScore: Int,
-    val nextDayRecommendation: String
+    val recoveryScore: Int?,
+    val recoveryLabel: String,
+    val recoveryReasons: List<String>,
+    val nextDayRecommendation: DailyRecommendation?
 )

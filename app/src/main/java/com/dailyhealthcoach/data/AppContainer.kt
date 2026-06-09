@@ -71,6 +71,11 @@ class AppContainer(context: Context) {
         habitRepository = habitRepository,
         macroTargetRepository = macroTargetRepository,
         nutritionRepository = nutritionRepository,
+        bodyMetricRepository = bodyMetricRepository,
+        workoutRepository = workoutRepository,
+        exerciseRepository = exerciseRepository,
+        recoveryRepository = recoveryRepository,
+        dailyRecommendationRepository = dailyRecommendationRepository,
         recoveryScoreCalculator = RecoveryScoreCalculator(),
         recommendationService = NextDayRecommendationService()
     )

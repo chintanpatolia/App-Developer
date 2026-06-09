@@ -10,6 +10,15 @@ data class DashboardUiState(
     val steps: Int = 0,
     val stepGoal: Int = 8_000,
     val sleepHours: Double = 0.0,
-    val recoveryScore: Int = 0,
-    val nextDayRecommendation: String = ""
+    val recoveryScore: Int? = null,
+    val recoveryLabel: String = "Recovery not calculated",
+    val recoveryReasons: List<String> = emptyList(),
+    val nextDayRecommendation: DailyRecommendationUiState? = null
+)
+
+data class DailyRecommendationUiState(
+    val title: String,
+    val explanation: String,
+    val suggestedFocus: String,
+    val reasons: List<String>
 )

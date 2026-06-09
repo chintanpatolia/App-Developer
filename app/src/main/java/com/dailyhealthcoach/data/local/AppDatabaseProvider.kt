@@ -2,6 +2,8 @@ package com.dailyhealthcoach.data.local
 
 import android.content.Context
 import androidx.room.Room
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 
 object AppDatabaseProvider {
     @Volatile
@@ -13,7 +15,38 @@ object AppDatabaseProvider {
                 context.applicationContext,
                 AppDatabase::class.java,
                 "daily_health_coach.db"
-            ).build().also { database = it }
+            )
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+                .build()
+                .also { database = it }
+        }
+    }
+
+    private val MIGRATION_1_2 = object : Migration(1, 2) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE body_metric_logs ADD COLUMN heightInches REAL")
+            db.execSQL("ALTER TABLE body_metric_logs ADD COLUMN calculatedBodyFatPercent REAL")
+            db.execSQL("ALTER TABLE body_metric_logs ADD COLUMN manualBodyFatPercent REAL")
+            db.execSQL("ALTER TABLE body_metric_logs ADD COLUMN isBodyFatOverridden INTEGER NOT NULL DEFAULT 0")
+            db.execSQL("ALTER TABLE body_metric_logs ADD COLUMN neckMeasurement REAL")
+        }
+    }
+
+    private val MIGRATION_2_3 = object : Migration(2, 3) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE recovery_scores ADD COLUMN label TEXT NOT NULL DEFAULT ''")
+            db.execSQL("ALTER TABLE recovery_scores ADD COLUMN reasonText TEXT")
+            db.execSQL("ALTER TABLE recovery_scores ADD COLUMN updatedAt TEXT NOT NULL DEFAULT ''")
+        }
+    }
+
+    private val MIGRATION_3_4 = object : Migration(3, 4) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE daily_recommendations ADD COLUMN title TEXT NOT NULL DEFAULT ''")
+            db.execSQL("ALTER TABLE daily_recommendations ADD COLUMN explanation TEXT NOT NULL DEFAULT ''")
+            db.execSQL("ALTER TABLE daily_recommendations ADD COLUMN suggestedFocus TEXT NOT NULL DEFAULT ''")
+            db.execSQL("ALTER TABLE daily_recommendations ADD COLUMN reasonBullets TEXT")
+            db.execSQL("ALTER TABLE daily_recommendations ADD COLUMN updatedAt TEXT NOT NULL DEFAULT ''")
         }
     }
 }

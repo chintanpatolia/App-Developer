@@ -1,7 +1,6 @@
 package com.dailyhealthcoach.domain.model
 
-data class BodyMetricLog(
-    val id: Long,
+data class BodyMetricLogInput(
     val date: String,
     val heightInches: Double?,
     val bodyWeight: Double?,
@@ -18,6 +17,5 @@ data class BodyMetricLog(
     val stressLevel: Int?,
     val sorenessLevel: Int?,
     val restingHeartRate: Int?,
-    val stepCount: Int?,
     val notes: String?
 )

@@ -95,41 +95,110 @@ fun DashboardScreen(
                     leftTitle = "Sleep",
                     leftValue = "${uiState.sleepHours} hours",
                     rightTitle = "Recovery",
-                    rightValue = "${uiState.recoveryScore}/100"
+                    rightValue = uiState.recoveryScore?.let { "$it/100" } ?: "-"
                 )
 
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer
-                    )
-                ) {
-                    Column(
-                        modifier = Modifier.padding(18.dp),
-                        verticalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        Text(
-                            text = "Next-day recommendation",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                        Text(
-                            text = uiState.nextDayRecommendation,
-                            style = MaterialTheme.typography.bodyLarge
-                        )
-                        Text(
-                            text = "Placeholder until workout, recovery, and nutrition logic is implemented.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.72f)
-                        )
-                    }
-                }
+                RecoveryDetailCard(uiState = uiState)
+
+                NextDayRecommendationCard(recommendation = uiState.nextDayRecommendation)
 
                 Text(
                     text = "General wellness guidance only. This app does not diagnose, treat, or replace medical advice.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+            }
+        }
+    }
+}
+
+@Composable
+private fun NextDayRecommendationCard(recommendation: DailyRecommendationUiState?) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = "Next-day recommendation",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+            if (recommendation == null) {
+                Text(
+                    text = "Log body metrics, nutrition, and workouts to generate a recommendation.",
+                    style = MaterialTheme.typography.bodyLarge
+                )
+            } else {
+                Text(
+                    text = recommendation.title,
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = recommendation.explanation,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Text(
+                    text = "Suggested focus: ${recommendation.suggestedFocus}",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.82f)
+                )
+                recommendation.reasons.take(4).forEach { reason ->
+                    Text(
+                        text = "- $reason",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun RecoveryDetailCard(uiState: DashboardUiState) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = "Recovery",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+            if (uiState.recoveryScore == null) {
+                Text(
+                    text = "Log sleep, nutrition, and workout data to calculate recovery.",
+                    style = MaterialTheme.typography.bodyLarge
+                )
+            } else {
+                Text(
+                    text = "${uiState.recoveryScore}/100",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = uiState.recoveryLabel,
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.78f)
+                )
+                uiState.recoveryReasons.take(4).forEach { reason ->
+                    Text(
+                        text = "- $reason",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
             }
         }
     }

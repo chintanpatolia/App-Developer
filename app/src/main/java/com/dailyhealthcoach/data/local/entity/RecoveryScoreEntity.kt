@@ -12,6 +12,8 @@ data class RecoveryScoreEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val date: String,
     val score: Int,
+    val label: String = "",
+    val reasonText: String? = null,
     val sleepContribution: Int,
     val proteinContribution: Int,
     val sorenessContribution: Int,
@@ -20,5 +22,6 @@ data class RecoveryScoreEntity(
     val stepsContribution: Int,
     val restDayContribution: Int,
     val notes: String? = null,
-    val createdAt: String
+    val createdAt: String,
+    val updatedAt: String = createdAt
 )

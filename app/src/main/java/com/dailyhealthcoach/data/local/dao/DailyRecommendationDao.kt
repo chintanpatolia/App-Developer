@@ -11,6 +11,9 @@ interface DailyRecommendationDao {
     @Query("SELECT * FROM daily_recommendations WHERE date = :date LIMIT 1")
     fun observeForDate(date: String): Flow<DailyRecommendationEntity?>
 
+    @Query("SELECT * FROM daily_recommendations WHERE date = :date LIMIT 1")
+    suspend fun getForDate(date: String): DailyRecommendationEntity?
+
     @Upsert
     suspend fun upsert(recommendation: DailyRecommendationEntity)
 }

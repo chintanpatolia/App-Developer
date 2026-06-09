@@ -11,6 +11,9 @@ interface BodyMetricLogDao {
     @Query("SELECT * FROM body_metric_logs WHERE date = :date LIMIT 1")
     fun observeForDate(date: String): Flow<BodyMetricLogEntity?>
 
+    @Query("SELECT * FROM body_metric_logs WHERE date = :date LIMIT 1")
+    suspend fun getForDate(date: String): BodyMetricLogEntity?
+
     @Query("SELECT * FROM body_metric_logs ORDER BY date DESC")
     fun observeAll(): Flow<List<BodyMetricLogEntity>>
 

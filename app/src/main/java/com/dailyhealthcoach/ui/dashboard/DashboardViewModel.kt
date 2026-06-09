@@ -36,7 +36,16 @@ private fun DashboardSummary.toUiState(): DashboardUiState {
         stepGoal = stepGoal,
         sleepHours = sleepHours,
         recoveryScore = recoveryScore,
-        nextDayRecommendation = nextDayRecommendation
+        recoveryLabel = recoveryLabel,
+        recoveryReasons = recoveryReasons,
+        nextDayRecommendation = nextDayRecommendation?.let {
+            DailyRecommendationUiState(
+                title = it.title,
+                explanation = it.explanation,
+                suggestedFocus = it.suggestedFocus,
+                reasons = it.reasonBullets
+            )
+        }
     )
 }
 

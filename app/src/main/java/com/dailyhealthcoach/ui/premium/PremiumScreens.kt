@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -790,54 +789,6 @@ fun AchievementsScreen() {
             }
         }
         FloatingTitlePill(text = "Achievements", modifier = Modifier.align(Alignment.TopCenter))
-    }
-}
-
-@Composable
-fun BodyScreen() {
-    Box(modifier = Modifier.fillMaxWidth()) {
-        MainFeatureCard(modifier = Modifier.padding(top = 22.dp)) {
-            Column(
-                modifier = Modifier.padding(top = 18.dp),
-                verticalArrangement = Arrangement.spacedBy(20.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                ProgressRing(progress = 0.58f, modifier = Modifier.size(180.dp)) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(text = "204.9 lb", color = PrimaryText, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                        Text(text = "current", color = MutedText)
-                    }
-                }
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    MeasurementTile("Goal", "186.9", Modifier.weight(1f))
-                    MeasurementTile("Remaining", "18.0", Modifier.weight(1f))
-                }
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    MeasurementTile("Chest", "42 in", Modifier.weight(1f))
-                    MeasurementTile("Waist", "36 in", Modifier.weight(1f))
-                    MeasurementTile("Arms", "15 in", Modifier.weight(1f))
-                }
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    PhotoTile("Front", Modifier.weight(1f))
-                    PhotoTile("Side", Modifier.weight(1f))
-                    PhotoTile("Back", Modifier.weight(1f))
-                }
-            }
-        }
-        FloatingTitlePill(text = "Body", modifier = Modifier.align(Alignment.TopCenter))
-    }
-}
-
-@Composable
-private fun PhotoTile(label: String, modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier
-            .height(100.dp)
-            .clip(RoundedCornerShape(24.dp))
-            .background(SecondaryCard.copy(alpha = 0.72f)),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(text = label, color = MutedText, fontWeight = FontWeight.SemiBold)
     }
 }
 

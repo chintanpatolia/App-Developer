@@ -5,4 +5,5 @@ import kotlinx.coroutines.flow.Flow
 
 interface DailyRecommendationRepository {
     fun observeForDate(date: String): Flow<DailyRecommendation?>
+    suspend fun saveForDate(recommendation: DailyRecommendation)
 }

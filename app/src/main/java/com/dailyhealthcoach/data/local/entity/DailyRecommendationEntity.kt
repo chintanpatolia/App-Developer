@@ -12,9 +12,14 @@ data class DailyRecommendationEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val date: String,
     val recommendationType: String,
+    val title: String = "",
+    val explanation: String = "",
+    val suggestedFocus: String = "",
+    val reasonBullets: String? = null,
     val targetMuscleGroups: String? = null,
     val intensity: String? = null,
     val loadGuidance: String? = null,
     val reasonSummary: String,
-    val createdAt: String
+    val createdAt: String,
+    val updatedAt: String = createdAt
 )

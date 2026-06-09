@@ -30,10 +30,16 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.dailyhealthcoach.data.AppContainer
-import com.dailyhealthcoach.ui.premium.AchievementsScreen
+import com.dailyhealthcoach.ui.body.BodyRoute
+import com.dailyhealthcoach.ui.body.BodyViewModel
+import com.dailyhealthcoach.ui.body.BodyViewModelFactory
+import com.dailyhealthcoach.ui.dashboard.DashboardRoute
+import com.dailyhealthcoach.ui.dashboard.DashboardViewModel
+import com.dailyhealthcoach.ui.dashboard.DashboardViewModelFactory
+import com.dailyhealthcoach.ui.habits.HabitsRoute
+import com.dailyhealthcoach.ui.habits.HabitsViewModel
+import com.dailyhealthcoach.ui.habits.HabitsViewModelFactory
 import com.dailyhealthcoach.ui.premium.AppBackground
-import com.dailyhealthcoach.ui.premium.BodyScreen
-import com.dailyhealthcoach.ui.premium.InsightsScreen
 import com.dailyhealthcoach.ui.premium.NutritionRoute
 import com.dailyhealthcoach.ui.premium.PremiumWorkoutRoute
 import com.dailyhealthcoach.ui.premium.ScreenHeader
@@ -50,42 +56,59 @@ import com.dailyhealthcoach.ui.workout.WorkoutViewModelFactory
 
 @Composable
 fun DailyHealthCoachApp(appContainer: AppContainer) {
-    var selectedScreen by remember { mutableStateOf(AppScreen.WORKOUT) }
+    var selectedScreen by remember { mutableStateOf(AppScreen.DASHBOARD) }
 
     AppBackground {
         Box(modifier = Modifier.fillMaxSize()) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-                    .padding(start = 18.dp, top = 24.dp, end = 18.dp, bottom = 148.dp),
-                verticalArrangement = Arrangement.spacedBy(22.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                ScreenHeader()
-                when (selectedScreen) {
-                    AppScreen.WORKOUT -> {
-                        val workoutViewModel: WorkoutViewModel = viewModel(
-                            factory = WorkoutViewModelFactory(
-                                exerciseRepository = appContainer.exerciseRepository,
-                                workoutRepository = appContainer.workoutRepository
-                            )
+            when (selectedScreen) {
+                AppScreen.DASHBOARD -> {
+                    val dashboardViewModel: DashboardViewModel = viewModel(
+                        factory = DashboardViewModelFactory(
+                            getDashboardSummaryUseCase = appContainer.getDashboardSummaryUseCase
                         )
-                        PremiumWorkoutRoute(viewModel = workoutViewModel)
-                    }
+                    )
+                    DashboardRoute(
+                        viewModel = dashboardViewModel,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(bottom = 112.dp)
+                    )
+                }
 
-                    AppScreen.NUTRITION -> {
-                        val nutritionViewModel: NutritionViewModel = viewModel(
-                            factory = NutritionViewModelFactory(
-                                nutritionRepository = appContainer.nutritionRepository,
-                                macroTargetRepository = appContainer.macroTargetRepository
-                            )
+                AppScreen.HABITS -> {
+                    val habitsViewModel: HabitsViewModel = viewModel(
+                        factory = HabitsViewModelFactory(
+                            getTodayHabitsUseCase = appContainer.getTodayHabitsUseCase,
+                            setHabitStatusForTodayUseCase = appContainer.setHabitStatusForTodayUseCase
                         )
-                        NutritionRoute(viewModel = nutritionViewModel)
-                    }
-                    AppScreen.ACHIEVEMENTS -> AchievementsScreen()
-                    AppScreen.BODY -> BodyScreen()
-                    AppScreen.INSIGHTS -> InsightsScreen()
+                    )
+                    HabitsRoute(
+                        viewModel = habitsViewModel,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(bottom = 112.dp)
+                    )
+                }
+
+                AppScreen.WORKOUT,
+                AppScreen.NUTRITION -> MainShellContent(
+                    selectedScreen = selectedScreen,
+                    appContainer = appContainer
+                )
+
+                AppScreen.BODY -> {
+                    val bodyViewModel: BodyViewModel = viewModel(
+                        factory = BodyViewModelFactory(
+                            bodyMetricRepository = appContainer.bodyMetricRepository,
+                            userProfileRepository = appContainer.userProfileRepository
+                        )
+                    )
+                    BodyRoute(
+                        viewModel = bodyViewModel,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(bottom = 112.dp)
+                    )
                 }
             }
 
@@ -98,28 +121,48 @@ fun DailyHealthCoachApp(appContainer: AppContainer) {
                     .padding(horizontal = 16.dp, vertical = 18.dp)
             )
 
-            FloatingAssistantButton(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .navigationBarsPadding()
-                    .padding(bottom = 72.dp)
-            )
+        }
+    }
+}
 
-            MiniCircleButton(
-                text = "S",
-                modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .navigationBarsPadding()
-                    .padding(start = 24.dp, bottom = 82.dp)
-            )
+@Composable
+private fun MainShellContent(
+    selectedScreen: AppScreen,
+    appContainer: AppContainer
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(start = 18.dp, top = 24.dp, end = 18.dp, bottom = 148.dp),
+        verticalArrangement = Arrangement.spacedBy(22.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        ScreenHeader()
+        when (selectedScreen) {
+            AppScreen.WORKOUT -> {
+                val workoutViewModel: WorkoutViewModel = viewModel(
+                    factory = WorkoutViewModelFactory(
+                        exerciseRepository = appContainer.exerciseRepository,
+                        workoutRepository = appContainer.workoutRepository
+                    )
+                )
+                PremiumWorkoutRoute(viewModel = workoutViewModel)
+            }
 
-            MiniCircleButton(
-                text = "M",
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .navigationBarsPadding()
-                    .padding(end = 24.dp, bottom = 82.dp)
-            )
+            AppScreen.NUTRITION -> {
+                val nutritionViewModel: NutritionViewModel = viewModel(
+                    factory = NutritionViewModelFactory(
+                        nutritionRepository = appContainer.nutritionRepository,
+                        macroTargetRepository = appContainer.macroTargetRepository
+                    )
+                )
+                NutritionRoute(viewModel = nutritionViewModel)
+            }
+
+            AppScreen.BODY -> Unit
+            AppScreen.DASHBOARD,
+            AppScreen.HABITS -> Unit
         }
     }
 }

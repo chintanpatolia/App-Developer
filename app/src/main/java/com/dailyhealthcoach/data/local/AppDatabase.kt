@@ -39,7 +39,7 @@ import com.dailyhealthcoach.data.local.entity.WorkoutExerciseEntity
         RecoveryScoreEntity::class,
         DailyRecommendationEntity::class
     ],
-    version = 1,
+    version = 4,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

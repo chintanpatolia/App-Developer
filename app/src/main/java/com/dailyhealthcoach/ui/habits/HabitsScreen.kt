@@ -1,6 +1,9 @@
 package com.dailyhealthcoach.ui.habits
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
@@ -14,20 +17,30 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.dailyhealthcoach.domain.model.HabitStatus
+import com.dailyhealthcoach.ui.premium.FloatingTitlePill
+import com.dailyhealthcoach.ui.premium.MacroBar
+import com.dailyhealthcoach.ui.premium.ScreenHeader
+import com.dailyhealthcoach.ui.theme.CyanAccent
+import com.dailyhealthcoach.ui.theme.MainCard
+import com.dailyhealthcoach.ui.theme.MutedControl
+import com.dailyhealthcoach.ui.theme.MutedText
+import com.dailyhealthcoach.ui.theme.PositiveAccent
+import com.dailyhealthcoach.ui.theme.PrimaryText
+import com.dailyhealthcoach.ui.theme.SecondaryCard
+import com.dailyhealthcoach.ui.theme.WarningAccent
 
 @Composable
 fun HabitsRoute(
@@ -48,62 +61,67 @@ fun HabitsScreen(
     onStatusSelected: (Long, HabitStatus) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Scaffold { paddingValues ->
-        Surface(
-            modifier = modifier
+    Surface(
+        modifier = modifier.fillMaxSize(),
+        color = Color.Transparent
+    ) {
+        Column(
+            modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues),
-            color = MaterialTheme.colorScheme.background
+                .verticalScroll(rememberScrollState())
+                .navigationBarsPadding()
+                .padding(start = 18.dp, top = 24.dp, end = 18.dp, bottom = 36.dp),
+            verticalArrangement = Arrangement.spacedBy(18.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-                    .navigationBarsPadding()
-                    .padding(
-                        start = 20.dp,
-                        top = 20.dp,
-                        end = 20.dp,
-                        bottom = 72.dp
-                    ),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                Text(
-                    text = "Habits",
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.SemiBold
+            ScreenHeader()
+            HabitSummaryCard(uiState = uiState)
+
+            uiState.habits.forEach { habit ->
+                HabitCard(
+                    habit = habit,
+                    onStatusSelected = onStatusSelected
                 )
-
-                ElevatedCard(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(18.dp),
-                    elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
-                ) {
-                    Column(
-                        modifier = Modifier.padding(20.dp),
-                        verticalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        Text(
-                            text = "${uiState.completionPercentage}% complete",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                        Text(
-                            text = "${uiState.completedCount} of ${uiState.trackableCount} today",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-
-                uiState.habits.forEach { habit ->
-                    HabitCard(
-                        habit = habit,
-                        onStatusSelected = onStatusSelected
-                    )
-                }
             }
         }
+    }
+}
+
+@Composable
+private fun HabitSummaryCard(uiState: HabitsUiState) {
+    Box(modifier = Modifier.fillMaxWidth()) {
+        ElevatedCard(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 22.dp),
+            shape = RoundedCornerShape(34.dp),
+            colors = CardDefaults.cardColors(containerColor = MainCard),
+            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 8.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(start = 24.dp, top = 34.dp, end = 24.dp, bottom = 24.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                Text(
+                    text = "${uiState.completionPercentage}% complete",
+                    color = PrimaryText,
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "${uiState.completedCount} of ${uiState.trackableCount} daily habits complete",
+                    color = MutedText,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                MacroBar(
+                    label = "Today",
+                    value = "${uiState.completedCount}/${uiState.trackableCount}",
+                    progress = progress(uiState.completedCount, uiState.trackableCount),
+                    color = CyanAccent
+                )
+            }
+        }
+        FloatingTitlePill(text = "Habits", modifier = Modifier.align(Alignment.TopCenter))
     }
 }
 
@@ -114,21 +132,21 @@ private fun HabitCard(
 ) {
     ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
+        shape = RoundedCornerShape(28.dp),
         elevation = CardDefaults.elevatedCardElevation(
-            defaultElevation = if (habit.isTodayTrackable) 2.dp else 1.dp
+            defaultElevation = if (habit.isTodayTrackable) 6.dp else 3.dp
         ),
         colors = CardDefaults.cardColors(
             containerColor = if (habit.isTodayTrackable) {
                 habit.status.cardTint()
             } else {
-                Color(0xFFFBFAF7)
+                SecondaryCard.copy(alpha = 0.46f)
             }
         )
     ) {
         Column(
-            modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            modifier = Modifier.padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -136,8 +154,9 @@ private fun HabitCard(
             ) {
                 Text(
                     text = habit.name,
+                    color = PrimaryText,
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
+                    fontWeight = FontWeight.Bold,
                     modifier = Modifier.weight(1f)
                 )
                 FrequencyPill(
@@ -150,7 +169,7 @@ private fun HabitCard(
             Text(
                 text = habit.description,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MutedText
             )
 
             if (habit.isTodayTrackable) {
@@ -194,8 +213,8 @@ private fun FrequencyPill(
     modifier: Modifier = Modifier
 ) {
     Surface(
-        color = if (isLongTermReminder) Color(0xFFF0ECE3) else Color(0xFFF1F3F1),
-        contentColor = if (isLongTermReminder) Color(0xFF655B48) else MaterialTheme.colorScheme.onSurfaceVariant,
+        color = if (isLongTermReminder) WarningAccent.copy(alpha = 0.18f) else SecondaryCard.copy(alpha = 0.8f),
+        contentColor = if (isLongTermReminder) WarningAccent else CyanAccent,
         shape = RoundedCornerShape(999.dp),
         modifier = modifier
     ) {
@@ -212,14 +231,14 @@ private fun FrequencyPill(
 private fun LongTermReminderNote() {
     Card(
         colors = CardDefaults.cardColors(
-            containerColor = Color(0xFFF4F1EA)
+            containerColor = MainCard.copy(alpha = 0.78f)
         ),
-        shape = RoundedCornerShape(14.dp)
+        shape = RoundedCornerShape(20.dp)
     ) {
         Text(
-            text = "Long-term reminder. Track this separately from daily completion.",
+            text = "Long-term reminder. Track separately from daily completion.",
             style = MaterialTheme.typography.bodySmall,
-            color = Color(0xFF665E4D),
+            color = MutedText,
             modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp)
         )
     }
@@ -233,30 +252,41 @@ private fun HabitStatusChip(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    FilterChip(
-        selected = selected,
-        onClick = onClick,
+    val chipColor = if (selected) status.selectedContainerColor() else Color.Transparent
+    val borderColor = if (selected) status.selectedBorderColor() else MutedControl.copy(alpha = 0.8f)
+    val textColor = if (selected) status.selectedTextColor() else MutedText
+
+    Surface(
+        modifier = modifier
+            .defaultMinSize(minHeight = 42.dp)
+            .clip(RoundedCornerShape(999.dp))
+            .clickable(onClick = onClick),
         shape = RoundedCornerShape(999.dp),
-        colors = FilterChipDefaults.filterChipColors(
-            selectedContainerColor = status.selectedContainerColor(),
-            selectedLabelColor = status.selectedTextColor()
-        ),
-        label = {
+        color = chipColor,
+        border = BorderStroke(1.dp, borderColor)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp, vertical = 10.dp),
+            contentAlignment = Alignment.Center
+        ) {
             Text(
                 text = label,
+                color = textColor,
+                style = MaterialTheme.typography.labelMedium,
                 maxLines = 1,
                 fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal
             )
-        },
-        modifier = modifier.defaultMinSize(minHeight = 40.dp)
-    )
+        }
+    }
 }
 
 private fun HabitStatus.cardTint(): Color {
     return when (this) {
-        HabitStatus.COMPLETE -> Color(0xFFF6FBF7)
-        HabitStatus.SKIPPED -> Color(0xFFFFFBF0)
-        HabitStatus.NOT_DONE -> Color(0xFFFAFAFA)
+        HabitStatus.COMPLETE -> PositiveAccent.copy(alpha = 0.18f)
+        HabitStatus.SKIPPED -> WarningAccent.copy(alpha = 0.18f)
+        HabitStatus.NOT_DONE -> MainCard
     }
 }
 
@@ -268,10 +298,23 @@ private fun HabitStatus.selectedContainerColor(): Color {
     }
 }
 
+private fun HabitStatus.selectedBorderColor(): Color {
+    return when (this) {
+        HabitStatus.COMPLETE -> PositiveAccent
+        HabitStatus.SKIPPED -> WarningAccent
+        HabitStatus.NOT_DONE -> MutedControl
+    }
+}
+
 private fun HabitStatus.selectedTextColor(): Color {
     return when (this) {
         HabitStatus.COMPLETE -> Color(0xFF2F6B3F)
         HabitStatus.SKIPPED -> Color(0xFF7A5A16)
         HabitStatus.NOT_DONE -> Color(0xFF4D4D4D)
     }
+}
+
+private fun progress(value: Int, target: Int): Float {
+    if (target <= 0) return 0f
+    return (value.toFloat() / target.toFloat()).coerceIn(0f, 1f)
 }
