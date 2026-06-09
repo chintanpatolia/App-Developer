@@ -5,12 +5,14 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.dailyhealthcoach.domain.model.DailyRecommendation
 import com.dailyhealthcoach.domain.model.Exercise
+import com.dailyhealthcoach.domain.model.RecoveryActivity
 import com.dailyhealthcoach.domain.model.Workout
 import com.dailyhealthcoach.domain.model.WorkoutExercise
 import com.dailyhealthcoach.domain.model.WorkoutSetInput
 import com.dailyhealthcoach.domain.model.WorkoutStatus
 import com.dailyhealthcoach.domain.repository.DailyRecommendationRepository
 import com.dailyhealthcoach.domain.repository.ExerciseRepository
+import com.dailyhealthcoach.domain.repository.RecoveryActivityRepository
 import com.dailyhealthcoach.domain.repository.WorkoutRepository
 import com.dailyhealthcoach.domain.usecase.GenerateWorkoutPlanUseCase
 import java.time.LocalDate
@@ -26,6 +28,7 @@ class WorkoutViewModel(
     private val exerciseRepository: ExerciseRepository,
     private val workoutRepository: WorkoutRepository,
     private val dailyRecommendationRepository: DailyRecommendationRepository,
+    private val recoveryActivityRepository: RecoveryActivityRepository,
     private val generateWorkoutPlanUseCase: GenerateWorkoutPlanUseCase,
     private val today: String
 ) : ViewModel() {
@@ -39,6 +42,8 @@ class WorkoutViewModel(
         dailyRecommendationRepository.observeForDate(today)
     ) { exercises, workouts, workoutSets, draft, recommendation ->
         buildUiState(exercises, workouts, workoutSets, draft, recommendation, generateWorkoutPlanUseCase, today)
+    }.combine(recoveryActivityRepository.observeAll()) { state, allLogs ->
+        mergeRecoveryLogs(state, allLogs)
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
@@ -196,6 +201,42 @@ class WorkoutViewModel(
                             notes = it.notes
                         )
                     }
+                }
+            )
+            draftState.value = WorkoutDraftState()
+        }
+    }
+
+    fun saveRecoverySession(activityDrafts: List<ActivityDraft>, overallNotes: String) {
+        val draft = draftState.value
+        val requiredDrafts = activityDrafts.filter { !it.name.startsWith("Optional") }
+        val overallStatus = when {
+            activityDrafts.all { it.status == WorkoutStatus.SKIPPED } -> WorkoutStatus.SKIPPED
+            requiredDrafts.isNotEmpty() && requiredDrafts.all { it.status == WorkoutStatus.COMPLETED } -> WorkoutStatus.COMPLETED
+            else -> WorkoutStatus.PARTIAL
+        }
+        val totalDuration = activityDrafts.sumOf { it.durationInput.toIntOrNull() ?: 0 }.takeIf { it > 0 }
+        viewModelScope.launch {
+            val workoutId = workoutRepository.saveWorkout(
+                date = LocalDate.now().toString(),
+                name = draft.workoutName.ifBlank { "Active Recovery" },
+                status = overallStatus,
+                durationMinutes = totalDuration,
+                overallRpe = null,
+                notes = overallNotes.ifBlank { null },
+                sets = emptyList()
+            )
+            recoveryActivityRepository.saveAll(
+                workoutId = workoutId,
+                activities = activityDrafts.map { d ->
+                    RecoveryActivity(
+                        workoutId = workoutId,
+                        name = d.name,
+                        status = d.status.storageValue,
+                        durationMinutes = d.durationInput.toIntOrNull(),
+                        rpe = d.rpeInput.toIntOrNull(),
+                        notes = d.notesInput.ifBlank { null }
+                    )
                 }
             )
             draftState.value = WorkoutDraftState()
@@ -405,10 +446,33 @@ private fun String.filterWeightInput(): String {
     return builder.toString()
 }
 
+private fun mergeRecoveryLogs(
+    state: WorkoutUiState,
+    allLogs: List<RecoveryActivity>
+): WorkoutUiState {
+    val detail = state.selectedWorkoutDetail ?: return state
+    val logsForWorkout = allLogs.filter { it.workoutId == detail.id }
+    if (logsForWorkout.isEmpty()) return state
+    return state.copy(
+        selectedWorkoutDetail = detail.copy(
+            recoveryActivities = logsForWorkout.map { log ->
+                RecoveryActivityDetailUiState(
+                    name = log.name,
+                    statusLabel = WorkoutStatus.fromStorageValue(log.status).label,
+                    durationText = log.durationMinutes?.let { "$it min" } ?: "",
+                    rpe = log.rpe?.let { "RPE $it" } ?: "",
+                    notes = log.notes
+                )
+            }
+        )
+    )
+}
+
 class WorkoutViewModelFactory(
     private val exerciseRepository: ExerciseRepository,
     private val workoutRepository: WorkoutRepository,
     private val dailyRecommendationRepository: DailyRecommendationRepository,
+    private val recoveryActivityRepository: RecoveryActivityRepository,
     private val generateWorkoutPlanUseCase: GenerateWorkoutPlanUseCase,
     private val today: String
 ) : ViewModelProvider.Factory {
@@ -419,6 +483,7 @@ class WorkoutViewModelFactory(
                 exerciseRepository = exerciseRepository,
                 workoutRepository = workoutRepository,
                 dailyRecommendationRepository = dailyRecommendationRepository,
+                recoveryActivityRepository = recoveryActivityRepository,
                 generateWorkoutPlanUseCase = generateWorkoutPlanUseCase,
                 today = today
             ) as T

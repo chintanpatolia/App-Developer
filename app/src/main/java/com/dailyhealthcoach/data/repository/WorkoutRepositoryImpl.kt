@@ -43,7 +43,7 @@ class WorkoutRepositoryImpl(
         overallRpe: Int?,
         notes: String?,
         sets: List<WorkoutSetInput>
-    ) {
+    ): Long {
         val now = Instant.now().toString()
         val workoutId = workoutDao.insert(
             WorkoutEntity(
@@ -71,6 +71,7 @@ class WorkoutRepositoryImpl(
                 )
             }
         )
+        return workoutId
     }
 }
 

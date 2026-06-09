@@ -19,5 +19,5 @@ interface WorkoutRepository {
         overallRpe: Int?,
         notes: String?,
         sets: List<WorkoutSetInput>
-    )
+    ): Long
 }

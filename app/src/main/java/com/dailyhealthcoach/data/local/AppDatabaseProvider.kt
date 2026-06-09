@@ -16,7 +16,7 @@ object AppDatabaseProvider {
                 AppDatabase::class.java,
                 "daily_health_coach.db"
             )
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
                 .build()
                 .also { database = it }
         }
@@ -47,6 +47,22 @@ object AppDatabaseProvider {
             db.execSQL("ALTER TABLE daily_recommendations ADD COLUMN suggestedFocus TEXT NOT NULL DEFAULT ''")
             db.execSQL("ALTER TABLE daily_recommendations ADD COLUMN reasonBullets TEXT")
             db.execSQL("ALTER TABLE daily_recommendations ADD COLUMN updatedAt TEXT NOT NULL DEFAULT ''")
+        }
+    }
+
+    private val MIGRATION_4_5 = object : Migration(4, 5) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                """CREATE TABLE IF NOT EXISTS recovery_activity_logs (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                    workout_id INTEGER NOT NULL,
+                    activity_name TEXT NOT NULL,
+                    status TEXT NOT NULL DEFAULT 'COMPLETED',
+                    duration_minutes INTEGER,
+                    rpe INTEGER,
+                    notes TEXT
+                )""".trimIndent()
+            )
         }
     }
 }

@@ -92,6 +92,22 @@ data class ExerciseDetailUiState(
     val sets: List<SetDetailUiState>
 )
 
+data class ActivityDraft(
+    val name: String,
+    val status: WorkoutStatus = WorkoutStatus.COMPLETED,
+    val durationInput: String = "",
+    val rpeInput: String = "",
+    val notesInput: String = ""
+)
+
+data class RecoveryActivityDetailUiState(
+    val name: String,
+    val statusLabel: String,
+    val durationText: String,
+    val rpe: String,
+    val notes: String?
+)
+
 data class WorkoutDetailUiState(
     val id: Long,
     val date: String,
@@ -99,5 +115,6 @@ data class WorkoutDetailUiState(
     val statusLabel: String,
     val durationText: String,
     val notes: String?,
-    val exercises: List<ExerciseDetailUiState>
+    val exercises: List<ExerciseDetailUiState>,
+    val recoveryActivities: List<RecoveryActivityDetailUiState> = emptyList()
 )

@@ -8,6 +8,7 @@ import com.dailyhealthcoach.data.repository.ExerciseRepositoryImpl
 import com.dailyhealthcoach.data.repository.HabitRepositoryImpl
 import com.dailyhealthcoach.data.repository.MacroTargetRepositoryImpl
 import com.dailyhealthcoach.data.repository.NutritionRepositoryImpl
+import com.dailyhealthcoach.data.repository.RecoveryActivityRepositoryImpl
 import com.dailyhealthcoach.data.repository.RecoveryRepositoryImpl
 import com.dailyhealthcoach.data.repository.UserProfileRepositoryImpl
 import com.dailyhealthcoach.data.repository.WorkoutRepositoryImpl
@@ -19,6 +20,7 @@ import com.dailyhealthcoach.domain.repository.ExerciseRepository
 import com.dailyhealthcoach.domain.repository.HabitRepository
 import com.dailyhealthcoach.domain.repository.MacroTargetRepository
 import com.dailyhealthcoach.domain.repository.NutritionRepository
+import com.dailyhealthcoach.domain.repository.RecoveryActivityRepository
 import com.dailyhealthcoach.domain.repository.RecoveryRepository
 import com.dailyhealthcoach.domain.repository.UserProfileRepository
 import com.dailyhealthcoach.domain.repository.WorkoutRepository
@@ -87,6 +89,10 @@ class AppContainer(context: Context) {
 
     val setHabitStatusForTodayUseCase = SetHabitStatusForTodayUseCase(
         habitRepository = habitRepository
+    )
+
+    val recoveryActivityRepository: RecoveryActivityRepository = RecoveryActivityRepositoryImpl(
+        dao = database.recoveryActivityDao()
     )
 
     val generateWorkoutPlanUseCase = GenerateWorkoutPlanUseCase()

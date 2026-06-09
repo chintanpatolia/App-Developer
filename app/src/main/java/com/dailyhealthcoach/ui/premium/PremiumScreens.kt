@@ -50,9 +50,11 @@ import com.dailyhealthcoach.ui.nutrition.FoodEntryUiState
 import com.dailyhealthcoach.ui.nutrition.MealSectionUiState
 import com.dailyhealthcoach.ui.nutrition.NutritionUiState
 import com.dailyhealthcoach.ui.nutrition.NutritionViewModel
+import com.dailyhealthcoach.ui.workout.ActivityDraft
 import com.dailyhealthcoach.ui.workout.DraftWorkoutSetUiState
 import com.dailyhealthcoach.ui.workout.ExerciseDetailUiState
 import com.dailyhealthcoach.ui.workout.ExerciseOptionUiState
+import com.dailyhealthcoach.ui.workout.RecoveryActivityDetailUiState
 import com.dailyhealthcoach.ui.workout.SelectedExerciseUiState
 import com.dailyhealthcoach.ui.workout.WorkoutDetailUiState
 import com.dailyhealthcoach.ui.workout.WorkoutHistoryUiState
@@ -122,6 +124,9 @@ fun PremiumWorkoutRoute(viewModel: WorkoutViewModel) {
         onSaveWorkout = {
             viewModel.saveWorkout()
             showActiveWorkout = false
+        },
+        onSaveRecoverySession = { drafts, notes ->
+            viewModel.saveRecoverySession(drafts, notes)
             showNonStrengthSession = false
         }
     )
@@ -151,7 +156,8 @@ private fun PremiumWorkoutScreen(
     onExerciseNotesChange: (Long, String) -> Unit,
     onAddSet: (Long) -> Unit,
     onRemoveSet: (Long, Int) -> Unit,
-    onSaveWorkout: () -> Unit
+    onSaveWorkout: () -> Unit,
+    onSaveRecoverySession: (List<ActivityDraft>, String) -> Unit
 ) {
     Column(modifier = Modifier.padding(bottom = 40.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
         when {
@@ -175,14 +181,9 @@ private fun PremiumWorkoutScreen(
                 onSaveWorkout = onSaveWorkout
             )
             showNonStrengthSession -> PlanSessionScreen(
-                uiState = uiState,
                 workoutPlan = uiState.workoutPlan,
                 onBack = onBackToPlan,
-                onDurationChange = onDurationChange,
-                onOverallRpeChange = onOverallRpeChange,
-                onWorkoutNotesChange = onWorkoutNotesChange,
-                onStatusSelected = onStatusSelected,
-                onSaveSession = onSaveWorkout
+                onSaveSession = onSaveRecoverySession
             )
             uiState.selectedWorkoutDetail != null -> WorkoutDetailView(
                 detail = uiState.selectedWorkoutDetail,
@@ -405,14 +406,9 @@ private fun ActiveWorkoutScreen(
 
 @Composable
 private fun PlanSessionScreen(
-    uiState: WorkoutUiState,
     workoutPlan: WorkoutPlanUiState?,
     onBack: () -> Unit,
-    onDurationChange: (String) -> Unit,
-    onOverallRpeChange: (String) -> Unit,
-    onWorkoutNotesChange: (String) -> Unit,
-    onStatusSelected: (WorkoutStatus) -> Unit,
-    onSaveSession: () -> Unit
+    onSaveSession: (List<ActivityDraft>, String) -> Unit
 ) {
     val sessionTitle = when (workoutPlan?.focus) {
         "Active Recovery" -> "Recovery Session"
@@ -420,6 +416,13 @@ private fun PlanSessionScreen(
         "Rest Day" -> "Rest Day Log"
         else -> workoutPlan?.focus ?: "Session"
     }
+    var activityDrafts: List<ActivityDraft> by remember(workoutPlan) {
+        mutableStateOf(
+            workoutPlan?.nonStrengthActivities?.map { ActivityDraft(name = it) } ?: emptyList<ActivityDraft>()
+        )
+    }
+    var overallNotes by remember { mutableStateOf("") }
+
     Box(modifier = Modifier.fillMaxWidth()) {
         MainFeatureCard(modifier = Modifier.padding(top = 22.dp)) {
             Column(
@@ -437,62 +440,133 @@ private fun PlanSessionScreen(
                         fontWeight = FontWeight.Bold
                     )
                 }
-                if (workoutPlan != null && workoutPlan.nonStrengthActivities.isNotEmpty()) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(18.dp))
-                            .background(SecondaryCard.copy(alpha = 0.6f))
-                            .padding(horizontal = 16.dp, vertical = 12.dp),
-                        verticalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        Text(
-                            text = "Today's activities",
-                            color = MutedText,
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                        workoutPlan.nonStrengthActivities.forEach { activity ->
-                            Text(text = "· $activity", color = PrimaryText, style = MaterialTheme.typography.bodyMedium)
+                activityDrafts.forEachIndexed { index, draft ->
+                    ActivityDraftCard(
+                        draft = draft,
+                        onStatusSelected = { status ->
+                            activityDrafts = activityDrafts.toMutableList().also { it[index] = draft.copy(status = status) }
+                        },
+                        onDurationChange = { value ->
+                            activityDrafts = activityDrafts.toMutableList().also { it[index] = draft.copy(durationInput = value.filter { c -> c.isDigit() }) }
+                        },
+                        onRpeChange = { value ->
+                            activityDrafts = activityDrafts.toMutableList().also { it[index] = draft.copy(rpeInput = value.filter { c -> c.isDigit() }.take(2)) }
+                        },
+                        onNotesChange = { value ->
+                            activityDrafts = activityDrafts.toMutableList().also { it[index] = draft.copy(notesInput = value) }
                         }
-                    }
-                }
-                if (workoutPlan != null && workoutPlan.durationMinutes.isNotEmpty()) {
-                    Text(
-                        text = "Target: ${workoutPlan.durationMinutes} min",
-                        color = CyanAccent,
-                        style = MaterialTheme.typography.bodySmall,
-                        fontWeight = FontWeight.SemiBold
                     )
                 }
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    OutlinedTextField(
-                        value = uiState.durationMinutes,
-                        onValueChange = onDurationChange,
-                        label = { Text("Duration (min)") },
-                        singleLine = true,
-                        modifier = Modifier.weight(1f)
-                    )
-                    OutlinedTextField(
-                        value = uiState.overallRpe,
-                        onValueChange = onOverallRpeChange,
-                        label = { Text("Effort (RPE)") },
-                        singleLine = true,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-                WorkoutStatusChips(selectedStatus = uiState.selectedStatus, onStatusSelected = onStatusSelected)
                 OutlinedTextField(
-                    value = uiState.workoutNotes,
-                    onValueChange = onWorkoutNotesChange,
-                    label = { Text("Notes") },
+                    value = overallNotes,
+                    onValueChange = { overallNotes = it },
+                    label = { Text("Overall notes (optional)") },
                     minLines = 2,
                     modifier = Modifier.fillMaxWidth()
                 )
-                PrimaryBlueButton(text = "Save Session", onClick = onSaveSession, modifier = Modifier.fillMaxWidth())
+                PrimaryBlueButton(
+                    text = "Save Session",
+                    onClick = { onSaveSession(activityDrafts, overallNotes) },
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
         }
         FloatingTitlePill(text = sessionTitle, modifier = Modifier.align(Alignment.TopCenter))
+    }
+}
+
+@Composable
+private fun ActivityDraftCard(
+    draft: ActivityDraft,
+    onStatusSelected: (WorkoutStatus) -> Unit,
+    onDurationChange: (String) -> Unit,
+    onRpeChange: (String) -> Unit,
+    onNotesChange: (String) -> Unit
+) {
+    val statusColor = when (draft.status) {
+        WorkoutStatus.COMPLETED -> PositiveAccent
+        WorkoutStatus.PARTIAL -> WarningAccent
+        WorkoutStatus.SKIPPED -> MutedText
+    }
+    ElevatedCard(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(22.dp),
+        colors = CardDefaults.cardColors(containerColor = SecondaryCard),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = draft.name,
+                    color = PrimaryText,
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.weight(1f)
+                )
+                Surface(
+                    shape = RoundedCornerShape(999.dp),
+                    color = statusColor.copy(alpha = 0.18f)
+                ) {
+                    Text(
+                        text = draft.status.label,
+                        color = statusColor,
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                    )
+                }
+            }
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                WorkoutStatus.entries.forEach { status ->
+                    FilterChip(
+                        selected = draft.status == status,
+                        onClick = { onStatusSelected(status) },
+                        shape = RoundedCornerShape(999.dp),
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = when (status) {
+                                WorkoutStatus.COMPLETED -> PositiveAccent
+                                WorkoutStatus.PARTIAL -> WarningAccent
+                                WorkoutStatus.SKIPPED -> MutedControl
+                            },
+                            selectedLabelColor = PrimaryText,
+                            labelColor = MutedText
+                        ),
+                        label = { Text(status.label, maxLines = 1) },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                OutlinedTextField(
+                    value = draft.durationInput,
+                    onValueChange = onDurationChange,
+                    label = { Text("Duration (min)") },
+                    singleLine = true,
+                    modifier = Modifier.weight(1f)
+                )
+                OutlinedTextField(
+                    value = draft.rpeInput,
+                    onValueChange = onRpeChange,
+                    label = { Text("Effort (RPE)") },
+                    singleLine = true,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+            OutlinedTextField(
+                value = draft.notesInput,
+                onValueChange = onNotesChange,
+                label = { Text("Notes") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
     }
 }
 
@@ -836,12 +910,18 @@ private fun WorkoutDetailView(
                         )
                     }
                 }
-                if (detail.exercises.isEmpty()) {
-                    Text(text = "No exercises logged for this workout.", color = MutedText)
-                } else {
-                    detail.exercises.forEach { exercise ->
-                        ExerciseDetailSection(exercise = exercise)
+                when {
+                    detail.recoveryActivities.isNotEmpty() -> {
+                        detail.recoveryActivities.forEach { activity ->
+                            RecoveryActivityDetailSection(activity = activity)
+                        }
                     }
+                    detail.exercises.isNotEmpty() -> {
+                        detail.exercises.forEach { exercise ->
+                            ExerciseDetailSection(exercise = exercise)
+                        }
+                    }
+                    else -> Text(text = "No activities logged for this session.", color = MutedText)
                 }
             }
         }
@@ -879,6 +959,37 @@ private fun ExerciseDetailSection(exercise: ExerciseDetailUiState) {
             if (!set.notes.isNullOrBlank()) {
                 Text(text = set.notes, color = MutedText, style = MaterialTheme.typography.bodySmall)
             }
+        }
+    }
+}
+
+@Composable
+private fun RecoveryActivityDetailSection(activity: RecoveryActivityDetailUiState) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(SecondaryCard.copy(alpha = 0.55f))
+            .padding(12.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(text = activity.name, color = PrimaryText, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+            Text(text = activity.statusLabel, color = statusColor(activity.statusLabel), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+        }
+        val meta = listOfNotNull(
+            activity.durationText.takeIf { it.isNotEmpty() },
+            activity.rpe.takeIf { it.isNotEmpty() }
+        ).joinToString("  ·  ")
+        if (meta.isNotEmpty()) {
+            Text(text = meta, color = CyanAccent, style = MaterialTheme.typography.bodySmall)
+        }
+        if (!activity.notes.isNullOrBlank()) {
+            Text(text = activity.notes, color = MutedText, style = MaterialTheme.typography.bodySmall)
         }
     }
 }

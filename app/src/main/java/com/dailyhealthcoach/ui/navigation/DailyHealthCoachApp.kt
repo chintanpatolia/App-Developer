@@ -171,6 +171,7 @@ private fun MainShellContent(
                         exerciseRepository = appContainer.exerciseRepository,
                         workoutRepository = appContainer.workoutRepository,
                         dailyRecommendationRepository = appContainer.dailyRecommendationRepository,
+                        recoveryActivityRepository = appContainer.recoveryActivityRepository,
                         generateWorkoutPlanUseCase = appContainer.generateWorkoutPlanUseCase,
                         today = LocalDate.now().toString()
                     )
