@@ -16,6 +16,7 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -35,15 +36,17 @@ import com.dailyhealthcoach.ui.theme.WarningAccent
 @Composable
 fun DashboardRoute(
     viewModel: DashboardViewModel,
+    onNavigateToProgress: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    DashboardScreen(uiState = uiState, modifier = modifier)
+    DashboardScreen(uiState = uiState, onNavigateToProgress = onNavigateToProgress, modifier = modifier)
 }
 
 @Composable
 fun DashboardScreen(
     uiState: DashboardUiState,
+    onNavigateToProgress: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Surface(modifier = modifier.fillMaxSize(), color = Color.Transparent) {
@@ -59,6 +62,7 @@ fun DashboardScreen(
             SummaryGrid(uiState = uiState)
             RecoveryCard(uiState = uiState)
             RecommendationCard(recommendation = uiState.nextDayRecommendation)
+            ViewProgressCard(onClick = onNavigateToProgress)
             Text(
                 text = "General wellness guidance only. Not medical advice.",
                 style = MaterialTheme.typography.bodySmall,
@@ -260,6 +264,33 @@ private fun RecommendationCard(recommendation: DailyRecommendationUiState?) {
                 recommendation.reasons.take(3).forEach { reason ->
                     Text(text = "· $reason", style = MaterialTheme.typography.bodySmall, color = MutedText)
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ViewProgressCard(onClick: () -> Unit) {
+    ElevatedCard(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.elevatedCardColors(containerColor = SecondaryCard),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 18.dp, vertical = 4.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Progress & Trends",
+                style = MaterialTheme.typography.titleSmall,
+                color = PrimaryText
+            )
+            TextButton(onClick = onClick) {
+                Text(text = "View >", color = CyanAccent, fontWeight = FontWeight.SemiBold)
             }
         }
     }

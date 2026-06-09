@@ -39,6 +39,10 @@ import com.dailyhealthcoach.ui.dashboard.DashboardViewModelFactory
 import com.dailyhealthcoach.ui.habits.HabitsRoute
 import com.dailyhealthcoach.ui.habits.HabitsViewModel
 import com.dailyhealthcoach.ui.habits.HabitsViewModelFactory
+import com.dailyhealthcoach.ui.progress.ProgressRoute
+import com.dailyhealthcoach.ui.progress.ProgressViewModel
+import com.dailyhealthcoach.ui.progress.ProgressViewModelFactory
+import java.time.LocalDate
 import com.dailyhealthcoach.ui.premium.AppBackground
 import com.dailyhealthcoach.ui.premium.NutritionRoute
 import com.dailyhealthcoach.ui.premium.PremiumWorkoutRoute
@@ -69,6 +73,27 @@ fun DailyHealthCoachApp(appContainer: AppContainer) {
                     )
                     DashboardRoute(
                         viewModel = dashboardViewModel,
+                        onNavigateToProgress = { selectedScreen = AppScreen.PROGRESS },
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(bottom = 112.dp)
+                    )
+                }
+
+                AppScreen.PROGRESS -> {
+                    val progressViewModel: ProgressViewModel = viewModel(
+                        factory = ProgressViewModelFactory(
+                            bodyMetricRepository = appContainer.bodyMetricRepository,
+                            nutritionRepository = appContainer.nutritionRepository,
+                            habitRepository = appContainer.habitRepository,
+                            workoutRepository = appContainer.workoutRepository,
+                            recoveryRepository = appContainer.recoveryRepository,
+                            today = LocalDate.now().toString()
+                        )
+                    )
+                    ProgressRoute(
+                        viewModel = progressViewModel,
+                        onNavigateBack = { selectedScreen = AppScreen.DASHBOARD },
                         modifier = Modifier
                             .fillMaxSize()
                             .padding(bottom = 112.dp)
@@ -160,7 +185,8 @@ private fun MainShellContent(
                 NutritionRoute(viewModel = nutritionViewModel)
             }
 
-            AppScreen.BODY -> Unit
+            AppScreen.BODY,
+            AppScreen.PROGRESS,
             AppScreen.DASHBOARD,
             AppScreen.HABITS -> Unit
         }
@@ -184,7 +210,7 @@ private fun BottomNavCapsule(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            AppScreen.entries.forEach { screen ->
+            AppScreen.entries.filter { it.showInNav }.forEach { screen ->
                 val selected = selectedScreen == screen
                 TextButton(
                     onClick = { onScreenSelected(screen) },

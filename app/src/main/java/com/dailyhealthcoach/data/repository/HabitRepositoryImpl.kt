@@ -25,6 +25,11 @@ class HabitRepositoryImpl(
             .map { logs -> logs.map { it.toDomain() } }
     }
 
+    override fun observeLogsBetween(startDate: String, endDate: String): Flow<List<DailyHabitLog>> {
+        return dailyHabitLogDao.observeLogsBetween(startDate, endDate)
+            .map { logs -> logs.map { it.toDomain() } }
+    }
+
     override suspend fun setHabitStatusForDate(
         habitDefinitionId: Long,
         date: String,

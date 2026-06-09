@@ -11,6 +11,9 @@ interface FoodEntryDao {
     @Query("SELECT * FROM food_entries WHERE date = :date ORDER BY mealTime ASC, id ASC")
     fun observeForDate(date: String): Flow<List<FoodEntryEntity>>
 
+    @Query("SELECT * FROM food_entries ORDER BY date DESC")
+    fun observeAll(): Flow<List<FoodEntryEntity>>
+
     @Upsert
     suspend fun upsert(entry: FoodEntryEntity)
 

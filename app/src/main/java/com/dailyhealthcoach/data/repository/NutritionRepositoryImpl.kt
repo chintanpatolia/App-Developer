@@ -16,6 +16,10 @@ class NutritionRepositoryImpl(
         return foodEntryDao.observeForDate(date).map { entries -> entries.map { it.toDomain() } }
     }
 
+    override fun observeAll(): Flow<List<FoodEntry>> {
+        return foodEntryDao.observeAll().map { entries -> entries.map { it.toDomain() } }
+    }
+
     override suspend fun saveFoodEntry(input: FoodEntryInput) {
         val now = Instant.now().toString()
         foodEntryDao.upsert(

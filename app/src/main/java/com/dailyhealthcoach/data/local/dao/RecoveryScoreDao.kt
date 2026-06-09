@@ -14,6 +14,9 @@ interface RecoveryScoreDao {
     @Query("SELECT * FROM recovery_scores WHERE date = :date LIMIT 1")
     suspend fun getForDate(date: String): RecoveryScoreEntity?
 
+    @Query("SELECT * FROM recovery_scores ORDER BY date DESC")
+    fun observeAll(): Flow<List<RecoveryScoreEntity>>
+
     @Upsert
     suspend fun upsert(score: RecoveryScoreEntity)
 }

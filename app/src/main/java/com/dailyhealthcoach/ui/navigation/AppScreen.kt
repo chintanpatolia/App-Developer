@@ -1,9 +1,10 @@
 package com.dailyhealthcoach.ui.navigation
 
-enum class AppScreen(val label: String) {
+enum class AppScreen(val label: String, val showInNav: Boolean = true) {
     DASHBOARD("Dashboard"),
     HABITS("Habits"),
     WORKOUT("Workout"),
     NUTRITION("Nutrition"),
-    BODY("Body")
+    BODY("Body"),
+    PROGRESS("Progress", showInNav = false)
 }

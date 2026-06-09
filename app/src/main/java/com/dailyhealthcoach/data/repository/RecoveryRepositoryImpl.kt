@@ -15,6 +15,10 @@ class RecoveryRepositoryImpl(
         return recoveryScoreDao.observeForDate(date).map { it?.toDomain() }
     }
 
+    override fun observeAll(): Flow<List<RecoveryScore>> {
+        return recoveryScoreDao.observeAll().map { scores -> scores.map { it.toDomain() } }
+    }
+
     override suspend fun saveForDate(date: String, score: Int, label: String, reasons: List<String>) {
         val now = Instant.now().toString()
         val existing = recoveryScoreDao.getForDate(date)
