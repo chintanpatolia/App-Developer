@@ -11,7 +11,26 @@ data class NutritionUiState(
     val latestMealTime: String = "Not logged",
     val mealSections: List<MealSectionUiState> = emptyList(),
     val isFormVisible: Boolean = false,
-    val form: FoodEntryFormUiState = FoodEntryFormUiState()
+    val form: FoodEntryFormUiState = FoodEntryFormUiState(),
+    val recentFoods: List<QuickAddFoodUiState> = emptyList(),
+    val savedFoods: List<QuickAddFoodUiState> = emptyList()
+)
+
+data class QuickAddFoodUiState(
+    val sourceEntryId: Long,
+    val foodName: String,
+    val brandName: String?,
+    val servingDescription: String?,
+    val calories: Int,
+    val proteinGrams: Double,
+    val carbGrams: Double,
+    val fatGrams: Double,
+    val fiberGrams: Double,
+    val defaultMealName: String,
+    val isSaved: Boolean,
+    val isWholeFoodBased: Boolean,
+    val isProcessed: Boolean,
+    val isFermented: Boolean
 )
 
 data class MealSectionUiState(
@@ -33,7 +52,8 @@ data class FoodEntryUiState(
     val mealTime: String?,
     val isWholeFoodBased: Boolean,
     val isProcessed: Boolean,
-    val isFermented: Boolean
+    val isFermented: Boolean,
+    val isSaved: Boolean = false
 )
 
 data class FoodEntryFormUiState(

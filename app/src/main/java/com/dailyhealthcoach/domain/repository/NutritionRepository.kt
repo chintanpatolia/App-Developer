@@ -9,4 +9,6 @@ interface NutritionRepository {
     fun observeAll(): Flow<List<FoodEntry>>
     suspend fun saveFoodEntry(input: FoodEntryInput)
     suspend fun deleteFoodEntry(id: Long)
+    suspend fun setFoodEntrySaved(id: Long, saved: Boolean)
+    suspend fun getFoodEntriesForDate(date: String): List<FoodEntry>
 }

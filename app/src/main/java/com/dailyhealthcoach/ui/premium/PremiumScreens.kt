@@ -50,6 +50,7 @@ import com.dailyhealthcoach.ui.nutrition.FoodEntryUiState
 import com.dailyhealthcoach.ui.nutrition.MealSectionUiState
 import com.dailyhealthcoach.ui.nutrition.NutritionUiState
 import com.dailyhealthcoach.ui.nutrition.NutritionViewModel
+import com.dailyhealthcoach.ui.nutrition.QuickAddFoodUiState
 import com.dailyhealthcoach.ui.workout.ActivityDraft
 import com.dailyhealthcoach.ui.workout.DraftWorkoutSetUiState
 import com.dailyhealthcoach.ui.workout.ExerciseDetailUiState
@@ -72,7 +73,10 @@ fun NutritionRoute(viewModel: NutritionViewModel) {
         onSaveForm = viewModel::saveForm,
         onEditEntry = viewModel::editEntry,
         onDeleteEntry = viewModel::deleteEntry,
-        onFormChange = viewModel::updateForm
+        onFormChange = viewModel::updateForm,
+        onToggleSaved = { id, saved -> viewModel.toggleSaved(id, saved) },
+        onQuickAddFood = viewModel::quickAddFood,
+        onCopyYesterday = viewModel::copyYesterday
     )
 }
 
@@ -1008,7 +1012,10 @@ fun NutritionPlanScreen(
     onSaveForm: () -> Unit,
     onEditEntry: (FoodEntryUiState) -> Unit,
     onDeleteEntry: (Long) -> Unit,
-    onFormChange: ((FoodEntryFormUiState) -> FoodEntryFormUiState) -> Unit
+    onFormChange: ((FoodEntryFormUiState) -> FoodEntryFormUiState) -> Unit,
+    onToggleSaved: (Long, Boolean) -> Unit,
+    onQuickAddFood: (QuickAddFoodUiState) -> Unit,
+    onCopyYesterday: () -> Unit
 ) {
     Box(modifier = Modifier.fillMaxWidth()) {
         MainFeatureCard(modifier = Modifier.padding(top = 22.dp)) {
@@ -1027,7 +1034,16 @@ fun NutritionPlanScreen(
                     Text(text = "Latest meal", color = MutedText)
                     Text(text = uiState.latestMealTime, color = CyanAccent, fontWeight = FontWeight.Bold)
                 }
-                PrimaryBlueButton(text = "Add Food", onClick = onAddFood, modifier = Modifier.fillMaxWidth())
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    PrimaryBlueButton(text = "Add Food", onClick = onAddFood, modifier = Modifier.weight(1f))
+                    OutlinedButton(
+                        onClick = onCopyYesterday,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(999.dp)
+                    ) {
+                        Text("Copy Yesterday", color = MutedText)
+                    }
+                }
                 if (uiState.isFormVisible) {
                     FoodEntryForm(
                         form = uiState.form,
@@ -1036,11 +1052,28 @@ fun NutritionPlanScreen(
                         onCancel = onCancelForm
                     )
                 }
+                if (uiState.savedFoods.isNotEmpty()) {
+                    QuickAddSection(
+                        title = "Saved Foods",
+                        foods = uiState.savedFoods,
+                        onAdd = onQuickAddFood,
+                        onToggleSaved = { food -> onToggleSaved(food.sourceEntryId, !food.isSaved) }
+                    )
+                }
+                if (uiState.recentFoods.isNotEmpty()) {
+                    QuickAddSection(
+                        title = "Recent Foods",
+                        foods = uiState.recentFoods,
+                        onAdd = onQuickAddFood,
+                        onToggleSaved = { food -> onToggleSaved(food.sourceEntryId, !food.isSaved) }
+                    )
+                }
                 uiState.mealSections.forEach { section ->
                     MealSection(
                         section = section,
                         onEditEntry = onEditEntry,
-                        onDeleteEntry = onDeleteEntry
+                        onDeleteEntry = onDeleteEntry,
+                        onToggleSaved = onToggleSaved
                     )
                 }
             }
@@ -1166,10 +1199,67 @@ private fun FoodFlagChips(
 }
 
 @Composable
+private fun QuickAddSection(
+    title: String,
+    foods: List<QuickAddFoodUiState>,
+    onAdd: (QuickAddFoodUiState) -> Unit,
+    onToggleSaved: (QuickAddFoodUiState) -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(text = title, color = PrimaryText, fontWeight = FontWeight.Bold)
+        foods.forEach { food ->
+            QuickAddFoodRow(food = food, onAdd = onAdd, onToggleSaved = onToggleSaved)
+        }
+    }
+}
+
+@Composable
+private fun QuickAddFoodRow(
+    food: QuickAddFoodUiState,
+    onAdd: (QuickAddFoodUiState) -> Unit,
+    onToggleSaved: (QuickAddFoodUiState) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(SecondaryCard.copy(alpha = 0.55f))
+            .padding(horizontal = 14.dp, vertical = 10.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(text = food.foodName, color = PrimaryText, fontWeight = FontWeight.SemiBold)
+            val detail = buildString {
+                if (food.calories > 0) append("${food.calories} kcal")
+                if (food.proteinGrams > 0) append("  P${food.proteinGrams.clean()}g")
+                if (food.carbGrams > 0) append("  C${food.carbGrams.clean()}g")
+                if (food.fatGrams > 0) append("  F${food.fatGrams.clean()}g")
+            }
+            if (detail.isNotEmpty()) {
+                Text(text = detail, color = MutedText, style = MaterialTheme.typography.bodySmall)
+            }
+        }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            TextButton(onClick = { onToggleSaved(food) }) {
+                Text(
+                    text = if (food.isSaved) "♥" else "♡",
+                    color = if (food.isSaved) PositiveAccent else MutedText
+                )
+            }
+            TextButton(onClick = { onAdd(food) }) {
+                Text("Add", color = CyanAccent, fontWeight = FontWeight.Bold)
+            }
+        }
+    }
+}
+
+@Composable
 private fun MealSection(
     section: MealSectionUiState,
     onEditEntry: (FoodEntryUiState) -> Unit,
-    onDeleteEntry: (Long) -> Unit
+    onDeleteEntry: (Long) -> Unit,
+    onToggleSaved: (Long, Boolean) -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -1180,7 +1270,7 @@ private fun MealSection(
             Text(text = "No foods logged.", color = MutedText, style = MaterialTheme.typography.bodySmall)
         } else {
             section.entries.forEach { entry ->
-                FoodEntryRow(entry = entry, onEditEntry = onEditEntry, onDeleteEntry = onDeleteEntry)
+                FoodEntryRow(entry = entry, onEditEntry = onEditEntry, onDeleteEntry = onDeleteEntry, onToggleSaved = onToggleSaved)
             }
         }
     }
@@ -1190,7 +1280,8 @@ private fun MealSection(
 private fun FoodEntryRow(
     entry: FoodEntryUiState,
     onEditEntry: (FoodEntryUiState) -> Unit,
-    onDeleteEntry: (Long) -> Unit
+    onDeleteEntry: (Long) -> Unit,
+    onToggleSaved: (Long, Boolean) -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -1212,6 +1303,12 @@ private fun FoodEntryRow(
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             TextButton(onClick = { onEditEntry(entry) }) { Text("Edit", color = CyanAccent) }
             TextButton(onClick = { onDeleteEntry(entry.id) }) { Text("Delete", color = MutedText) }
+            TextButton(onClick = { onToggleSaved(entry.id, !entry.isSaved) }) {
+                Text(
+                    text = if (entry.isSaved) "♥ Saved" else "♡ Save",
+                    color = if (entry.isSaved) PositiveAccent else MutedText
+                )
+            }
         }
     }
 }

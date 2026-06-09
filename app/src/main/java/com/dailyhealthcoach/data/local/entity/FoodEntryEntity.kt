@@ -27,6 +27,7 @@ data class FoodEntryEntity(
     val isFermented: Boolean = false,
     val source: String,
     val notes: String? = null,
+    val isSaved: Boolean = false,
     val createdAt: String,
     val updatedAt: String
 )

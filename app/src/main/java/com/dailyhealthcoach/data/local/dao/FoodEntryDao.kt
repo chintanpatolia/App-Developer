@@ -19,4 +19,10 @@ interface FoodEntryDao {
 
     @Query("DELETE FROM food_entries WHERE id = :id")
     suspend fun deleteById(id: Long)
+
+    @Query("UPDATE food_entries SET isSaved = :saved WHERE id = :id")
+    suspend fun setSaved(id: Long, saved: Int)
+
+    @Query("SELECT * FROM food_entries WHERE date = :date ORDER BY mealTime ASC, id ASC")
+    suspend fun getForDate(date: String): List<FoodEntryEntity>
 }

@@ -49,6 +49,14 @@ class NutritionRepositoryImpl(
     override suspend fun deleteFoodEntry(id: Long) {
         foodEntryDao.deleteById(id)
     }
+
+    override suspend fun setFoodEntrySaved(id: Long, saved: Boolean) {
+        foodEntryDao.setSaved(id, if (saved) 1 else 0)
+    }
+
+    override suspend fun getFoodEntriesForDate(date: String): List<FoodEntry> {
+        return foodEntryDao.getForDate(date).map { it.toDomain() }
+    }
 }
 
 private fun FoodEntryEntity.toDomain(): FoodEntry {
@@ -67,6 +75,7 @@ private fun FoodEntryEntity.toDomain(): FoodEntry {
         mealTime = mealTime,
         isWholeFoodBased = isWholeFoodBased,
         isProcessed = isProcessed,
-        isFermented = isFermented
+        isFermented = isFermented,
+        isSaved = isSaved
     )
 }

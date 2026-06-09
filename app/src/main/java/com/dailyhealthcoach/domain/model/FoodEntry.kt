@@ -15,5 +15,6 @@ data class FoodEntry(
     val mealTime: String?,
     val isWholeFoodBased: Boolean,
     val isProcessed: Boolean,
-    val isFermented: Boolean
+    val isFermented: Boolean,
+    val isSaved: Boolean = false
 )
