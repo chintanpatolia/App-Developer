@@ -50,7 +50,7 @@ class WorkoutViewModel(
     }
 
     fun closeActiveWorkout() {
-        draftState.update { it.copy(isWorkoutStarted = false) }
+        draftState.value = WorkoutDraftState()
     }
 
     fun updateWorkoutName(value: String) {

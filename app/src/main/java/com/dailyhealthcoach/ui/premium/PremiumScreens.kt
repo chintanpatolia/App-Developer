@@ -78,13 +78,21 @@ fun NutritionRoute(viewModel: NutritionViewModel) {
 fun PremiumWorkoutRoute(viewModel: WorkoutViewModel) {
     val uiState by viewModel.uiState.collectAsState()
     var showActiveWorkout by remember { mutableStateOf(false) }
+    var showNonStrengthSession by remember { mutableStateOf(false) }
 
     PremiumWorkoutScreen(
         uiState = uiState,
         showActiveWorkout = showActiveWorkout,
+        showNonStrengthSession = showNonStrengthSession,
         onStartWorkout = {
-            viewModel.startWorkout()
-            showActiveWorkout = true
+            val plan = uiState.workoutPlan
+            if (plan != null && !plan.isStrengthDay) {
+                viewModel.updateWorkoutName(plan.focus)
+                showNonStrengthSession = true
+            } else {
+                viewModel.startWorkout()
+                showActiveWorkout = true
+            }
         },
         onStartWorkoutWithPlan = { exerciseIds ->
             viewModel.startWorkoutWithPlan(exerciseIds)
@@ -93,6 +101,7 @@ fun PremiumWorkoutRoute(viewModel: WorkoutViewModel) {
         onBackToPlan = {
             viewModel.closeActiveWorkout()
             showActiveWorkout = false
+            showNonStrengthSession = false
         },
         onWorkoutSelected = viewModel::selectWorkout,
         onClearWorkout = viewModel::clearSelectedWorkout,
@@ -113,6 +122,7 @@ fun PremiumWorkoutRoute(viewModel: WorkoutViewModel) {
         onSaveWorkout = {
             viewModel.saveWorkout()
             showActiveWorkout = false
+            showNonStrengthSession = false
         }
     )
 }
@@ -121,6 +131,7 @@ fun PremiumWorkoutRoute(viewModel: WorkoutViewModel) {
 private fun PremiumWorkoutScreen(
     uiState: WorkoutUiState,
     showActiveWorkout: Boolean,
+    showNonStrengthSession: Boolean,
     onStartWorkout: () -> Unit,
     onStartWorkoutWithPlan: (List<Long>) -> Unit,
     onBackToPlan: () -> Unit,
@@ -162,6 +173,16 @@ private fun PremiumWorkoutScreen(
                 onAddSet = onAddSet,
                 onRemoveSet = onRemoveSet,
                 onSaveWorkout = onSaveWorkout
+            )
+            showNonStrengthSession -> PlanSessionScreen(
+                uiState = uiState,
+                workoutPlan = uiState.workoutPlan,
+                onBack = onBackToPlan,
+                onDurationChange = onDurationChange,
+                onOverallRpeChange = onOverallRpeChange,
+                onWorkoutNotesChange = onWorkoutNotesChange,
+                onStatusSelected = onStatusSelected,
+                onSaveSession = onSaveWorkout
             )
             uiState.selectedWorkoutDetail != null -> WorkoutDetailView(
                 detail = uiState.selectedWorkoutDetail,
@@ -379,6 +400,99 @@ private fun ActiveWorkoutScreen(
         }
     }
         FloatingTitlePill(text = "Active Workout", modifier = Modifier.align(Alignment.TopCenter))
+    }
+}
+
+@Composable
+private fun PlanSessionScreen(
+    uiState: WorkoutUiState,
+    workoutPlan: WorkoutPlanUiState?,
+    onBack: () -> Unit,
+    onDurationChange: (String) -> Unit,
+    onOverallRpeChange: (String) -> Unit,
+    onWorkoutNotesChange: (String) -> Unit,
+    onStatusSelected: (WorkoutStatus) -> Unit,
+    onSaveSession: () -> Unit
+) {
+    val sessionTitle = when (workoutPlan?.focus) {
+        "Active Recovery" -> "Recovery Session"
+        "Walking & Mobility" -> "Mobility Session"
+        "Rest Day" -> "Rest Day Log"
+        else -> workoutPlan?.focus ?: "Session"
+    }
+    Box(modifier = Modifier.fillMaxWidth()) {
+        MainFeatureCard(modifier = Modifier.padding(top = 22.dp)) {
+            Column(
+                modifier = Modifier.padding(top = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    TextButton(onClick = onBack) {
+                        Text(text = "Back", color = CyanAccent, fontWeight = FontWeight.Bold)
+                    }
+                    Text(
+                        text = sessionTitle,
+                        color = PrimaryText,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                if (workoutPlan != null && workoutPlan.nonStrengthActivities.isNotEmpty()) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(18.dp))
+                            .background(SecondaryCard.copy(alpha = 0.6f))
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text(
+                            text = "Today's activities",
+                            color = MutedText,
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        workoutPlan.nonStrengthActivities.forEach { activity ->
+                            Text(text = "· $activity", color = PrimaryText, style = MaterialTheme.typography.bodyMedium)
+                        }
+                    }
+                }
+                if (workoutPlan != null && workoutPlan.durationMinutes.isNotEmpty()) {
+                    Text(
+                        text = "Target: ${workoutPlan.durationMinutes} min",
+                        color = CyanAccent,
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    OutlinedTextField(
+                        value = uiState.durationMinutes,
+                        onValueChange = onDurationChange,
+                        label = { Text("Duration (min)") },
+                        singleLine = true,
+                        modifier = Modifier.weight(1f)
+                    )
+                    OutlinedTextField(
+                        value = uiState.overallRpe,
+                        onValueChange = onOverallRpeChange,
+                        label = { Text("Effort (RPE)") },
+                        singleLine = true,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+                WorkoutStatusChips(selectedStatus = uiState.selectedStatus, onStatusSelected = onStatusSelected)
+                OutlinedTextField(
+                    value = uiState.workoutNotes,
+                    onValueChange = onWorkoutNotesChange,
+                    label = { Text("Notes") },
+                    minLines = 2,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                PrimaryBlueButton(text = "Save Session", onClick = onSaveSession, modifier = Modifier.fillMaxWidth())
+            }
+        }
+        FloatingTitlePill(text = sessionTitle, modifier = Modifier.align(Alignment.TopCenter))
     }
 }
 
