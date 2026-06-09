@@ -5,4 +5,5 @@ import kotlinx.coroutines.flow.Flow
 
 interface MacroTargetRepository {
     fun observeActiveTarget(): Flow<MacroTarget?>
+    suspend fun saveTarget(proteinMin: Int, proteinMax: Int)
 }

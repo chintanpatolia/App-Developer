@@ -19,6 +19,9 @@ interface MacroTargetDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(target: MacroTargetEntity)
 
+    @Query("SELECT * FROM macro_targets WHERE isActive = 1 ORDER BY id DESC LIMIT 1")
+    suspend fun getActiveTarget(): MacroTargetEntity?
+
     @Upsert
     suspend fun upsert(target: MacroTargetEntity)
 }

@@ -6,5 +6,6 @@ enum class AppScreen(val label: String, val showInNav: Boolean = true) {
     WORKOUT("Workout"),
     NUTRITION("Nutrition"),
     BODY("Body"),
-    PROGRESS("Progress", showInNav = false)
+    PROGRESS("Progress", showInNav = false),
+    SETTINGS("Settings", showInNav = false)
 }

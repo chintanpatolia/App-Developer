@@ -18,6 +18,7 @@ import com.dailyhealthcoach.domain.repository.HabitRepository
 import com.dailyhealthcoach.domain.repository.MacroTargetRepository
 import com.dailyhealthcoach.domain.repository.NutritionRepository
 import com.dailyhealthcoach.domain.repository.RecoveryRepository
+import com.dailyhealthcoach.domain.repository.UserProfileRepository
 import com.dailyhealthcoach.domain.repository.WorkoutRepository
 import java.time.LocalDate
 import kotlinx.coroutines.flow.Flow
@@ -34,7 +35,8 @@ class GetDashboardSummaryUseCase(
     private val recoveryRepository: RecoveryRepository,
     private val dailyRecommendationRepository: DailyRecommendationRepository,
     private val recoveryScoreCalculator: RecoveryScoreCalculator,
-    private val recommendationService: NextDayRecommendationService
+    private val recommendationService: NextDayRecommendationService,
+    private val userProfileRepository: UserProfileRepository
 ) {
     operator fun invoke(date: String): Flow<DashboardSummary> {
         val today = LocalDate.parse(date)
@@ -66,8 +68,9 @@ class GetDashboardSummaryUseCase(
                     workoutSets = workoutSets,
                     exercises = exercises
                 )
-            }
-        ) { inputs, workoutInputs ->
+            },
+            userProfileRepository.observeUserProfile()
+        ) { inputs, workoutInputs, userProfile ->
             val todayHabits = inputs.habits.filter { it.frequencyType != "INTERVAL" }
             val completedHabitIds = inputs.logs
                 .filter { it.status == "COMPLETE" }
@@ -111,7 +114,7 @@ class GetDashboardSummaryUseCase(
                 proteinMinGoalGrams = inputs.macroTarget?.proteinMinGrams ?: 170,
                 proteinMaxGoalGrams = inputs.macroTarget?.proteinMaxGrams ?: 200,
                 steps = inputs.bodyMetricLog?.stepCount ?: 0,
-                stepGoal = 8_000,
+                stepGoal = userProfile?.stepMinTarget ?: 8_000,
                 sleepHours = inputs.bodyMetricLog?.sleepHours ?: 6.8,
                 recoveryScore = recovery?.score,
                 recoveryLabel = recovery?.label ?: "Recovery not calculated",

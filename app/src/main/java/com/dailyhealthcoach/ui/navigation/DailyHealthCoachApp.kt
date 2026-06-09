@@ -47,6 +47,9 @@ import com.dailyhealthcoach.ui.premium.AppBackground
 import com.dailyhealthcoach.ui.premium.NutritionRoute
 import com.dailyhealthcoach.ui.premium.PremiumWorkoutRoute
 import com.dailyhealthcoach.ui.premium.ScreenHeader
+import com.dailyhealthcoach.ui.profile.ProfileRoute
+import com.dailyhealthcoach.ui.profile.ProfileViewModel
+import com.dailyhealthcoach.ui.profile.ProfileViewModelFactory
 import com.dailyhealthcoach.ui.theme.AccentBlue
 import com.dailyhealthcoach.ui.theme.CyanAccent
 import com.dailyhealthcoach.ui.theme.MainCard
@@ -74,6 +77,23 @@ fun DailyHealthCoachApp(appContainer: AppContainer) {
                     DashboardRoute(
                         viewModel = dashboardViewModel,
                         onNavigateToProgress = { selectedScreen = AppScreen.PROGRESS },
+                        onNavigateToSettings = { selectedScreen = AppScreen.SETTINGS },
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(bottom = 112.dp)
+                    )
+                }
+
+                AppScreen.SETTINGS -> {
+                    val profileViewModel: ProfileViewModel = viewModel(
+                        factory = ProfileViewModelFactory(
+                            userProfileRepository = appContainer.userProfileRepository,
+                            macroTargetRepository = appContainer.macroTargetRepository
+                        )
+                    )
+                    ProfileRoute(
+                        viewModel = profileViewModel,
+                        onBack = { selectedScreen = AppScreen.DASHBOARD },
                         modifier = Modifier
                             .fillMaxSize()
                             .padding(bottom = 112.dp)
@@ -191,6 +211,7 @@ private fun MainShellContent(
 
             AppScreen.BODY,
             AppScreen.PROGRESS,
+            AppScreen.SETTINGS,
             AppScreen.DASHBOARD,
             AppScreen.HABITS -> Unit
         }

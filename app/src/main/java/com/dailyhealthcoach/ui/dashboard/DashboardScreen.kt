@@ -37,16 +37,18 @@ import com.dailyhealthcoach.ui.theme.WarningAccent
 fun DashboardRoute(
     viewModel: DashboardViewModel,
     onNavigateToProgress: () -> Unit,
+    onNavigateToSettings: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    DashboardScreen(uiState = uiState, onNavigateToProgress = onNavigateToProgress, modifier = modifier)
+    DashboardScreen(uiState = uiState, onNavigateToProgress = onNavigateToProgress, onNavigateToSettings = onNavigateToSettings, modifier = modifier)
 }
 
 @Composable
 fun DashboardScreen(
     uiState: DashboardUiState,
     onNavigateToProgress: () -> Unit,
+    onNavigateToSettings: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Surface(modifier = modifier.fillMaxSize(), color = Color.Transparent) {
@@ -58,7 +60,7 @@ fun DashboardScreen(
                 .padding(start = 18.dp, top = 24.dp, end = 18.dp, bottom = 36.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            DashboardHeader()
+            DashboardHeader(onNavigateToSettings = onNavigateToSettings)
             SummaryGrid(uiState = uiState)
             RecoveryCard(uiState = uiState)
             RecommendationCard(recommendation = uiState.nextDayRecommendation)
@@ -73,19 +75,24 @@ fun DashboardScreen(
 }
 
 @Composable
-private fun DashboardHeader() {
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(
-            text = "Daily Health Coach",
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
-            color = PrimaryText
-        )
-        Text(
-            text = "Today's health snapshot",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MutedText
-        )
+private fun DashboardHeader(onNavigateToSettings: () -> Unit) {
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.weight(1f)) {
+            Text(
+                text = "Daily Health Coach",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = PrimaryText
+            )
+            Text(
+                text = "Today's health snapshot",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MutedText
+            )
+        }
+        TextButton(onClick = onNavigateToSettings) {
+            Text("⚙", color = MutedText, style = MaterialTheme.typography.titleLarge)
+        }
     }
 }
 

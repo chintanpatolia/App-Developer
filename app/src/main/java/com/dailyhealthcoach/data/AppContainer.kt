@@ -80,7 +80,8 @@ class AppContainer(context: Context) {
         recoveryRepository = recoveryRepository,
         dailyRecommendationRepository = dailyRecommendationRepository,
         recoveryScoreCalculator = RecoveryScoreCalculator(),
-        recommendationService = NextDayRecommendationService()
+        recommendationService = NextDayRecommendationService(),
+        userProfileRepository = userProfileRepository
     )
 
     val getTodayHabitsUseCase = GetTodayHabitsUseCase(
