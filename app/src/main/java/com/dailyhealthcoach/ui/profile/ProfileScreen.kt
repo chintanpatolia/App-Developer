@@ -9,12 +9,18 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
+import com.dailyhealthcoach.healthconnect.HcStatus
+import com.dailyhealthcoach.healthconnect.HealthConnectManager
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.FilterChip
@@ -44,6 +50,7 @@ import com.dailyhealthcoach.ui.theme.WarningAccent
 fun ProfileRoute(
     viewModel: ProfileViewModel,
     onBack: () -> Unit,
+    onNavigateToReminders: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -52,6 +59,7 @@ fun ProfileRoute(
         onUpdate = viewModel::updateForm,
         onSave = viewModel::save,
         onBack = onBack,
+        onNavigateToReminders = onNavigateToReminders,
         modifier = modifier
     )
 }
@@ -62,6 +70,7 @@ fun ProfileScreen(
     onUpdate: ((ProfileUiState) -> ProfileUiState) -> Unit,
     onSave: () -> Unit,
     onBack: () -> Unit,
+    onNavigateToReminders: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Box(
@@ -73,6 +82,7 @@ fun ProfileScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
+                .statusBarsPadding()
                 .navigationBarsPadding()
                 .imePadding()
                 .padding(start = 18.dp, top = 16.dp, end = 18.dp, bottom = 40.dp),
@@ -244,6 +254,23 @@ fun ProfileScreen(
                 Text("Sleep 4–12 hrs. Strength 1–7 days/week.", color = MutedText, style = MaterialTheme.typography.bodySmall)
             }
 
+            HealthConnectCard()
+
+            ProfileCard(title = "Reminders") {
+                Text(
+                    "Set daily reminders for habits, workouts, and check-ins.",
+                    color = MutedText,
+                    style = MaterialTheme.typography.bodySmall
+                )
+                OutlinedButton(
+                    onClick = onNavigateToReminders,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(999.dp)
+                ) {
+                    Text("Manage Reminders →", color = CyanAccent)
+                }
+            }
+
             if (uiState.error != null) {
                 Text(
                     text = uiState.error,
@@ -290,6 +317,42 @@ private fun ProfileCard(
         ) {
             Text(text = title, color = CyanAccent, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
             content()
+        }
+    }
+}
+
+@Composable
+private fun HealthConnectCard() {
+    val context = LocalContext.current
+    val status = remember { HealthConnectManager.getSdkStatus(context) }
+    ProfileCard(title = "Health Connect") {
+        when (status) {
+            HcStatus.UNAVAILABLE -> {
+                Text(
+                    "Health Connect is not available on this device. Install the Health Connect app to enable automatic data import.",
+                    color = MutedText,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+            HcStatus.AVAILABLE -> {
+                Text(
+                    "Connect Health Connect to automatically import steps, sleep, weight, and resting heart rate.",
+                    color = MutedText,
+                    style = MaterialTheme.typography.bodySmall
+                )
+                OutlinedButton(
+                    onClick = { HealthConnectManager.openSettings(context) },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(999.dp)
+                ) {
+                    Text("Open Health Connect →", color = CyanAccent)
+                }
+                Text(
+                    "Grant permissions for this app in Health Connect, then return here.",
+                    color = MutedText,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
         }
     }
 }
