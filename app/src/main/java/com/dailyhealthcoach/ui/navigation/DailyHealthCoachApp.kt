@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -18,12 +19,14 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import android.app.Application
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -50,6 +53,9 @@ import com.dailyhealthcoach.ui.premium.ScreenHeader
 import com.dailyhealthcoach.ui.profile.ProfileRoute
 import com.dailyhealthcoach.ui.profile.ProfileViewModel
 import com.dailyhealthcoach.ui.profile.ProfileViewModelFactory
+import com.dailyhealthcoach.ui.reminders.ReminderRoute
+import com.dailyhealthcoach.ui.reminders.ReminderViewModel
+import com.dailyhealthcoach.ui.reminders.ReminderViewModelFactory
 import com.dailyhealthcoach.ui.theme.AccentBlue
 import com.dailyhealthcoach.ui.theme.CyanAccent
 import com.dailyhealthcoach.ui.theme.MainCard
@@ -94,6 +100,7 @@ fun DailyHealthCoachApp(appContainer: AppContainer) {
                     ProfileRoute(
                         viewModel = profileViewModel,
                         onBack = { selectedScreen = AppScreen.DASHBOARD },
+                        onNavigateToReminders = { selectedScreen = AppScreen.REMINDERS },
                         modifier = Modifier
                             .fillMaxSize()
                             .padding(bottom = 112.dp)
@@ -129,6 +136,20 @@ fun DailyHealthCoachApp(appContainer: AppContainer) {
                     )
                     HabitsRoute(
                         viewModel = habitsViewModel,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(bottom = 112.dp)
+                    )
+                }
+
+                AppScreen.REMINDERS -> {
+                    val app = LocalContext.current.applicationContext as Application
+                    val reminderViewModel: ReminderViewModel = viewModel(
+                        factory = ReminderViewModelFactory(app)
+                    )
+                    ReminderRoute(
+                        viewModel = reminderViewModel,
+                        onBack = { selectedScreen = AppScreen.SETTINGS },
                         modifier = Modifier
                             .fillMaxSize()
                             .padding(bottom = 112.dp)
@@ -179,6 +200,7 @@ private fun MainShellContent(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
+            .statusBarsPadding()
             .padding(start = 18.dp, top = 24.dp, end = 18.dp, bottom = 148.dp),
         verticalArrangement = Arrangement.spacedBy(22.dp),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -212,6 +234,7 @@ private fun MainShellContent(
             AppScreen.BODY,
             AppScreen.PROGRESS,
             AppScreen.SETTINGS,
+            AppScreen.REMINDERS,
             AppScreen.DASHBOARD,
             AppScreen.HABITS -> Unit
         }

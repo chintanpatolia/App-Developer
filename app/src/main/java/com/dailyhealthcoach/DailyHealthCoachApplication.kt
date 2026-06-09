@@ -4,6 +4,7 @@ import android.app.Application
 import com.dailyhealthcoach.data.AppContainer
 import com.dailyhealthcoach.data.local.AppDatabaseProvider
 import com.dailyhealthcoach.data.local.seed.DatabaseSeeder
+import com.dailyhealthcoach.notifications.NotificationHelper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -17,6 +18,7 @@ class DailyHealthCoachApplication : Application() {
     override fun onCreate() {
         super.onCreate()
 
+        NotificationHelper.createChannel(this)
         val database = AppDatabaseProvider.getDatabase(this)
         appContainer = AppContainer(this)
         applicationScope.launch {
