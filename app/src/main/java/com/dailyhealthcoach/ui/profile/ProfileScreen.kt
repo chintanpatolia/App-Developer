@@ -17,7 +17,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.platform.LocalContext
 import com.dailyhealthcoach.healthconnect.HcStatus
 import com.dailyhealthcoach.healthconnect.HealthConnectManager
@@ -45,6 +48,14 @@ import com.dailyhealthcoach.ui.theme.PositiveAccent
 import com.dailyhealthcoach.ui.theme.PrimaryText
 import com.dailyhealthcoach.ui.theme.SecondaryCard
 import com.dailyhealthcoach.ui.theme.WarningAccent
+
+private data class HcDataState(
+    val steps: Long? = null,
+    val sleepHours: Double? = null,
+    val weightLbs: Double? = null,
+    val restingHr: Int? = null,
+    val loaded: Boolean = false
+)
 
 @Composable
 fun ProfileRoute(
@@ -335,11 +346,7 @@ private fun HealthConnectCard() {
                 )
             }
             HcStatus.AVAILABLE -> {
-                Text(
-                    "Connect Health Connect to automatically import steps, sleep, weight, and resting heart rate.",
-                    color = MutedText,
-                    style = MaterialTheme.typography.bodySmall
-                )
+                HcDataPreview()
                 OutlinedButton(
                     onClick = { HealthConnectManager.openSettings(context) },
                     modifier = Modifier.fillMaxWidth(),
@@ -354,6 +361,63 @@ private fun HealthConnectCard() {
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun HcDataPreview() {
+    val context = LocalContext.current
+    val data by produceState(HcDataState()) {
+        value = HcDataState(
+            steps = HealthConnectManager.readTodaySteps(context),
+            sleepHours = HealthConnectManager.readLastSleepHours(context),
+            weightLbs = HealthConnectManager.readLastWeightPounds(context),
+            restingHr = HealthConnectManager.readLastRestingHeartRate(context),
+            loaded = true
+        )
+    }
+
+    if (!data.loaded) return
+
+    val hasAny = data.steps != null || data.sleepHours != null ||
+            data.weightLbs != null || data.restingHr != null
+
+    if (!hasAny) {
+        Text(
+            "No Health Connect data found yet. Grant permissions in Health Connect to import your steps, sleep, weight, and resting heart rate.",
+            color = MutedText,
+            style = MaterialTheme.typography.bodySmall
+        )
+        return
+    }
+
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        HcDataRow("Steps today", data.steps?.let { "%,d steps".format(it) })
+        HcDataRow("Sleep last night", data.sleepHours?.let { "%.1f h".format(it) })
+        HcDataRow("Weight (latest)", data.weightLbs?.let { "%.1f lbs".format(it) })
+        HcDataRow("Resting HR", data.restingHr?.let { "$it bpm" })
+    }
+    Text(
+        "Read-only. Edit values manually or update in Health Connect.",
+        color = MutedText,
+        style = MaterialTheme.typography.bodySmall
+    )
+}
+
+@Composable
+private fun HcDataRow(label: String, value: String?) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(label, color = MutedText, style = MaterialTheme.typography.bodySmall)
+        Text(
+            text = value ?: "—",
+            color = PrimaryText,
+            style = MaterialTheme.typography.bodySmall,
+            fontWeight = FontWeight.Medium
+        )
     }
 }
 
