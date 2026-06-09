@@ -51,8 +51,10 @@ import com.dailyhealthcoach.ui.nutrition.MealSectionUiState
 import com.dailyhealthcoach.ui.nutrition.NutritionUiState
 import com.dailyhealthcoach.ui.nutrition.NutritionViewModel
 import com.dailyhealthcoach.ui.workout.DraftWorkoutSetUiState
+import com.dailyhealthcoach.ui.workout.ExerciseDetailUiState
 import com.dailyhealthcoach.ui.workout.ExerciseOptionUiState
 import com.dailyhealthcoach.ui.workout.SelectedExerciseUiState
+import com.dailyhealthcoach.ui.workout.WorkoutDetailUiState
 import com.dailyhealthcoach.ui.workout.WorkoutHistoryUiState
 import com.dailyhealthcoach.ui.workout.WorkoutUiState
 import com.dailyhealthcoach.ui.workout.WorkoutViewModel
@@ -87,6 +89,8 @@ fun PremiumWorkoutRoute(viewModel: WorkoutViewModel) {
             viewModel.closeActiveWorkout()
             showActiveWorkout = false
         },
+        onWorkoutSelected = viewModel::selectWorkout,
+        onClearWorkout = viewModel::clearSelectedWorkout,
         onWorkoutNameChange = viewModel::updateWorkoutName,
         onDurationChange = viewModel::updateDuration,
         onOverallRpeChange = viewModel::updateOverallRpe,
@@ -114,6 +118,8 @@ private fun PremiumWorkoutScreen(
     showActiveWorkout: Boolean,
     onStartWorkout: () -> Unit,
     onBackToPlan: () -> Unit,
+    onWorkoutSelected: (Long) -> Unit,
+    onClearWorkout: () -> Unit,
     onWorkoutNameChange: (String) -> Unit,
     onDurationChange: (String) -> Unit,
     onOverallRpeChange: (String) -> Unit,
@@ -131,8 +137,8 @@ private fun PremiumWorkoutScreen(
     onSaveWorkout: () -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(18.dp)) {
-        if (showActiveWorkout) {
-            ActiveWorkoutScreen(
+        when {
+            showActiveWorkout -> ActiveWorkoutScreen(
                 uiState = uiState,
                 onBackToPlan = onBackToPlan,
                 onWorkoutNameChange = onWorkoutNameChange,
@@ -151,9 +157,14 @@ private fun PremiumWorkoutScreen(
                 onRemoveSet = onRemoveSet,
                 onSaveWorkout = onSaveWorkout
             )
-        } else {
-            PremiumWorkoutPlanCard(onStartWorkout = onStartWorkout)
-            RecentHistoryCard(workouts = uiState.recentWorkouts)
+            uiState.selectedWorkoutDetail != null -> WorkoutDetailView(
+                detail = uiState.selectedWorkoutDetail,
+                onBack = onClearWorkout
+            )
+            else -> {
+                PremiumWorkoutPlanCard(onStartWorkout = onStartWorkout)
+                WorkoutHistoryCard(workouts = uiState.recentWorkouts, onWorkoutSelected = onWorkoutSelected)
+            }
         }
     }
 }
@@ -514,33 +525,165 @@ private fun SetRow(
 }
 
 @Composable
-private fun RecentHistoryCard(workouts: List<WorkoutHistoryUiState>) {
+private fun WorkoutHistoryCard(
+    workouts: List<WorkoutHistoryUiState>,
+    onWorkoutSelected: (Long) -> Unit
+) {
     MainFeatureCard {
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text(text = "Recent workouts", color = PrimaryText, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            Text(
+                text = "Workout History",
+                color = PrimaryText,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            )
             if (workouts.isEmpty()) {
-                Text(text = "Saved workouts will appear here.", color = MutedText)
+                Text(text = "No workouts logged yet.", color = MutedText)
             } else {
-                workouts.take(4).forEach { workout ->
+                workouts.forEach { workout ->
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clip(RoundedCornerShape(22.dp))
+                            .clip(RoundedCornerShape(18.dp))
                             .background(SecondaryCard.copy(alpha = 0.72f))
-                            .padding(14.dp)
+                            .clickable { onWorkoutSelected(workout.id) }
+                            .padding(14.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
-                        Text(text = workout.name, color = PrimaryText, fontWeight = FontWeight.Bold)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = workout.name,
+                                color = PrimaryText,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.weight(1f)
+                            )
+                            Text(
+                                text = workout.statusLabel,
+                                color = statusColor(workout.statusLabel),
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
                         Text(
-                            text = "${workout.date} | ${workout.durationText} | ${workout.setCount} sets",
+                            text = buildString {
+                                append(workout.date)
+                                if (workout.durationText.isNotEmpty()) append(" · ${workout.durationText}")
+                                append(" · ${workout.exerciseCount} exercises · ${workout.setCount} sets")
+                                if (workout.avgRpe.isNotEmpty()) append(" · ${workout.avgRpe}")
+                            },
                             color = MutedText,
                             style = MaterialTheme.typography.bodySmall
                         )
-                        Text(text = workout.muscleGroups, color = CyanAccent)
+                        if (workout.muscleGroups.isNotEmpty()) {
+                            Text(text = workout.muscleGroups, color = CyanAccent, style = MaterialTheme.typography.bodySmall)
+                        }
                     }
                 }
             }
         }
     }
+}
+
+@Composable
+private fun WorkoutDetailView(
+    detail: WorkoutDetailUiState,
+    onBack: () -> Unit
+) {
+    Box(modifier = Modifier.fillMaxWidth()) {
+        MainFeatureCard(modifier = Modifier.padding(top = 22.dp)) {
+            Column(
+                modifier = Modifier.padding(top = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    TextButton(onClick = onBack) {
+                        Text(text = "< Back", color = CyanAccent, fontWeight = FontWeight.Bold)
+                    }
+                    Text(
+                        text = detail.statusLabel,
+                        color = statusColor(detail.statusLabel),
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+                Text(text = detail.name, color = PrimaryText, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Text(
+                    text = buildString {
+                        append(detail.date)
+                        if (detail.durationText.isNotEmpty()) append(" · ${detail.durationText}")
+                    },
+                    color = MutedText,
+                    style = MaterialTheme.typography.bodySmall
+                )
+                if (!detail.notes.isNullOrBlank()) {
+                    Surface(shape = RoundedCornerShape(14.dp), color = SecondaryCard.copy(alpha = 0.6f)) {
+                        Text(
+                            text = detail.notes,
+                            color = MutedText,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(12.dp)
+                        )
+                    }
+                }
+                if (detail.exercises.isEmpty()) {
+                    Text(text = "No exercises logged for this workout.", color = MutedText)
+                } else {
+                    detail.exercises.forEach { exercise ->
+                        ExerciseDetailSection(exercise = exercise)
+                    }
+                }
+            }
+        }
+        FloatingTitlePill(text = "Workout Details", modifier = Modifier.align(Alignment.TopCenter))
+    }
+}
+
+@Composable
+private fun ExerciseDetailSection(exercise: ExerciseDetailUiState) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(SecondaryCard.copy(alpha = 0.55f))
+            .padding(12.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        Text(text = exercise.exerciseName, color = PrimaryText, fontWeight = FontWeight.SemiBold)
+        if (exercise.muscleGroup.isNotEmpty()) {
+            Text(text = exercise.muscleGroup, color = CyanAccent, style = MaterialTheme.typography.bodySmall)
+        }
+        exercise.sets.forEach { set ->
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text(
+                    text = buildString {
+                        append("Set ${set.setNumber}:")
+                        set.reps?.let { append("  $it reps") }
+                        set.weight?.let { append("  ${"%.1f".format(it)} lb") }
+                        set.rpe?.let { append("  RPE $it") }
+                    },
+                    color = PrimaryText,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+            if (!set.notes.isNullOrBlank()) {
+                Text(text = set.notes, color = MutedText, style = MaterialTheme.typography.bodySmall)
+            }
+        }
+    }
+}
+
+private fun statusColor(label: String): Color = when (label.uppercase()) {
+    "COMPLETED" -> PositiveAccent
+    "PARTIAL" -> WarningAccent
+    else -> MutedText
 }
 
 @Composable

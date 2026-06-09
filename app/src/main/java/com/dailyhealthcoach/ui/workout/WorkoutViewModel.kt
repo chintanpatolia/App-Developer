@@ -151,6 +151,14 @@ class WorkoutViewModel(
         }
     }
 
+    fun selectWorkout(id: Long) {
+        draftState.update { it.copy(selectedWorkoutId = id) }
+    }
+
+    fun clearSelectedWorkout() {
+        draftState.update { it.copy(selectedWorkoutId = null) }
+    }
+
     fun saveWorkout() {
         val draft = draftState.value
         viewModelScope.launch {
@@ -199,7 +207,8 @@ private data class WorkoutDraftState(
     val overallRpe: String = "",
     val workoutNotes: String = "",
     val selectedStatus: WorkoutStatus = WorkoutStatus.COMPLETED,
-    val selectedExercises: List<DraftExerciseState> = emptyList()
+    val selectedExercises: List<DraftExerciseState> = emptyList(),
+    val selectedWorkoutId: Long? = null
 )
 
 private data class DraftExerciseState(
@@ -230,6 +239,55 @@ private fun buildUiState(
 ): WorkoutUiState {
     val exerciseById = exercises.associateBy { it.id }
     val setsByWorkoutId = workoutSets.groupBy { it.workoutId }
+    val sortedWorkouts = workouts.sortedByDescending { it.date }
+
+    val historyList = sortedWorkouts.map { workout ->
+        val sets = setsByWorkoutId[workout.id].orEmpty()
+        val muscleGroups = sets.mapNotNull { exerciseById[it.exerciseId]?.muscleGroup }.distinct()
+        val exerciseCount = sets.map { it.exerciseId }.distinct().size
+        val rpeValues = sets.mapNotNull { it.rpe }
+        val avgRpe = if (rpeValues.isNotEmpty()) "RPE ${rpeValues.average().let { "%.1f".format(it) }}" else ""
+        WorkoutHistoryUiState(
+            id = workout.id,
+            date = workout.date,
+            name = workout.name,
+            statusLabel = WorkoutStatus.fromStorageValue(workout.status).label,
+            durationText = workout.durationMinutes?.let { "$it min" } ?: "",
+            exerciseCount = exerciseCount,
+            setCount = sets.size,
+            avgRpe = avgRpe,
+            muscleGroups = muscleGroups.joinToString()
+        )
+    }
+
+    val selectedDetail = draft.selectedWorkoutId?.let { id ->
+        val workout = sortedWorkouts.firstOrNull { it.id == id } ?: return@let null
+        val sets = setsByWorkoutId[id].orEmpty()
+        WorkoutDetailUiState(
+            id = workout.id,
+            date = workout.date,
+            name = workout.name,
+            statusLabel = WorkoutStatus.fromStorageValue(workout.status).label,
+            durationText = workout.durationMinutes?.let { "$it min" } ?: "",
+            notes = workout.notes,
+            exercises = sets.groupBy { it.exerciseId }.map { (exerciseId, exerciseSets) ->
+                val exercise = exerciseById[exerciseId]
+                ExerciseDetailUiState(
+                    exerciseName = exercise?.name ?: "Unknown exercise",
+                    muscleGroup = exercise?.muscleGroup ?: "",
+                    sets = exerciseSets.sortedBy { it.setNumber }.map { set ->
+                        SetDetailUiState(
+                            setNumber = set.setNumber,
+                            reps = set.reps,
+                            weight = set.weight,
+                            rpe = set.rpe,
+                            notes = set.notes
+                        )
+                    }
+                )
+            }
+        )
+    }
 
     return WorkoutUiState(
         isWorkoutStarted = draft.isWorkoutStarted,
@@ -273,22 +331,8 @@ private fun buildUiState(
                 isExpanded = draftExercise.isExpanded
             )
         },
-        recentWorkouts = workouts.take(8).map { workout ->
-            val sets = setsByWorkoutId[workout.id].orEmpty()
-            val muscleGroups = sets
-                .mapNotNull { exerciseById[it.exerciseId]?.muscleGroup }
-                .distinct()
-
-            WorkoutHistoryUiState(
-                id = workout.id,
-                date = workout.date,
-                name = workout.name,
-                statusLabel = WorkoutStatus.fromStorageValue(workout.status).label,
-                durationText = workout.durationMinutes?.let { "$it min" } ?: "No duration",
-                setCount = sets.size,
-                muscleGroups = if (muscleGroups.isEmpty()) "No muscle groups logged" else muscleGroups.joinToString()
-            )
-        }
+        recentWorkouts = historyList,
+        selectedWorkoutDetail = selectedDetail
     )
 }
 
