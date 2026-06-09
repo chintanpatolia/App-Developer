@@ -49,20 +49,36 @@ Two pure-Kotlin services that compute derived health metrics from raw data snaps
 **Input:** `RecommendationInput` (all RecoveryScoreInput fields + date, recoveryScore, weeklyWorkouts, exercises)
 **Output:** `DailyRecommendation?` — null if `hasEnoughData()` returns false.
 
+**`shouldRest` gate (evaluated first):**
+```
+shouldRest = recoveryScore < 25
+          OR (recoveryScore < 35 AND restDayFatigueSignalCount >= 2 AND hasStrongRestSignal)
+```
+- `restDayFatigueSignalCount` counts: sleep<6h, soreness≥8, energy≤3, stress≥8, hardWorkoutTodayOrYesterday, recentAvgRpe≥8
+- `hasStrongRestSignal` = soreness≥8 OR energy≤3 OR hardWorkoutTodayOrYesterday OR recentAvgRpe≥8
+- **Stress alone does not trigger Rest.** Protein below target is not a fatigue signal at all.
+- Sleep 5–6h alone (count=1) does not reach the ≥2 threshold.
+
 **Decision tree:**
 ```
-recoveryScore < 25 OR (score < 35 AND ≥2 fatigue signals AND strong rest signal) → REST
-score < 40 → WALKING_MOBILITY
-score < 50 AND weeklyStrengthCount < 3 AND soreness ≤ 6 → LOWER_INTENSITY_STRENGTH
-score < 50 → ACTIVE_RECOVERY
-score < 70 AND (low protein OR poor sleep OR hard workout today) → LOWER_INTENSITY_STRENGTH
-score < 70 → STRENGTH
-weeklyStrengthCount < 4 AND no hard workout today → STRENGTH
-else → ACTIVE_RECOVERY
-cap: weeklyStrengthCount ≥ 4 + STRENGTH recommended → demote to ACTIVE_RECOVERY
+shouldRest                                                   → REST
+score < 40                                                   → WALKING_MOBILITY
+score < 50 AND weeklyStrengthCount < 3 AND soreness ≤ 6     → LOWER_INTENSITY_STRENGTH
+score < 50                                                   → ACTIVE_RECOVERY
+score < 70 AND (protein<140 OR sleep<6.5 OR hard workout today) → LOWER_INTENSITY_STRENGTH
+score < 70                                                   → STRENGTH
+weeklyStrengthCount < 4 AND no hard workout today            → STRENGTH
+else                                                         → ACTIVE_RECOVERY
+cap: weeklyStrengthCount ≥ 4 AND STRENGTH recommended        → demote to ACTIVE_RECOVERY
 ```
 
 **5 recommendation types:** REST, WALKING_MOBILITY, ACTIVE_RECOVERY, LOWER_INTENSITY_STRENGTH, STRENGTH
+
+**Validated scenarios (2026-06-09):**
+- Score 25, stress 8, soreness <8 → Walking / mobility (hasStrongRestSignal=false blocks rest)
+- Score 25, stress 8, soreness 8 → Rest (soreness≥8 triggers hasStrongRestSignal)
+- Score 18 → Rest (score < 25 unconditional)
+- Score 45, moderate soreness → Active recovery or Lower intensity strength
 
 ## Interfaces & Dependencies
 - Both instantiated in `AppContainer.kt:79-81` (stateless, no constructor params)
