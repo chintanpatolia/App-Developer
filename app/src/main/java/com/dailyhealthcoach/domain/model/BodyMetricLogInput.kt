@@ -17,5 +17,6 @@ data class BodyMetricLogInput(
     val stressLevel: Int?,
     val sorenessLevel: Int?,
     val restingHeartRate: Int?,
+    val stepCount: Int?,
     val notes: String?
 )

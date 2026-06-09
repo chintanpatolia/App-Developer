@@ -159,6 +159,9 @@ private fun MetricsFormCard(
                 MetricInput("Sleep", form.sleepHours, Modifier.weight(1f)) {
                     onFormChange { state -> state.copy(sleepHours = it.filterDecimal()) }
                 }
+                MetricInput("Steps", form.stepCount, Modifier.weight(1f)) {
+                    onFormChange { state -> state.copy(stepCount = it.filterDigits()) }
+                }
                 MetricInput("RHR", form.restingHeartRate, Modifier.weight(1f)) {
                     onFormChange { state -> state.copy(restingHeartRate = it.filterDigits()) }
                 }

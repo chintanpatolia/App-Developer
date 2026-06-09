@@ -78,6 +78,7 @@ class BodyViewModel(
                     stressLevel = form.stressLevel.toLevelOrNull(),
                     sorenessLevel = form.sorenessLevel.toLevelOrNull(),
                     restingHeartRate = form.restingHeartRate.toPositiveIntOrNull(),
+                    stepCount = form.stepCount.toPositiveIntOrNull(),
                     notes = form.notes.ifBlank { null }
                 )
             )
@@ -104,6 +105,7 @@ private fun BodyMetricLog.toUiState(): BodyMetricLogUiState {
         stressLevel = stressLevel,
         sorenessLevel = sorenessLevel,
         restingHeartRate = restingHeartRate,
+        stepCount = stepCount,
         notes = notes
     )
 }
@@ -127,6 +129,7 @@ private fun BodyMetricLog.toFormUiState(profileHeight: Double?): BodyMetricFormU
         stressLevel = stressLevel?.toString().orEmpty(),
         sorenessLevel = sorenessLevel?.toString().orEmpty(),
         restingHeartRate = restingHeartRate?.toString().orEmpty(),
+        stepCount = stepCount?.toString().orEmpty(),
         notes = notes.orEmpty()
     )
 }

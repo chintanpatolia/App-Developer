@@ -110,7 +110,7 @@ class GetDashboardSummaryUseCase(
                 proteinConsumedGrams = proteinConsumed,
                 proteinMinGoalGrams = inputs.macroTarget?.proteinMinGrams ?: 170,
                 proteinMaxGoalGrams = inputs.macroTarget?.proteinMaxGrams ?: 200,
-                steps = 6_400,
+                steps = inputs.bodyMetricLog?.stepCount ?: 0,
                 stepGoal = 8_000,
                 sleepHours = inputs.bodyMetricLog?.sleepHours ?: 6.8,
                 recoveryScore = recovery?.score,

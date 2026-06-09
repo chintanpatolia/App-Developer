@@ -23,6 +23,7 @@ data class BodyMetricLogUiState(
     val stressLevel: Int?,
     val sorenessLevel: Int?,
     val restingHeartRate: Int?,
+    val stepCount: Int?,
     val notes: String?
 )
 
@@ -43,6 +44,7 @@ data class BodyMetricFormUiState(
     val stressLevel: String = "",
     val sorenessLevel: String = "",
     val restingHeartRate: String = "",
+    val stepCount: String = "",
     val notes: String = "",
     val isDirty: Boolean = false
 )
