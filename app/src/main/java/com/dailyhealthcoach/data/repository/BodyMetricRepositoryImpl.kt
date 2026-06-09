@@ -42,7 +42,7 @@ class BodyMetricRepositoryImpl(
                 stressLevel = input.stressLevel,
                 sorenessLevel = input.sorenessLevel,
                 restingHeartRate = input.restingHeartRate,
-                stepCount = existing?.stepCount,
+                stepCount = input.stepCount,
                 notes = input.notes,
                 createdAt = existing?.createdAt ?: now,
                 updatedAt = now
