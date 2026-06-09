@@ -26,12 +26,27 @@ object HealthConnectManager {
         }
     }
 
-    fun openSettings(context: Context) {
-        try {
-            context.startActivity(Intent("androidx.health.ACTION_HEALTH_CONNECT_SETTINGS"))
-        } catch (_: ActivityNotFoundException) {
-            // HC not available to open; status card already shows UNAVAILABLE.
+    fun openSettings(context: Context): Boolean {
+        // Android 14+ has HC built in and uses a different action than the standalone app.
+        val intents = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            listOf(
+                Intent("android.health.connect.action.HEALTH_HOME_SETTINGS"),
+                Intent("androidx.health.ACTION_HEALTH_CONNECT_SETTINGS")
+            )
+        } else {
+            listOf(
+                Intent("androidx.health.ACTION_HEALTH_CONNECT_SETTINGS"),
+                Intent("android.health.connect.action.HEALTH_HOME_SETTINGS")
+            )
         }
+        for (intent in intents) {
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            try {
+                context.startActivity(intent)
+                return true
+            } catch (_: ActivityNotFoundException) { }
+        }
+        return false
     }
 
     // ── Phase 14b stubs ──────────────────────────────────────────────────────

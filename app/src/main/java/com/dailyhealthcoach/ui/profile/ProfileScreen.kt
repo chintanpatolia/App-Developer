@@ -346,19 +346,30 @@ private fun HealthConnectCard() {
                 )
             }
             HcStatus.AVAILABLE -> {
+                var launchFailed by remember { mutableStateOf(false) }
                 HcDataPreview()
                 OutlinedButton(
-                    onClick = { HealthConnectManager.openSettings(context) },
+                    onClick = {
+                        launchFailed = !HealthConnectManager.openSettings(context)
+                    },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(999.dp)
                 ) {
                     Text("Open Health Connect →", color = CyanAccent)
                 }
-                Text(
-                    "Grant permissions for this app in Health Connect, then return here.",
-                    color = MutedText,
-                    style = MaterialTheme.typography.bodySmall
-                )
+                if (launchFailed) {
+                    Text(
+                        "Could not open Health Connect. It may not be installed on this device.",
+                        color = WarningAccent,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                } else {
+                    Text(
+                        "Grant permissions for this app in Health Connect, then return here.",
+                        color = MutedText,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
             }
         }
     }
