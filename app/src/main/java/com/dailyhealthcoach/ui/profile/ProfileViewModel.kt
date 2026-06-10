@@ -1,8 +1,10 @@
 package com.dailyhealthcoach.ui.profile
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.dailyhealthcoach.data.export.DataExportService
 import com.dailyhealthcoach.domain.model.BodyMetricLog
 import com.dailyhealthcoach.domain.model.BodyMetricLogInput
 import com.dailyhealthcoach.domain.model.UserProfile
@@ -19,7 +21,8 @@ import java.time.LocalDate
 class ProfileViewModel(
     private val userProfileRepository: UserProfileRepository,
     private val macroTargetRepository: MacroTargetRepository,
-    private val bodyMetricRepository: BodyMetricRepository
+    private val bodyMetricRepository: BodyMetricRepository,
+    private val dataExportService: DataExportService
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ProfileUiState())
@@ -253,6 +256,25 @@ class ProfileViewModel(
         _uiState.value = _uiState.value.copy(hcImportConflict = null)
     }
 
+    // ── Export / Backup ─────────────────────────────────────────────────────
+
+    fun exportBackup(context: Context) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(exportStatus = "Exporting...")
+            runCatching {
+                dataExportService.exportJson(context.applicationContext)
+            }.onSuccess { uri ->
+                _uiState.value = _uiState.value.copy(pendingShareUri = uri, exportStatus = null)
+            }.onFailure {
+                _uiState.value = _uiState.value.copy(exportStatus = "Export failed. Please try again.")
+            }
+        }
+    }
+
+    fun clearShareUri() {
+        _uiState.value = _uiState.value.copy(pendingShareUri = null)
+    }
+
     private fun clearPending() {
         pendingField = null
         pendingSteps = null
@@ -306,12 +328,15 @@ private fun Double?.cleanString(): String {
 class ProfileViewModelFactory(
     private val userProfileRepository: UserProfileRepository,
     private val macroTargetRepository: MacroTargetRepository,
-    private val bodyMetricRepository: BodyMetricRepository
+    private val bodyMetricRepository: BodyMetricRepository,
+    private val dataExportService: DataExportService
 ) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(ProfileViewModel::class.java)) {
-            return ProfileViewModel(userProfileRepository, macroTargetRepository, bodyMetricRepository) as T
+            return ProfileViewModel(
+                userProfileRepository, macroTargetRepository, bodyMetricRepository, dataExportService
+            ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
     }

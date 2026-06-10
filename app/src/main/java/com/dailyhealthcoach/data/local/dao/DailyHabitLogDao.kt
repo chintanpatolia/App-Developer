@@ -16,6 +16,9 @@ interface DailyHabitLogDao {
     @Query("SELECT * FROM daily_habit_logs WHERE date BETWEEN :startDate AND :endDate")
     fun observeLogsBetween(startDate: String, endDate: String): Flow<List<DailyHabitLogEntity>>
 
+    @Query("SELECT * FROM daily_habit_logs ORDER BY date DESC")
+    suspend fun getAll(): List<DailyHabitLogEntity>
+
     @Upsert
     suspend fun upsert(log: DailyHabitLogEntity)
 

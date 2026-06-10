@@ -95,7 +95,8 @@ fun DailyHealthCoachApp(appContainer: AppContainer) {
                         factory = ProfileViewModelFactory(
                             userProfileRepository = appContainer.userProfileRepository,
                             macroTargetRepository = appContainer.macroTargetRepository,
-                            bodyMetricRepository = appContainer.bodyMetricRepository
+                            bodyMetricRepository = appContainer.bodyMetricRepository,
+                            dataExportService = appContainer.dataExportService
                         )
                     )
                     ProfileRoute(

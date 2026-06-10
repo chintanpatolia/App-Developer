@@ -14,6 +14,9 @@ interface DailyRecommendationDao {
     @Query("SELECT * FROM daily_recommendations WHERE date = :date LIMIT 1")
     suspend fun getForDate(date: String): DailyRecommendationEntity?
 
+    @Query("SELECT * FROM daily_recommendations ORDER BY date DESC")
+    suspend fun getAll(): List<DailyRecommendationEntity>
+
     @Upsert
     suspend fun upsert(recommendation: DailyRecommendationEntity)
 }

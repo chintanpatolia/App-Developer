@@ -1,5 +1,7 @@
 package com.dailyhealthcoach.ui.profile
 
+import android.net.Uri
+
 data class HcImportConflict(
     val fieldLabel: String,
     val existingDisplay: String,
@@ -23,5 +25,7 @@ data class ProfileUiState(
     val error: String? = null,
     val savedSuccess: Boolean = false,
     val hcImportConflict: HcImportConflict? = null,
-    val hcImportMessage: String? = null
+    val hcImportMessage: String? = null,
+    val pendingShareUri: Uri? = null,
+    val exportStatus: String? = null
 )

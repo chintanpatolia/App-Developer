@@ -1,5 +1,6 @@
 package com.dailyhealthcoach.ui.profile
 
+import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -20,6 +21,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
@@ -68,6 +70,19 @@ fun ProfileRoute(
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
+    val shareUri = uiState.pendingShareUri
+    LaunchedEffect(shareUri) {
+        if (shareUri != null) {
+            val intent = Intent(Intent.ACTION_SEND).apply {
+                type = "application/json"
+                putExtra(Intent.EXTRA_STREAM, shareUri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            context.startActivity(Intent.createChooser(intent, "Save backup"))
+            viewModel.clearShareUri()
+        }
+    }
     ProfileScreen(
         uiState = uiState,
         onUpdate = viewModel::updateForm,
@@ -80,6 +95,7 @@ fun ProfileRoute(
         onImportHr = viewModel::requestHrImport,
         onConfirmImport = viewModel::confirmImport,
         onCancelImport = viewModel::cancelImport,
+        onExport = { viewModel.exportBackup(context) },
         modifier = modifier
     )
 }
@@ -97,6 +113,7 @@ fun ProfileScreen(
     onImportHr: (Int) -> Unit = {},
     onConfirmImport: () -> Unit = {},
     onCancelImport: () -> Unit = {},
+    onExport: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Box(
@@ -305,6 +322,11 @@ fun ProfileScreen(
                     Text("Manage Reminders →", color = CyanAccent)
                 }
             }
+
+            ExportBackupCard(
+                exportStatus = uiState.exportStatus,
+                onExport = onExport
+            )
 
             if (uiState.error != null) {
                 Text(
@@ -552,6 +574,41 @@ private fun HcImportRow(
             TextButton(onClick = onImport) {
                 Text("Import", color = CyanAccent, style = MaterialTheme.typography.labelSmall)
             }
+        }
+    }
+}
+
+@Composable
+private fun ExportBackupCard(
+    exportStatus: String?,
+    onExport: () -> Unit
+) {
+    ProfileCard(title = "Export / Backup") {
+        Text(
+            "Save a full JSON backup of your health data to your device or cloud storage.",
+            color = MutedText,
+            style = MaterialTheme.typography.bodySmall
+        )
+        Text(
+            "Exports may contain personal health and nutrition data. Store them securely.",
+            color = WarningAccent,
+            style = MaterialTheme.typography.bodySmall
+        )
+        Spacer(Modifier.height(4.dp))
+        OutlinedButton(
+            onClick = onExport,
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(999.dp)
+        ) {
+            Text("Export Full Backup (JSON)", color = CyanAccent)
+        }
+        // TODO: Phase 19 — Add restore from backup
+        exportStatus?.let {
+            Text(
+                text = it,
+                color = if (it.startsWith("Export failed")) WarningAccent else PositiveAccent,
+                style = MaterialTheme.typography.bodySmall
+            )
         }
     }
 }

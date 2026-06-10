@@ -12,6 +12,9 @@ interface HabitDefinitionDao {
     @Query("SELECT * FROM habit_definitions WHERE isActive = 1 ORDER BY sortOrder ASC")
     fun observeActiveHabits(): Flow<List<HabitDefinitionEntity>>
 
+    @Query("SELECT * FROM habit_definitions ORDER BY sortOrder ASC")
+    suspend fun getAll(): List<HabitDefinitionEntity>
+
     @Query("SELECT COUNT(*) FROM habit_definitions")
     suspend fun countHabits(): Int
 
