@@ -229,7 +229,8 @@ private fun MainShellContent(
                     factory = NutritionViewModelFactory(
                         nutritionRepository = appContainer.nutritionRepository,
                         macroTargetRepository = appContainer.macroTargetRepository,
-                        foodLookupService = appContainer.foodLookupService
+                        foodLookupService = appContainer.foodLookupService,
+                        aiFoodLoggingService = appContainer.aiFoodLoggingService
                     )
                 )
                 NutritionRoute(viewModel = nutritionViewModel)

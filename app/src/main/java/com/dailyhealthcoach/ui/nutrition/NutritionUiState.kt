@@ -15,7 +15,11 @@ data class NutritionUiState(
     val recentFoods: List<QuickAddFoodUiState> = emptyList(),
     val savedFoods: List<QuickAddFoodUiState> = emptyList(),
     val isScannerVisible: Boolean = false,
-    val barcodeMessage: String? = null
+    val barcodeMessage: String? = null,
+    val isAiLogVisible: Boolean = false,
+    val aiInput: String = "",
+    val isAiParsing: Boolean = false,
+    val aiConfidenceMessage: String? = null
 )
 
 data class QuickAddFoodUiState(

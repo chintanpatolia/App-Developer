@@ -3,6 +3,7 @@ package com.dailyhealthcoach.ui.nutrition
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.dailyhealthcoach.ai.AiFoodLoggingService
 import com.dailyhealthcoach.barcode.FoodLookupService
 import com.dailyhealthcoach.domain.model.FoodEntry
 import com.dailyhealthcoach.domain.model.FoodEntryInput
@@ -22,7 +23,8 @@ import kotlinx.coroutines.launch
 class NutritionViewModel(
     private val nutritionRepository: NutritionRepository,
     macroTargetRepository: MacroTargetRepository,
-    private val foodLookupService: FoodLookupService
+    private val foodLookupService: FoodLookupService,
+    private val aiFoodLoggingService: AiFoodLoggingService
 ) : ViewModel() {
     private val today = LocalDate.now().toString()
     private val formState = MutableStateFlow(FormVisibilityState())
@@ -190,6 +192,51 @@ class NutritionViewModel(
         formState.update { it.copy(isScannerVisible = false) }
     }
 
+    // ── AI Quick Log ─────────────────────────────────────────────────────────
+
+    fun showAiLog() {
+        formState.update { it.copy(isAiLogVisible = true, isVisible = false, aiInput = "", aiConfidenceMessage = null) }
+    }
+
+    fun hideAiLog() {
+        formState.update { it.copy(isAiLogVisible = false, aiInput = "", isAiParsing = false) }
+    }
+
+    fun onAiInputChange(text: String) {
+        formState.update { it.copy(aiInput = text) }
+    }
+
+    fun submitAiLog() {
+        val input = formState.value.aiInput.trim()
+        if (input.isBlank()) return
+        viewModelScope.launch {
+            formState.update { it.copy(isAiParsing = true) }
+            val estimate = aiFoodLoggingService.parse(input)
+            val mealTimeNow = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm"))
+            val confidenceMsg = "AI estimate — confidence: ${estimate.confidence}. ${estimate.notes}"
+            formState.update {
+                it.copy(
+                    isAiLogVisible = false,
+                    isAiParsing = false,
+                    aiInput = "",
+                    isVisible = true,
+                    aiConfidenceMessage = confidenceMsg,
+                    form = FoodEntryFormUiState(
+                        mealTime = mealTimeNow,
+                        foodName = estimate.mealName,
+                        calories = estimate.calories.takeIf { c -> c > 0 }?.toString().orEmpty(),
+                        proteinGrams = estimate.proteinGrams.takeIf { p -> p > 0.0 }?.toString().orEmpty(),
+                        carbGrams = estimate.carbGrams.takeIf { c -> c > 0.0 }?.toString().orEmpty(),
+                        fatGrams = estimate.fatGrams.takeIf { f -> f > 0.0 }?.toString().orEmpty(),
+                        fiberGrams = estimate.fiberGrams.takeIf { f -> f > 0.0 }?.toString().orEmpty(),
+                        isWholeFoodBased = estimate.isWholeFoodBased,
+                        source = "AI_QUICK_LOG"
+                    )
+                )
+            }
+        }
+    }
+
     fun onBarcodeDetected(barcode: String) {
         formState.update { it.copy(isScannerVisible = false) }
         val mealTimeNow = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm"))
@@ -236,7 +283,11 @@ private data class FormVisibilityState(
     val isVisible: Boolean = false,
     val form: FoodEntryFormUiState = FoodEntryFormUiState(),
     val isScannerVisible: Boolean = false,
-    val barcodeMessage: String? = null
+    val barcodeMessage: String? = null,
+    val isAiLogVisible: Boolean = false,
+    val aiInput: String = "",
+    val isAiParsing: Boolean = false,
+    val aiConfidenceMessage: String? = null
 )
 
 private fun List<FoodEntry>.toUiState(
@@ -277,7 +328,11 @@ private fun List<FoodEntry>.toUiState(
         recentFoods = recentFoods,
         savedFoods = savedFoods,
         isScannerVisible = form.isScannerVisible,
-        barcodeMessage = form.barcodeMessage
+        barcodeMessage = form.barcodeMessage,
+        isAiLogVisible = form.isAiLogVisible,
+        aiInput = form.aiInput,
+        isAiParsing = form.isAiParsing,
+        aiConfidenceMessage = form.aiConfidenceMessage
     )
 }
 
@@ -323,7 +378,8 @@ private fun FoodEntry.toQuickAddUiState(): QuickAddFoodUiState {
 class NutritionViewModelFactory(
     private val nutritionRepository: NutritionRepository,
     private val macroTargetRepository: MacroTargetRepository,
-    private val foodLookupService: FoodLookupService
+    private val foodLookupService: FoodLookupService,
+    private val aiFoodLoggingService: AiFoodLoggingService
 ) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -331,7 +387,8 @@ class NutritionViewModelFactory(
             return NutritionViewModel(
                 nutritionRepository = nutritionRepository,
                 macroTargetRepository = macroTargetRepository,
-                foodLookupService = foodLookupService
+                foodLookupService = foodLookupService,
+                aiFoodLoggingService = aiFoodLoggingService
             ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")

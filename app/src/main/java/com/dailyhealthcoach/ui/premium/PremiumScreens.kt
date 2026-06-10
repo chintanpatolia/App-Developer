@@ -77,6 +77,10 @@ fun NutritionRoute(viewModel: NutritionViewModel) {
             uiState = uiState,
             onAddFood = viewModel::showAddForm,
             onScanBarcode = viewModel::showScanner,
+            onAiLog = viewModel::showAiLog,
+            onHideAiLog = viewModel::hideAiLog,
+            onAiInputChange = viewModel::onAiInputChange,
+            onSubmitAiLog = viewModel::submitAiLog,
             onCancelForm = viewModel::hideForm,
             onSaveForm = viewModel::saveForm,
             onEditEntry = viewModel::editEntry,
@@ -1018,6 +1022,10 @@ fun NutritionPlanScreen(
     uiState: NutritionUiState,
     onAddFood: () -> Unit,
     onScanBarcode: () -> Unit,
+    onAiLog: () -> Unit,
+    onHideAiLog: () -> Unit,
+    onAiInputChange: (String) -> Unit,
+    onSubmitAiLog: () -> Unit,
     onCancelForm: () -> Unit,
     onSaveForm: () -> Unit,
     onEditEntry: (FoodEntryUiState) -> Unit,
@@ -1054,18 +1062,51 @@ fun NutritionPlanScreen(
                         Text("Copy Yesterday", color = MutedText)
                     }
                 }
-                OutlinedButton(
-                    onClick = onScanBarcode,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(999.dp)
-                ) {
-                    Text("Scan Barcode", color = CyanAccent)
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    OutlinedButton(
+                        onClick = onScanBarcode,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(999.dp)
+                    ) {
+                        Text("Scan Barcode", color = CyanAccent)
+                    }
+                    OutlinedButton(
+                        onClick = onAiLog,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(999.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, CyanAccent.copy(alpha = 0.6f))
+                    ) {
+                        Text("AI Quick Log", color = CyanAccent, fontWeight = FontWeight.SemiBold)
+                    }
+                }
+                if (uiState.isAiLogVisible) {
+                    AiQuickLogInput(
+                        input = uiState.aiInput,
+                        isParsing = uiState.isAiParsing,
+                        onInputChange = onAiInputChange,
+                        onSubmit = onSubmitAiLog,
+                        onCancel = onHideAiLog
+                    )
                 }
                 if (uiState.isFormVisible) {
                     uiState.barcodeMessage?.let { msg ->
                         Text(
                             msg,
                             color = WarningAccent,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(horizontal = 4.dp)
+                        )
+                    }
+                    uiState.aiConfidenceMessage?.let { msg ->
+                        Text(
+                            msg,
+                            color = WarningAccent,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(horizontal = 4.dp)
+                        )
+                        Text(
+                            "AI estimates can be inaccurate. Review and edit before saving.",
+                            color = MutedText,
                             style = MaterialTheme.typography.bodySmall,
                             modifier = Modifier.padding(horizontal = 4.dp)
                         )
@@ -1104,6 +1145,60 @@ fun NutritionPlanScreen(
             }
         }
         FloatingTitlePill(text = "Nutrition Plan", modifier = Modifier.align(Alignment.TopCenter))
+    }
+}
+
+@Composable
+private fun AiQuickLogInput(
+    input: String,
+    isParsing: Boolean,
+    onInputChange: (String) -> Unit,
+    onSubmit: () -> Unit,
+    onCancel: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(18.dp))
+            .background(SecondaryCard.copy(alpha = 0.7f))
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Text(
+            text = "Describe your meal",
+            color = CyanAccent,
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.SemiBold
+        )
+        OutlinedTextField(
+            value = input,
+            onValueChange = onInputChange,
+            placeholder = {
+                Text(
+                    "e.g. 2 rotis, dal, rice, paneer, and chai",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MutedText
+                )
+            },
+            modifier = Modifier.fillMaxWidth(),
+            minLines = 2,
+            maxLines = 4
+        )
+        Text(
+            text = "AI estimates can be inaccurate. You will review before saving.",
+            color = MutedText,
+            style = MaterialTheme.typography.bodySmall
+        )
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            OutlinedButton(onClick = onCancel, modifier = Modifier.weight(1f), shape = RoundedCornerShape(999.dp)) {
+                Text("Cancel", color = MutedText)
+            }
+            PrimaryBlueButton(
+                text = if (isParsing) "Estimating..." else "Estimate",
+                onClick = onSubmit,
+                modifier = Modifier.weight(1f)
+            )
+        }
     }
 }
 
