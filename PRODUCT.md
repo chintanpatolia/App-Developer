@@ -152,4 +152,47 @@ For busy, health-conscious adults who want fat loss and metabolic improvement wi
 
 ---
 
+## Competitive Gap Mapping
+
+### MyFitnessPal — Gaps We Exploit
+
+1. **No actionable recommendations.** MFP shows a calorie pie chart and stops. Users must self-interpret what the numbers mean for tomorrow's eating.
+2. **Logging friction is high.** Manual search, large database, frequent incorrect entries, and portion estimation all slow the process. There is no conversational or AI-assisted entry path.
+3. **No cross-domain correlation.** MFP does not connect food patterns to sleep quality, energy levels, workout performance, or recovery — it logs in a silo.
+4. **One-size macro targets.** Default calorie/macro goals are static. MFP does not adjust based on training load, body composition change, or day-to-day biometrics.
+5. **No recovery awareness.** Workout logging exists but is disconnected from fatigue, soreness, and readiness signals. There is no concept of a "recovery day" nutrition strategy.
+6. **No cultural food relevance.** The database skews heavily toward Western and processed foods. South Asian, Middle Eastern, and Mediterranean home-cooked meals require manual entry every time.
+7. **No GLP-1 or metabolic context.** MFP has no mode for users on appetite suppressants, prediabetics managing glucose response, or users with low energy tolerance.
+
+### MacroFactor — Gaps We Exploit
+
+1. **Numbers-first UX, not meaning-first UX.** MacroFactor is designed for users who already understand TDEE, progressive overload, and macro periodization. It adjusts numbers precisely but does not explain what those numbers mean for health outcomes.
+2. **No habit or lifestyle context.** MacroFactor tracks only food and weight. Sleep quality, stress level, training soreness, and daily habits are not inputs to the system.
+3. **No next-meal or next-action recommendation.** MacroFactor tells users their weekly macro targets. It does not tell them what to eat next given today's protein gap and current energy level.
+4. **Limited recovery integration.** There is no recovery score, RPE feedback loop, or rest-day recommendation built on multi-signal health data.
+5. **No metabolic feedback narrative.** MacroFactor adjusts TDEE algorithmically but does not surface the story: "You've been sleeping 5.5 hours and your weight stalled — here is what that likely means."
+6. **Premium price without AI guidance.** MacroFactor charges a subscription for macro precision. Users who want interpretation and guidance alongside adjustments have no product that delivers both.
+
+### Competitive Gap Matrix
+
+| Capability | MyFitnessPal | MacroFactor | Daily Health Coach (target) |
+|---|---|---|---|
+| Macro logging | ✓ Large database | ✓ Precise tracking | ✓ AI-assisted logging |
+| Macro adjustment | — | ✓ Algorithmic TDEE | Planned (Phase 22+) |
+| Next-meal recommendation | — | — | ✓ Core differentiator |
+| Multi-signal health correlation | — | — | ✓ Sleep + energy + recovery |
+| Recovery score + training readiness | — | — | ✓ Phase 1–13 foundation |
+| Habit tracking | Limited | — | ✓ Phase 3 foundation |
+| Cultural food coverage | Poor | Moderate | Planned (Phase 22+ regional DB) |
+| GLP-1 / metabolic context mode | — | — | Planned (Phase 23+) |
+| AI conversational food entry | — | — | Planned (Phase 21 AI pillar) |
+| Local-first / offline | — | — | ✓ All data on-device |
+| One-time cost or no subscription | — | — | ✓ Planned positioning |
+
+### MVP Opportunity Summary
+
+The MVP gap is not in logging precision — both incumbents handle that. The gap is in **interpretation and action**: after logging, neither competitor tells users what to do next or why their data matters. Daily Health Coach enters the market owning the recommendation layer. The local-first architecture provides a secondary moat: no account, no cloud, no subscription anxiety, and no data privacy concerns — which directly addresses the MyFitnessPal refugee persona. Phase 21+ AI features (conversational logging, next-meal recommendations, metabolic feedback narrative) expand the moat by making the interpretation layer faster and more personalized than any macro-only tool can offer. The near-term priority is to make the recommendation output — recovery score, training readiness, protein gap, next-meal suggestion — so clear and actionable that users do not need to open MFP or MacroFactor at all.
+
+---
+
 *Last updated: 2026-06-09*
