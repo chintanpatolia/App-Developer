@@ -96,7 +96,8 @@ fun DailyHealthCoachApp(appContainer: AppContainer) {
                             userProfileRepository = appContainer.userProfileRepository,
                             macroTargetRepository = appContainer.macroTargetRepository,
                             bodyMetricRepository = appContainer.bodyMetricRepository,
-                            dataExportService = appContainer.dataExportService
+                            dataExportService = appContainer.dataExportService,
+                            dataRestoreService = appContainer.dataRestoreService
                         )
                     )
                     ProfileRoute(

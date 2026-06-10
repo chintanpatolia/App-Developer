@@ -1,10 +1,12 @@
 package com.dailyhealthcoach.ui.profile
 
 import android.content.Context
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.dailyhealthcoach.data.export.DataExportService
+import com.dailyhealthcoach.data.export.DataRestoreService
 import com.dailyhealthcoach.domain.model.BodyMetricLog
 import com.dailyhealthcoach.domain.model.BodyMetricLogInput
 import com.dailyhealthcoach.domain.model.UserProfile
@@ -22,7 +24,8 @@ class ProfileViewModel(
     private val userProfileRepository: UserProfileRepository,
     private val macroTargetRepository: MacroTargetRepository,
     private val bodyMetricRepository: BodyMetricRepository,
-    private val dataExportService: DataExportService
+    private val dataExportService: DataExportService,
+    private val dataRestoreService: DataRestoreService
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ProfileUiState())
@@ -275,6 +278,49 @@ class ProfileViewModel(
         _uiState.value = _uiState.value.copy(pendingShareUri = null)
     }
 
+    // ── Restore Backup ──────────────────────────────────────────────────────
+
+    private var pendingRestoreUri: Uri? = null
+
+    fun onRestoreFileSelected(context: Context, uri: Uri) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(restoreStatus = "Validating backup...")
+            when (val result = dataRestoreService.validate(context, uri)) {
+                is DataRestoreService.RestoreResult.Success -> {
+                    pendingRestoreUri = uri
+                    _uiState.value = _uiState.value.copy(showRestoreDialog = true, restoreStatus = null)
+                }
+                is DataRestoreService.RestoreResult.Invalid -> {
+                    _uiState.value = _uiState.value.copy(restoreStatus = result.reason)
+                }
+                is DataRestoreService.RestoreResult.Error -> {
+                    _uiState.value = _uiState.value.copy(restoreStatus = result.message)
+                }
+            }
+        }
+    }
+
+    fun confirmRestore(context: Context) {
+        val uri = pendingRestoreUri ?: return
+        pendingRestoreUri = null
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(showRestoreDialog = false, restoreStatus = "Restoring...")
+            when (val result = dataRestoreService.restore(context, uri)) {
+                is DataRestoreService.RestoreResult.Success ->
+                    _uiState.value = _uiState.value.copy(restoreStatus = "Backup restored successfully.")
+                is DataRestoreService.RestoreResult.Error ->
+                    _uiState.value = _uiState.value.copy(restoreStatus = result.message)
+                is DataRestoreService.RestoreResult.Invalid ->
+                    _uiState.value = _uiState.value.copy(restoreStatus = result.reason)
+            }
+        }
+    }
+
+    fun cancelRestore() {
+        pendingRestoreUri = null
+        _uiState.value = _uiState.value.copy(showRestoreDialog = false, restoreStatus = null)
+    }
+
     private fun clearPending() {
         pendingField = null
         pendingSteps = null
@@ -329,13 +375,15 @@ class ProfileViewModelFactory(
     private val userProfileRepository: UserProfileRepository,
     private val macroTargetRepository: MacroTargetRepository,
     private val bodyMetricRepository: BodyMetricRepository,
-    private val dataExportService: DataExportService
+    private val dataExportService: DataExportService,
+    private val dataRestoreService: DataRestoreService
 ) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(ProfileViewModel::class.java)) {
             return ProfileViewModel(
-                userProfileRepository, macroTargetRepository, bodyMetricRepository, dataExportService
+                userProfileRepository, macroTargetRepository, bodyMetricRepository,
+                dataExportService, dataRestoreService
             ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")

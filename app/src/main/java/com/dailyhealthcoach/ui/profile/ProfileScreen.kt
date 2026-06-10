@@ -1,6 +1,8 @@
 package com.dailyhealthcoach.ui.profile
 
 import android.content.Intent
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -83,6 +85,9 @@ fun ProfileRoute(
             viewModel.clearShareUri()
         }
     }
+    val restoreLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri -> if (uri != null) viewModel.onRestoreFileSelected(context, uri) }
     ProfileScreen(
         uiState = uiState,
         onUpdate = viewModel::updateForm,
@@ -96,6 +101,9 @@ fun ProfileRoute(
         onConfirmImport = viewModel::confirmImport,
         onCancelImport = viewModel::cancelImport,
         onExport = { viewModel.exportBackup(context) },
+        onPickRestoreFile = { restoreLauncher.launch(arrayOf("application/json", "*/*")) },
+        onConfirmRestore = { viewModel.confirmRestore(context) },
+        onCancelRestore = viewModel::cancelRestore,
         modifier = modifier
     )
 }
@@ -114,6 +122,9 @@ fun ProfileScreen(
     onConfirmImport: () -> Unit = {},
     onCancelImport: () -> Unit = {},
     onExport: () -> Unit = {},
+    onPickRestoreFile: () -> Unit = {},
+    onConfirmRestore: () -> Unit = {},
+    onCancelRestore: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Box(
@@ -325,7 +336,12 @@ fun ProfileScreen(
 
             ExportBackupCard(
                 exportStatus = uiState.exportStatus,
-                onExport = onExport
+                onExport = onExport,
+                showRestoreDialog = uiState.showRestoreDialog,
+                restoreStatus = uiState.restoreStatus,
+                onPickRestoreFile = onPickRestoreFile,
+                onConfirmRestore = onConfirmRestore,
+                onCancelRestore = onCancelRestore
             )
 
             if (uiState.error != null) {
@@ -581,7 +597,12 @@ private fun HcImportRow(
 @Composable
 private fun ExportBackupCard(
     exportStatus: String?,
-    onExport: () -> Unit
+    onExport: () -> Unit,
+    showRestoreDialog: Boolean,
+    restoreStatus: String?,
+    onPickRestoreFile: () -> Unit,
+    onConfirmRestore: () -> Unit,
+    onCancelRestore: () -> Unit
 ) {
     ProfileCard(title = "Export / Backup") {
         Text(
@@ -590,7 +611,7 @@ private fun ExportBackupCard(
             style = MaterialTheme.typography.bodySmall
         )
         Text(
-            "Exports may contain personal health and nutrition data. Store them securely.",
+            "Backups may contain personal health and nutrition data. Only restore files you trust.",
             color = WarningAccent,
             style = MaterialTheme.typography.bodySmall
         )
@@ -602,7 +623,6 @@ private fun ExportBackupCard(
         ) {
             Text("Export Full Backup (JSON)", color = CyanAccent)
         }
-        // TODO: Phase 19 — Add restore from backup
         exportStatus?.let {
             Text(
                 text = it,
@@ -610,6 +630,58 @@ private fun ExportBackupCard(
                 style = MaterialTheme.typography.bodySmall
             )
         }
+        Spacer(Modifier.height(4.dp))
+        OutlinedButton(
+            onClick = onPickRestoreFile,
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(999.dp)
+        ) {
+            Text("Restore from Backup", color = CyanAccent)
+        }
+        restoreStatus?.let {
+            Text(
+                text = it,
+                color = when {
+                    it.startsWith("Restoring") -> MutedText
+                    it.startsWith("Backup restored") -> PositiveAccent
+                    else -> WarningAccent
+                },
+                style = MaterialTheme.typography.bodySmall
+            )
+        }
+    }
+
+    if (showRestoreDialog) {
+        AlertDialog(
+            onDismissRequest = onCancelRestore,
+            containerColor = SecondaryCard,
+            titleContentColor = PrimaryText,
+            textContentColor = MutedText,
+            title = { Text("Restore Backup?", fontWeight = FontWeight.Bold) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(
+                        "Existing records will be updated with backup data. Records not in the backup will remain.",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                    Text(
+                        "Only restore files you trust.",
+                        color = WarningAccent,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = onConfirmRestore) {
+                    Text("Restore", color = CyanAccent, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = onCancelRestore) {
+                    Text("Cancel", color = MutedText)
+                }
+            }
+        )
     }
 }
 

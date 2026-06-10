@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Upsert
 import com.dailyhealthcoach.data.local.entity.HabitDefinitionEntity
 import kotlinx.coroutines.flow.Flow
 
@@ -20,4 +21,7 @@ interface HabitDefinitionDao {
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertAll(habits: List<HabitDefinitionEntity>)
+
+    @Upsert
+    suspend fun upsertAll(habits: List<HabitDefinitionEntity>)
 }

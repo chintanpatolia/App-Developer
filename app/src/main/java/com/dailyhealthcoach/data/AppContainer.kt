@@ -27,6 +27,7 @@ import com.dailyhealthcoach.domain.repository.WorkoutRepository
 import com.dailyhealthcoach.barcode.FoodLookupService
 import com.dailyhealthcoach.barcode.MockFoodLookupService
 import com.dailyhealthcoach.data.export.DataExportService
+import com.dailyhealthcoach.data.export.DataRestoreService
 import com.dailyhealthcoach.domain.usecase.GenerateWorkoutPlanUseCase
 import com.dailyhealthcoach.domain.usecase.GetDashboardSummaryUseCase
 import com.dailyhealthcoach.domain.usecase.GetTodayHabitsUseCase
@@ -104,4 +105,5 @@ class AppContainer(context: Context) {
     val foodLookupService: FoodLookupService = MockFoodLookupService()
 
     val dataExportService: DataExportService = DataExportService(database)
+    val dataRestoreService: DataRestoreService = DataRestoreService(database)
 }

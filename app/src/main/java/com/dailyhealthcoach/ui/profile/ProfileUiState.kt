@@ -27,5 +27,7 @@ data class ProfileUiState(
     val hcImportConflict: HcImportConflict? = null,
     val hcImportMessage: String? = null,
     val pendingShareUri: Uri? = null,
-    val exportStatus: String? = null
+    val exportStatus: String? = null,
+    val showRestoreDialog: Boolean = false,
+    val restoreStatus: String? = null
 )
