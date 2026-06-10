@@ -13,7 +13,9 @@ data class NutritionUiState(
     val isFormVisible: Boolean = false,
     val form: FoodEntryFormUiState = FoodEntryFormUiState(),
     val recentFoods: List<QuickAddFoodUiState> = emptyList(),
-    val savedFoods: List<QuickAddFoodUiState> = emptyList()
+    val savedFoods: List<QuickAddFoodUiState> = emptyList(),
+    val isScannerVisible: Boolean = false,
+    val barcodeMessage: String? = null
 )
 
 data class QuickAddFoodUiState(
@@ -70,5 +72,7 @@ data class FoodEntryFormUiState(
     val mealTime: String = "",
     val isWholeFoodBased: Boolean = true,
     val isProcessed: Boolean = false,
-    val isFermented: Boolean = false
+    val isFermented: Boolean = false,
+    val barcode: String = "",
+    val source: String = "MANUAL"
 )

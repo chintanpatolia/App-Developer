@@ -62,22 +62,31 @@ import com.dailyhealthcoach.ui.workout.WorkoutHistoryUiState
 import com.dailyhealthcoach.ui.workout.WorkoutPlanUiState
 import com.dailyhealthcoach.ui.workout.WorkoutUiState
 import com.dailyhealthcoach.ui.workout.WorkoutViewModel
+import com.dailyhealthcoach.barcode.BarcodeScannerScreen
 
 @Composable
 fun NutritionRoute(viewModel: NutritionViewModel) {
     val uiState by viewModel.uiState.collectAsState()
-    NutritionPlanScreen(
-        uiState = uiState,
-        onAddFood = viewModel::showAddForm,
-        onCancelForm = viewModel::hideForm,
-        onSaveForm = viewModel::saveForm,
-        onEditEntry = viewModel::editEntry,
-        onDeleteEntry = viewModel::deleteEntry,
-        onFormChange = viewModel::updateForm,
-        onToggleSaved = { id, saved -> viewModel.toggleSaved(id, saved) },
-        onQuickAddFood = viewModel::quickAddFood,
-        onCopyYesterday = viewModel::copyYesterday
-    )
+    if (uiState.isScannerVisible) {
+        BarcodeScannerScreen(
+            onBarcodeDetected = viewModel::onBarcodeDetected,
+            onBack = viewModel::hideScanner
+        )
+    } else {
+        NutritionPlanScreen(
+            uiState = uiState,
+            onAddFood = viewModel::showAddForm,
+            onScanBarcode = viewModel::showScanner,
+            onCancelForm = viewModel::hideForm,
+            onSaveForm = viewModel::saveForm,
+            onEditEntry = viewModel::editEntry,
+            onDeleteEntry = viewModel::deleteEntry,
+            onFormChange = viewModel::updateForm,
+            onToggleSaved = { id, saved -> viewModel.toggleSaved(id, saved) },
+            onQuickAddFood = viewModel::quickAddFood,
+            onCopyYesterday = viewModel::copyYesterday
+        )
+    }
 }
 
 @Composable
@@ -1008,6 +1017,7 @@ private fun statusColor(label: String): Color = when (label.uppercase()) {
 fun NutritionPlanScreen(
     uiState: NutritionUiState,
     onAddFood: () -> Unit,
+    onScanBarcode: () -> Unit,
     onCancelForm: () -> Unit,
     onSaveForm: () -> Unit,
     onEditEntry: (FoodEntryUiState) -> Unit,
@@ -1044,7 +1054,22 @@ fun NutritionPlanScreen(
                         Text("Copy Yesterday", color = MutedText)
                     }
                 }
+                OutlinedButton(
+                    onClick = onScanBarcode,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(999.dp)
+                ) {
+                    Text("Scan Barcode", color = CyanAccent)
+                }
                 if (uiState.isFormVisible) {
+                    uiState.barcodeMessage?.let { msg ->
+                        Text(
+                            msg,
+                            color = WarningAccent,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(horizontal = 4.dp)
+                        )
+                    }
                     FoodEntryForm(
                         form = uiState.form,
                         onFormChange = onFormChange,

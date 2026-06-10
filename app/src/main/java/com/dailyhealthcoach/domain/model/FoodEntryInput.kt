@@ -15,5 +15,7 @@ data class FoodEntryInput(
     val mealTime: String?,
     val isWholeFoodBased: Boolean,
     val isProcessed: Boolean,
-    val isFermented: Boolean
+    val isFermented: Boolean,
+    val barcode: String? = null,
+    val source: String = "MANUAL"
 )

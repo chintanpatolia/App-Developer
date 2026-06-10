@@ -5,8 +5,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -14,9 +16,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -34,7 +38,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -71,6 +74,12 @@ fun ProfileRoute(
         onSave = viewModel::save,
         onBack = onBack,
         onNavigateToReminders = onNavigateToReminders,
+        onImportSteps = viewModel::requestStepsImport,
+        onImportSleep = viewModel::requestSleepImport,
+        onImportWeight = viewModel::requestWeightImport,
+        onImportHr = viewModel::requestHrImport,
+        onConfirmImport = viewModel::confirmImport,
+        onCancelImport = viewModel::cancelImport,
         modifier = modifier
     )
 }
@@ -82,6 +91,12 @@ fun ProfileScreen(
     onSave: () -> Unit,
     onBack: () -> Unit,
     onNavigateToReminders: () -> Unit = {},
+    onImportSteps: (Long) -> Unit = {},
+    onImportSleep: (Double) -> Unit = {},
+    onImportWeight: (Double) -> Unit = {},
+    onImportHr: (Int) -> Unit = {},
+    onConfirmImport: () -> Unit = {},
+    onCancelImport: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Box(
@@ -265,7 +280,16 @@ fun ProfileScreen(
                 Text("Sleep 4–12 hrs. Strength 1–7 days/week.", color = MutedText, style = MaterialTheme.typography.bodySmall)
             }
 
-            HealthConnectCard()
+            HealthConnectCard(
+                hcImportConflict = uiState.hcImportConflict,
+                hcImportMessage = uiState.hcImportMessage,
+                onImportSteps = onImportSteps,
+                onImportSleep = onImportSleep,
+                onImportWeight = onImportWeight,
+                onImportHr = onImportHr,
+                onConfirmImport = onConfirmImport,
+                onCancelImport = onCancelImport
+            )
 
             ProfileCard(title = "Reminders") {
                 Text(
@@ -333,7 +357,16 @@ private fun ProfileCard(
 }
 
 @Composable
-private fun HealthConnectCard() {
+private fun HealthConnectCard(
+    hcImportConflict: HcImportConflict?,
+    hcImportMessage: String?,
+    onImportSteps: (Long) -> Unit,
+    onImportSleep: (Double) -> Unit,
+    onImportWeight: (Double) -> Unit,
+    onImportHr: (Int) -> Unit,
+    onConfirmImport: () -> Unit,
+    onCancelImport: () -> Unit
+) {
     val context = LocalContext.current
     val status = remember { HealthConnectManager.getSdkStatus(context) }
     ProfileCard(title = "Health Connect") {
@@ -347,7 +380,16 @@ private fun HealthConnectCard() {
             }
             HcStatus.AVAILABLE -> {
                 var launchFailed by remember { mutableStateOf(false) }
-                HcDataPreview()
+                HcDataPreview(
+                    hcImportConflict = hcImportConflict,
+                    hcImportMessage = hcImportMessage,
+                    onImportSteps = onImportSteps,
+                    onImportSleep = onImportSleep,
+                    onImportWeight = onImportWeight,
+                    onImportHr = onImportHr,
+                    onConfirmImport = onConfirmImport,
+                    onCancelImport = onCancelImport
+                )
                 OutlinedButton(
                     onClick = {
                         launchFailed = !HealthConnectManager.openSettings(context)
@@ -376,7 +418,16 @@ private fun HealthConnectCard() {
 }
 
 @Composable
-private fun HcDataPreview() {
+private fun HcDataPreview(
+    hcImportConflict: HcImportConflict?,
+    hcImportMessage: String?,
+    onImportSteps: (Long) -> Unit,
+    onImportSleep: (Double) -> Unit,
+    onImportWeight: (Double) -> Unit,
+    onImportHr: (Int) -> Unit,
+    onConfirmImport: () -> Unit,
+    onCancelImport: () -> Unit
+) {
     val context = LocalContext.current
     val data by produceState(HcDataState()) {
         value = HcDataState(
@@ -402,33 +453,106 @@ private fun HcDataPreview() {
         return
     }
 
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        HcDataRow("Steps today", data.steps?.let { "%,d steps".format(it) })
-        HcDataRow("Sleep last night", data.sleepHours?.let { "%.1f h".format(it) })
-        HcDataRow("Weight (latest)", data.weightLbs?.let { "%.1f lbs".format(it) })
-        HcDataRow("Resting HR", data.restingHr?.let { "$it bpm" })
+    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        HcImportRow(
+            label = "Steps today",
+            value = data.steps?.let { "%,d steps".format(it) },
+            onImport = data.steps?.let { steps -> { onImportSteps(steps) } }
+        )
+        HcImportRow(
+            label = "Sleep last night",
+            value = data.sleepHours?.let { "%.1f h".format(it) },
+            onImport = data.sleepHours?.let { h -> { onImportSleep(h) } }
+        )
+        HcImportRow(
+            label = "Weight (latest)",
+            value = data.weightLbs?.let { "%.1f lbs".format(it) },
+            onImport = data.weightLbs?.let { w -> { onImportWeight(w) } }
+        )
+        HcImportRow(
+            label = "Resting HR",
+            value = data.restingHr?.let { "$it bpm" },
+            onImport = data.restingHr?.let { hr -> { onImportHr(hr) } }
+        )
     }
     Text(
-        "Read-only. Edit values manually or update in Health Connect.",
+        "Tap Import to save a value to your local data.",
         color = MutedText,
         style = MaterialTheme.typography.bodySmall
     )
+
+    hcImportMessage?.let { msg ->
+        Text(msg, color = PositiveAccent, style = MaterialTheme.typography.bodySmall)
+    }
+
+    hcImportConflict?.let { conflict ->
+        AlertDialog(
+            onDismissRequest = onCancelImport,
+            containerColor = SecondaryCard,
+            titleContentColor = PrimaryText,
+            textContentColor = MutedText,
+            title = { Text("Replace Existing Data?", fontWeight = FontWeight.Bold) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(
+                        "${conflict.fieldLabel} — your entry: ${conflict.existingDisplay}",
+                        color = PrimaryText,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                    Text(
+                        "Health Connect: ${conflict.hcDisplay}",
+                        color = CyanAccent,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                    Spacer(Modifier.height(2.dp))
+                    Text(
+                        "Replace your manual entry with the Health Connect value?",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = onConfirmImport) {
+                    Text("Replace", color = CyanAccent, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = onCancelImport) {
+                    Text("Keep Mine", color = MutedText)
+                }
+            }
+        )
+    }
 }
 
 @Composable
-private fun HcDataRow(label: String, value: String?) {
+private fun HcImportRow(
+    label: String,
+    value: String?,
+    onImport: (() -> Unit)?
+) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(label, color = MutedText, style = MaterialTheme.typography.bodySmall)
+        Text(
+            label,
+            color = MutedText,
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.weight(1f)
+        )
         Text(
             text = value ?: "—",
             color = PrimaryText,
             style = MaterialTheme.typography.bodySmall,
             fontWeight = FontWeight.Medium
         )
+        if (onImport != null) {
+            TextButton(onClick = onImport) {
+                Text("Import", color = CyanAccent, style = MaterialTheme.typography.labelSmall)
+            }
+        }
     }
 }
 

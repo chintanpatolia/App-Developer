@@ -1,5 +1,11 @@
 package com.dailyhealthcoach.ui.profile
 
+data class HcImportConflict(
+    val fieldLabel: String,
+    val existingDisplay: String,
+    val hcDisplay: String
+)
+
 data class ProfileUiState(
     val name: String = "",
     val age: String = "",
@@ -15,5 +21,7 @@ data class ProfileUiState(
     val sleepTarget: String = "7",
     val strengthTarget: String = "3",
     val error: String? = null,
-    val savedSuccess: Boolean = false
+    val savedSuccess: Boolean = false,
+    val hcImportConflict: HcImportConflict? = null,
+    val hcImportMessage: String? = null
 )

@@ -3,6 +3,7 @@ package com.dailyhealthcoach.ui.nutrition
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.dailyhealthcoach.barcode.FoodLookupService
 import com.dailyhealthcoach.domain.model.FoodEntry
 import com.dailyhealthcoach.domain.model.FoodEntryInput
 import com.dailyhealthcoach.domain.repository.MacroTargetRepository
@@ -20,7 +21,8 @@ import kotlinx.coroutines.launch
 
 class NutritionViewModel(
     private val nutritionRepository: NutritionRepository,
-    macroTargetRepository: MacroTargetRepository
+    macroTargetRepository: MacroTargetRepository,
+    private val foodLookupService: FoodLookupService
 ) : ViewModel() {
     private val today = LocalDate.now().toString()
     private val formState = MutableStateFlow(FormVisibilityState())
@@ -103,7 +105,9 @@ class NutritionViewModel(
                     mealTime = form.mealTime.ifBlank { null },
                     isWholeFoodBased = form.isWholeFoodBased,
                     isProcessed = form.isProcessed,
-                    isFermented = form.isFermented
+                    isFermented = form.isFermented,
+                    barcode = form.barcode.ifBlank { null },
+                    source = form.source
                 )
             )
             formState.value = FormVisibilityState()
@@ -175,11 +179,64 @@ class NutritionViewModel(
             }
         }
     }
+
+    // ── Barcode Scanner ──────────────────────────────────────────────────────
+
+    fun showScanner() {
+        formState.update { it.copy(isScannerVisible = true, barcodeMessage = null) }
+    }
+
+    fun hideScanner() {
+        formState.update { it.copy(isScannerVisible = false) }
+    }
+
+    fun onBarcodeDetected(barcode: String) {
+        formState.update { it.copy(isScannerVisible = false) }
+        val mealTimeNow = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm"))
+        viewModelScope.launch {
+            val result = foodLookupService.lookup(barcode)
+            if (result != null) {
+                formState.update {
+                    it.copy(
+                        isVisible = true,
+                        barcodeMessage = null,
+                        form = FoodEntryFormUiState(
+                            mealTime = mealTimeNow,
+                            foodName = result.foodName,
+                            brandName = result.brandName.orEmpty(),
+                            servingDescription = result.servingDescription.orEmpty(),
+                            calories = result.calories?.toString().orEmpty(),
+                            proteinGrams = result.proteinGrams?.toString().orEmpty(),
+                            carbGrams = result.carbGrams?.toString().orEmpty(),
+                            fatGrams = result.fatGrams?.toString().orEmpty(),
+                            fiberGrams = result.fiberGrams?.toString().orEmpty(),
+                            barcode = barcode,
+                            source = result.source
+                        )
+                    )
+                }
+            } else {
+                formState.update {
+                    it.copy(
+                        isVisible = true,
+                        barcodeMessage = "Barcode $barcode not found. Enter food details manually.",
+                        form = FoodEntryFormUiState(
+                            mealTime = mealTimeNow,
+                            barcode = barcode,
+                            source = "BARCODE_MANUAL"
+                        )
+                    )
+                }
+            }
+        }
+    }
 }
 
 private data class FormVisibilityState(
     val isVisible: Boolean = false,
-    val form: FoodEntryFormUiState = FoodEntryFormUiState()
+    val form: FoodEntryFormUiState = FoodEntryFormUiState(),
+    val isScannerVisible: Boolean = false,
+    val barcodeMessage: String? = null
 )
 
 private fun List<FoodEntry>.toUiState(
@@ -218,7 +275,9 @@ private fun List<FoodEntry>.toUiState(
         isFormVisible = form.isVisible,
         form = form.form,
         recentFoods = recentFoods,
-        savedFoods = savedFoods
+        savedFoods = savedFoods,
+        isScannerVisible = form.isScannerVisible,
+        barcodeMessage = form.barcodeMessage
     )
 }
 
@@ -263,14 +322,16 @@ private fun FoodEntry.toQuickAddUiState(): QuickAddFoodUiState {
 
 class NutritionViewModelFactory(
     private val nutritionRepository: NutritionRepository,
-    private val macroTargetRepository: MacroTargetRepository
+    private val macroTargetRepository: MacroTargetRepository,
+    private val foodLookupService: FoodLookupService
 ) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(NutritionViewModel::class.java)) {
             return NutritionViewModel(
                 nutritionRepository = nutritionRepository,
-                macroTargetRepository = macroTargetRepository
+                macroTargetRepository = macroTargetRepository,
+                foodLookupService = foodLookupService
             ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")

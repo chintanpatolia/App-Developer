@@ -29,6 +29,7 @@ class NutritionRepositoryImpl(
                 mealName = input.mealName,
                 foodName = input.foodName,
                 brandName = input.brandName,
+                barcode = input.barcode,
                 servingDescription = input.servingDescription,
                 calories = input.calories,
                 proteinGrams = input.proteinGrams,
@@ -39,7 +40,7 @@ class NutritionRepositoryImpl(
                 isWholeFoodBased = input.isWholeFoodBased,
                 isProcessed = input.isProcessed,
                 isFermented = input.isFermented,
-                source = "MANUAL",
+                source = input.source,
                 createdAt = now,
                 updatedAt = now
             )
@@ -76,6 +77,8 @@ private fun FoodEntryEntity.toDomain(): FoodEntry {
         isWholeFoodBased = isWholeFoodBased,
         isProcessed = isProcessed,
         isFermented = isFermented,
-        isSaved = isSaved
+        isSaved = isSaved,
+        barcode = barcode,
+        source = source
     )
 }

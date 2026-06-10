@@ -3,7 +3,10 @@ package com.dailyhealthcoach.ui.profile
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.dailyhealthcoach.domain.model.BodyMetricLog
+import com.dailyhealthcoach.domain.model.BodyMetricLogInput
 import com.dailyhealthcoach.domain.model.UserProfile
+import com.dailyhealthcoach.domain.repository.BodyMetricRepository
 import com.dailyhealthcoach.domain.repository.MacroTargetRepository
 import com.dailyhealthcoach.domain.repository.UserProfileRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -11,10 +14,12 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 
 class ProfileViewModel(
     private val userProfileRepository: UserProfileRepository,
-    private val macroTargetRepository: MacroTargetRepository
+    private val macroTargetRepository: MacroTargetRepository,
+    private val bodyMetricRepository: BodyMetricRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ProfileUiState())
@@ -22,6 +27,14 @@ class ProfileViewModel(
 
     private var existingBirthDate: String? = null
     private var existingBedtime: String? = null
+
+    private enum class PendingField { STEPS, SLEEP, WEIGHT, RESTING_HR }
+    private var pendingField: PendingField? = null
+    private var pendingSteps: Long? = null
+    private var pendingSleep: Double? = null
+    private var pendingWeight: Double? = null
+    private var pendingHr: Int? = null
+    private var pendingExisting: BodyMetricLog? = null
 
     init {
         viewModelScope.launch {
@@ -111,6 +124,172 @@ class ProfileViewModel(
             _uiState.value = _uiState.value.copy(savedSuccess = true, error = null)
         }
     }
+
+    // ── Health Connect Import ────────────────────────────────────────────────
+    // TODO: track that imported values originated from Health Connect (requires schema change).
+
+    fun requestStepsImport(steps: Long) {
+        val today = LocalDate.now().toString()
+        viewModelScope.launch {
+            val existing = bodyMetricRepository.observeForDate(today).first()
+            if (existing?.stepCount != null) {
+                pendingField = PendingField.STEPS
+                pendingSteps = steps
+                pendingExisting = existing
+                _uiState.value = _uiState.value.copy(
+                    hcImportConflict = HcImportConflict(
+                        fieldLabel = "Steps",
+                        existingDisplay = "%,d steps".format(existing.stepCount),
+                        hcDisplay = "%,d steps".format(steps)
+                    )
+                )
+            } else {
+                bodyMetricRepository.saveForDate(buildInput(today, existing, stepCount = steps.toInt()))
+                _uiState.value = _uiState.value.copy(hcImportMessage = "Steps imported from Health Connect.")
+            }
+        }
+    }
+
+    fun requestSleepImport(hours: Double) {
+        val today = LocalDate.now().toString()
+        viewModelScope.launch {
+            val existing = bodyMetricRepository.observeForDate(today).first()
+            if (existing?.sleepHours != null) {
+                pendingField = PendingField.SLEEP
+                pendingSleep = hours
+                pendingExisting = existing
+                _uiState.value = _uiState.value.copy(
+                    hcImportConflict = HcImportConflict(
+                        fieldLabel = "Sleep",
+                        existingDisplay = "%.1f h".format(existing.sleepHours),
+                        hcDisplay = "%.1f h".format(hours)
+                    )
+                )
+            } else {
+                bodyMetricRepository.saveForDate(buildInput(today, existing, sleepHours = hours))
+                _uiState.value = _uiState.value.copy(hcImportMessage = "Sleep imported from Health Connect.")
+            }
+        }
+    }
+
+    fun requestWeightImport(lbs: Double) {
+        val today = LocalDate.now().toString()
+        viewModelScope.launch {
+            val existing = bodyMetricRepository.observeForDate(today).first()
+            if (existing?.bodyWeight != null) {
+                pendingField = PendingField.WEIGHT
+                pendingWeight = lbs
+                pendingExisting = existing
+                _uiState.value = _uiState.value.copy(
+                    hcImportConflict = HcImportConflict(
+                        fieldLabel = "Weight",
+                        existingDisplay = "%.1f lbs".format(existing.bodyWeight),
+                        hcDisplay = "%.1f lbs".format(lbs)
+                    )
+                )
+            } else {
+                bodyMetricRepository.saveForDate(buildInput(today, existing, bodyWeight = lbs))
+                _uiState.value = _uiState.value.copy(hcImportMessage = "Weight imported from Health Connect.")
+            }
+        }
+    }
+
+    fun requestHrImport(bpm: Int) {
+        val today = LocalDate.now().toString()
+        viewModelScope.launch {
+            val existing = bodyMetricRepository.observeForDate(today).first()
+            if (existing?.restingHeartRate != null) {
+                pendingField = PendingField.RESTING_HR
+                pendingHr = bpm
+                pendingExisting = existing
+                _uiState.value = _uiState.value.copy(
+                    hcImportConflict = HcImportConflict(
+                        fieldLabel = "Resting Heart Rate",
+                        existingDisplay = "${existing.restingHeartRate} bpm",
+                        hcDisplay = "$bpm bpm"
+                    )
+                )
+            } else {
+                bodyMetricRepository.saveForDate(buildInput(today, existing, restingHeartRate = bpm))
+                _uiState.value = _uiState.value.copy(hcImportMessage = "Resting HR imported from Health Connect.")
+            }
+        }
+    }
+
+    fun confirmImport() {
+        val today = LocalDate.now().toString()
+        val existing = pendingExisting
+        val field = pendingField
+        viewModelScope.launch {
+            val msg: String? = when (field) {
+                PendingField.STEPS -> pendingSteps?.let {
+                    bodyMetricRepository.saveForDate(buildInput(today, existing, stepCount = it.toInt()))
+                    "Steps imported from Health Connect."
+                }
+                PendingField.SLEEP -> pendingSleep?.let {
+                    bodyMetricRepository.saveForDate(buildInput(today, existing, sleepHours = it))
+                    "Sleep imported from Health Connect."
+                }
+                PendingField.WEIGHT -> pendingWeight?.let {
+                    bodyMetricRepository.saveForDate(buildInput(today, existing, bodyWeight = it))
+                    "Weight imported from Health Connect."
+                }
+                PendingField.RESTING_HR -> pendingHr?.let {
+                    bodyMetricRepository.saveForDate(buildInput(today, existing, restingHeartRate = it))
+                    "Resting HR imported from Health Connect."
+                }
+                null -> null
+            }
+            clearPending()
+            _uiState.value = _uiState.value.copy(
+                hcImportConflict = null,
+                hcImportMessage = msg ?: _uiState.value.hcImportMessage
+            )
+        }
+    }
+
+    fun cancelImport() {
+        clearPending()
+        _uiState.value = _uiState.value.copy(hcImportConflict = null)
+    }
+
+    private fun clearPending() {
+        pendingField = null
+        pendingSteps = null
+        pendingSleep = null
+        pendingWeight = null
+        pendingHr = null
+        pendingExisting = null
+    }
+
+    // Builds a full BodyMetricLogInput, preserving all existing fields except the ones explicitly overridden.
+    private fun buildInput(
+        today: String,
+        existing: BodyMetricLog?,
+        stepCount: Int? = existing?.stepCount,
+        sleepHours: Double? = existing?.sleepHours,
+        bodyWeight: Double? = existing?.bodyWeight,
+        restingHeartRate: Int? = existing?.restingHeartRate
+    ) = BodyMetricLogInput(
+        date = today,
+        heightInches = existing?.heightInches,
+        bodyWeight = bodyWeight,
+        bodyFatPercentage = existing?.bodyFatPercentage,
+        calculatedBodyFatPercent = existing?.calculatedBodyFatPercent,
+        manualBodyFatPercent = existing?.manualBodyFatPercent,
+        isBodyFatOverridden = existing?.isBodyFatOverridden ?: false,
+        waistMeasurement = existing?.waistMeasurement,
+        neckMeasurement = existing?.neckMeasurement,
+        chestMeasurement = existing?.chestMeasurement,
+        armMeasurement = existing?.armMeasurement,
+        sleepHours = sleepHours,
+        energyLevel = existing?.energyLevel,
+        stressLevel = existing?.stressLevel,
+        sorenessLevel = existing?.sorenessLevel,
+        restingHeartRate = restingHeartRate,
+        stepCount = stepCount,
+        notes = existing?.notes
+    )
 }
 
 private fun Double?.toHeightParts(): Pair<String, String> {
@@ -126,12 +305,13 @@ private fun Double?.cleanString(): String {
 
 class ProfileViewModelFactory(
     private val userProfileRepository: UserProfileRepository,
-    private val macroTargetRepository: MacroTargetRepository
+    private val macroTargetRepository: MacroTargetRepository,
+    private val bodyMetricRepository: BodyMetricRepository
 ) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(ProfileViewModel::class.java)) {
-            return ProfileViewModel(userProfileRepository, macroTargetRepository) as T
+            return ProfileViewModel(userProfileRepository, macroTargetRepository, bodyMetricRepository) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
     }
