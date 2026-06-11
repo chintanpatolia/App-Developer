@@ -12,10 +12,12 @@ import com.dailyhealthcoach.domain.repository.NutritionRepository
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -39,9 +41,12 @@ class NutritionViewModel(
             proteinGoalMin = macroTarget?.proteinMinGrams ?: 170,
             proteinGoalMax = macroTarget?.proteinMaxGrams ?: 200,
             form = form,
-            allEntries = allEntries
+            allEntries = allEntries,
+            hour = LocalTime.now().hour
         )
-    }.stateIn(
+    }
+    .flowOn(Dispatchers.Default)
+    .stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
         initialValue = NutritionUiState()
@@ -192,6 +197,30 @@ class NutritionViewModel(
         formState.update { it.copy(isScannerVisible = false) }
     }
 
+    fun logUsualMeal(meal: UsualMealUiState, mealName: String) {
+        viewModelScope.launch {
+            nutritionRepository.saveFoodEntry(
+                FoodEntryInput(
+                    id = 0,
+                    date = today,
+                    mealName = mealName,
+                    foodName = meal.foodName,
+                    brandName = meal.brandName,
+                    servingDescription = meal.servingDescription,
+                    calories = meal.calories.takeIf { it > 0 },
+                    proteinGrams = meal.proteinGrams.takeIf { it > 0.0 },
+                    carbGrams = meal.carbGrams.takeIf { it > 0.0 },
+                    fatGrams = meal.fatGrams.takeIf { it > 0.0 },
+                    fiberGrams = meal.fiberGrams.takeIf { it > 0.0 },
+                    mealTime = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm")),
+                    isWholeFoodBased = meal.isWholeFoodBased,
+                    isProcessed = meal.isProcessed,
+                    isFermented = meal.isFermented
+                )
+            )
+        }
+    }
+
     // ── AI Quick Log ─────────────────────────────────────────────────────────
 
     fun showAiLog() {
@@ -294,17 +323,21 @@ private fun List<FoodEntry>.toUiState(
     proteinGoalMin: Int,
     proteinGoalMax: Int,
     form: FormVisibilityState,
-    allEntries: List<FoodEntry>
+    allEntries: List<FoodEntry>,
+    hour: Int
 ): NutritionUiState {
     val uiEntries = map { it.toUiState() }
     val meals = listOf("Breakfast", "Lunch", "Dinner", "Snack")
+    val usualMeals = detectUsualMeals(allEntries, todayEntries = this, hour)
+    val suggestedFoodNames = usualMeals.map { it.foodName.lowercase().trim() }.toSet()
     val recentFoods = allEntries
         .sortedByDescending { it.id }
         .distinctBy { it.foodName.lowercase() + "|" + (it.brandName?.lowercase() ?: "") }
+        .filter { it.foodName.lowercase().trim() !in suggestedFoodNames }
         .take(8)
         .map { it.toQuickAddUiState() }
     val savedFoods = allEntries
-        .filter { it.isSaved }
+        .filter { it.isSaved && it.foodName.lowercase().trim() !in suggestedFoodNames }
         .sortedByDescending { it.id }
         .distinctBy { it.foodName.lowercase() + "|" + (it.brandName?.lowercase() ?: "") }
         .map { it.toQuickAddUiState() }
@@ -327,6 +360,7 @@ private fun List<FoodEntry>.toUiState(
         form = form.form,
         recentFoods = recentFoods,
         savedFoods = savedFoods,
+        usualMeals = usualMeals,
         isScannerVisible = form.isScannerVisible,
         barcodeMessage = form.barcodeMessage,
         isAiLogVisible = form.isAiLogVisible,
@@ -373,6 +407,54 @@ private fun FoodEntry.toQuickAddUiState(): QuickAddFoodUiState {
         isProcessed = isProcessed,
         isFermented = isFermented
     )
+}
+
+private fun detectUsualMeals(
+    allEntries: List<FoodEntry>,
+    todayEntries: List<FoodEntry>,
+    hour: Int
+): List<UsualMealUiState> {
+    // Group by food name + meal type only — brand/serving are optional and vary between logs
+    fun FoodEntry.groupKey() =
+        "${foodName.lowercase().trim()}|${mealName.lowercase().trim()}"
+
+    val todayKeys = todayEntries.map { it.groupKey() }.toSet()
+
+    return allEntries
+        .groupBy { it.groupKey() }
+        .filter { (_, entries) -> entries.size >= 3 }
+        .map { (key, entries) ->
+            val latest = entries.maxBy { it.id }
+            UsualMealUiState(
+                foodName = latest.foodName,
+                brandName = latest.brandName,
+                servingDescription = latest.servingDescription,
+                mealName = latest.mealName,
+                calories = latest.calories ?: 0,
+                proteinGrams = latest.proteinGrams ?: 0.0,
+                carbGrams = latest.carbGrams ?: 0.0,
+                fatGrams = latest.fatGrams ?: 0.0,
+                fiberGrams = latest.fiberGrams ?: 0.0,
+                timesLogged = entries.size,
+                loggedToday = key in todayKeys,
+                isWholeFoodBased = latest.isWholeFoodBased,
+                isProcessed = latest.isProcessed,
+                isFermented = latest.isFermented
+            )
+        }
+        .sortedWith(
+            compareByDescending<UsualMealUiState> { it.timesLogged }
+                .thenBy { mealTimeScore(it.mealName, hour) }
+        )
+        .take(8)
+}
+
+private fun mealTimeScore(mealName: String, hour: Int): Int = when {
+    hour < 11 && mealName.equals("Breakfast", ignoreCase = true) -> 0
+    hour in 11..14 && mealName.equals("Lunch", ignoreCase = true) -> 0
+    hour >= 17 && mealName.equals("Dinner", ignoreCase = true) -> 0
+    hour in 14..23 && mealName.equals("Snack", ignoreCase = true) -> 0
+    else -> 1
 }
 
 class NutritionViewModelFactory(

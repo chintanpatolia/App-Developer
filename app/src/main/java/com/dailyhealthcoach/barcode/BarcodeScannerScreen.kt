@@ -208,6 +208,7 @@ private fun CameraPreview(
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                 .build()
             analysis.setAnalyzer(executor) { imageProxy: ImageProxy ->
+                @androidx.annotation.OptIn(androidx.camera.core.ExperimentalGetImage::class)
                 val mediaImage = imageProxy.image
                 if (mediaImage != null && !detectedRef.get()) {
                     val image = InputImage.fromMediaImage(

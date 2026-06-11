@@ -14,12 +14,30 @@ data class NutritionUiState(
     val form: FoodEntryFormUiState = FoodEntryFormUiState(),
     val recentFoods: List<QuickAddFoodUiState> = emptyList(),
     val savedFoods: List<QuickAddFoodUiState> = emptyList(),
+    val usualMeals: List<UsualMealUiState> = emptyList(),
     val isScannerVisible: Boolean = false,
     val barcodeMessage: String? = null,
     val isAiLogVisible: Boolean = false,
     val aiInput: String = "",
     val isAiParsing: Boolean = false,
     val aiConfidenceMessage: String? = null
+)
+
+data class UsualMealUiState(
+    val foodName: String,
+    val brandName: String?,
+    val servingDescription: String?,
+    val mealName: String,
+    val calories: Int,
+    val proteinGrams: Double,
+    val carbGrams: Double,
+    val fatGrams: Double,
+    val fiberGrams: Double,
+    val timesLogged: Int,
+    val loggedToday: Boolean,
+    val isWholeFoodBased: Boolean,
+    val isProcessed: Boolean,
+    val isFermented: Boolean
 )
 
 data class QuickAddFoodUiState(

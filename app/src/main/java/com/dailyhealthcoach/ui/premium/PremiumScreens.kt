@@ -3,6 +3,8 @@ package com.dailyhealthcoach.ui.premium
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -11,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
@@ -51,6 +54,7 @@ import com.dailyhealthcoach.ui.nutrition.MealSectionUiState
 import com.dailyhealthcoach.ui.nutrition.NutritionUiState
 import com.dailyhealthcoach.ui.nutrition.NutritionViewModel
 import com.dailyhealthcoach.ui.nutrition.QuickAddFoodUiState
+import com.dailyhealthcoach.ui.nutrition.UsualMealUiState
 import com.dailyhealthcoach.ui.workout.ActivityDraft
 import com.dailyhealthcoach.ui.workout.DraftWorkoutSetUiState
 import com.dailyhealthcoach.ui.workout.ExerciseDetailUiState
@@ -67,6 +71,19 @@ import com.dailyhealthcoach.barcode.BarcodeScannerScreen
 @Composable
 fun NutritionRoute(viewModel: NutritionViewModel) {
     val uiState by viewModel.uiState.collectAsState()
+    var pendingUsualMeal by remember { mutableStateOf<UsualMealUiState?>(null) }
+
+    pendingUsualMeal?.let { meal ->
+        MealPickerDialog(
+            foodName = meal.foodName,
+            onSelect = { selectedMealName ->
+                viewModel.logUsualMeal(meal, selectedMealName)
+                pendingUsualMeal = null
+            },
+            onDismiss = { pendingUsualMeal = null }
+        )
+    }
+
     if (uiState.isScannerVisible) {
         BarcodeScannerScreen(
             onBarcodeDetected = viewModel::onBarcodeDetected,
@@ -81,6 +98,7 @@ fun NutritionRoute(viewModel: NutritionViewModel) {
             onHideAiLog = viewModel::hideAiLog,
             onAiInputChange = viewModel::onAiInputChange,
             onSubmitAiLog = viewModel::submitAiLog,
+            onLogUsualMeal = { meal -> pendingUsualMeal = meal },
             onCancelForm = viewModel::hideForm,
             onSaveForm = viewModel::saveForm,
             onEditEntry = viewModel::editEntry,
@@ -1026,6 +1044,7 @@ fun NutritionPlanScreen(
     onHideAiLog: () -> Unit,
     onAiInputChange: (String) -> Unit,
     onSubmitAiLog: () -> Unit,
+    onLogUsualMeal: (UsualMealUiState) -> Unit,
     onCancelForm: () -> Unit,
     onSaveForm: () -> Unit,
     onEditEntry: (FoodEntryUiState) -> Unit,
@@ -1118,6 +1137,10 @@ fun NutritionPlanScreen(
                         onCancel = onCancelForm
                     )
                 }
+                UsualMealsSection(
+                    meals = uiState.usualMeals,
+                    onLog = onLogUsualMeal
+                )
                 if (uiState.savedFoods.isNotEmpty()) {
                     QuickAddSection(
                         title = "Saved Foods",
@@ -1315,6 +1338,114 @@ private fun FoodFlagChips(
             colors = FilterChipDefaults.filterChipColors(selectedContainerColor = CyanAccent, selectedLabelColor = PrimaryText, labelColor = MutedText),
             modifier = Modifier.weight(1f)
         )
+    }
+}
+
+@Composable
+private fun MealPickerDialog(
+    foodName: String,
+    onSelect: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = SecondaryCard,
+        titleContentColor = PrimaryText,
+        textContentColor = MutedText,
+        title = { Text("Log under which meal?", fontWeight = FontWeight.Bold) },
+        text = {
+            Column {
+                Text(foodName, color = CyanAccent, fontWeight = FontWeight.SemiBold)
+                Spacer(Modifier.height(10.dp))
+                listOf("Breakfast", "Lunch", "Dinner", "Snack").forEach { option ->
+                    TextButton(
+                        onClick = { onSelect(option) },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(option, color = PrimaryText)
+                    }
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel", color = MutedText)
+            }
+        }
+    )
+}
+
+@Composable
+private fun UsualMealsSection(
+    meals: List<UsualMealUiState>,
+    onLog: (UsualMealUiState) -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(text = "Suggested Meals", color = PrimaryText, fontWeight = FontWeight.Bold)
+        Text(
+            text = "Your frequent foods — tap Log to choose a meal and add to today's log",
+            color = MutedText,
+            style = MaterialTheme.typography.bodySmall
+        )
+        if (meals.isEmpty()) {
+            Text(
+                text = "Log the same food 3 or more times to see suggestions here.",
+                color = MutedText,
+                style = MaterialTheme.typography.bodySmall
+            )
+        } else {
+            meals.forEach { meal ->
+                UsualMealRow(meal = meal, onLog = { onLog(meal) })
+            }
+        }
+    }
+}
+
+@Composable
+private fun UsualMealRow(
+    meal: UsualMealUiState,
+    onLog: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(SecondaryCard.copy(alpha = 0.55f))
+            .padding(horizontal = 14.dp, vertical = 10.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(text = meal.foodName, color = PrimaryText, fontWeight = FontWeight.SemiBold)
+                Text(
+                    text = meal.mealName,
+                    color = CyanAccent,
+                    style = MaterialTheme.typography.labelSmall
+                )
+            }
+            val macros = buildString {
+                if (meal.calories > 0) append("${meal.calories} kcal")
+                if (meal.proteinGrams > 0) append("  P${meal.proteinGrams.clean()}g")
+                if (meal.carbGrams > 0) append("  C${meal.carbGrams.clean()}g")
+                if (meal.fatGrams > 0) append("  F${meal.fatGrams.clean()}g")
+            }
+            if (macros.isNotEmpty()) {
+                Text(text = macros, color = MutedText, style = MaterialTheme.typography.bodySmall)
+            }
+            Text(
+                text = "Logged ${meal.timesLogged}×",
+                color = MutedText,
+                style = MaterialTheme.typography.labelSmall
+            )
+        }
+        TextButton(onClick = onLog) {
+            Text("Choose Meal", color = CyanAccent, fontWeight = FontWeight.Bold)
+        }
     }
 }
 
