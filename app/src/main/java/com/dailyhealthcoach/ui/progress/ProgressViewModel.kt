@@ -15,6 +15,7 @@ import com.dailyhealthcoach.domain.repository.WorkoutRepository
 import java.time.LocalDate
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 
@@ -49,7 +50,9 @@ class ProgressViewModel(
             workoutFrequency = buildWorkoutFrequencyTrend(workouts, today),
             habitCompletion = buildHabitCompletionTrend(habitLogs, totalHabits, today)
         )
-    }.stateIn(
+    }
+    .catch { emit(ProgressUiState(null, null, null, null, null, null, null)) }
+    .stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
         initialValue = ProgressUiState(null, null, null, null, null, null, null)
