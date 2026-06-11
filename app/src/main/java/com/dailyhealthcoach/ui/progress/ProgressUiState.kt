@@ -12,7 +12,8 @@ data class TrendData(
     val sevenDayAvg: String,
     val changeLabel: String,
     val changePositive: Boolean?,
-    val last7: List<TrendEntry>
+    val last7: List<TrendEntry>,
+    val points: List<Float> = emptyList()
 )
 
 data class ProgressUiState(
@@ -20,6 +21,7 @@ data class ProgressUiState(
     val bodyFat: TrendData?,
     val sleep: TrendData?,
     val protein: TrendData?,
+    val steps: TrendData?,
     val recovery: TrendData?,
     val workoutFrequency: TrendData?,
     val habitCompletion: TrendData?
