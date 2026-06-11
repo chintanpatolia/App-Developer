@@ -26,7 +26,7 @@ class HabitAutoUpdateUseCase(
     suspend operator fun invoke(date: String) {
         val habits = habitRepository.observeActiveHabits().first()
         val logs = habitRepository.observeLogsForDate(date).first()
-        val loggedHabitIds = logs.map { it.habitDefinitionId }.toSet()
+        val logsByHabitId = logs.associateBy { it.habitDefinitionId }
 
         val foodEntries = nutritionRepository.getFoodEntriesForDate(date)
         val workouts = workoutRepository.observeWorkoutsForDate(date).first()
@@ -35,7 +35,8 @@ class HabitAutoUpdateUseCase(
         val userProfile = userProfileRepository.observeUserProfile().first()
 
         for (habit in habits) {
-            if (habit.id in loggedHabitIds) continue
+            val existingLog = logsByHabitId[habit.id]
+            val isAutoCompleted = existingLog?.notes?.startsWith("Auto-completed from") == true
 
             val result = resolveAutoComplete(
                 habitName = habit.name.lowercase().trim(),
@@ -47,12 +48,18 @@ class HabitAutoUpdateUseCase(
             ) ?: continue
 
             val (shouldComplete, source) = result
-            if (shouldComplete) {
-                habitRepository.setHabitStatusForDate(
+            when {
+                shouldComplete -> habitRepository.setHabitStatusForDate(
                     habitDefinitionId = habit.id,
                     date = date,
                     status = HabitStatus.COMPLETE.storageValue,
                     notes = source
+                )
+                isAutoCompleted -> habitRepository.setHabitStatusForDate(
+                    habitDefinitionId = habit.id,
+                    date = date,
+                    status = HabitStatus.NOT_DONE.storageValue,
+                    notes = null
                 )
             }
         }
