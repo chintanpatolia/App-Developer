@@ -7,6 +7,7 @@ import com.dailyhealthcoach.domain.model.BodyMetricLog
 import com.dailyhealthcoach.domain.model.BodyMetricLogInput
 import com.dailyhealthcoach.domain.repository.BodyMetricRepository
 import com.dailyhealthcoach.domain.repository.UserProfileRepository
+import com.dailyhealthcoach.domain.usecase.HabitAutoUpdateUseCase
 import java.time.LocalDate
 import kotlin.math.log10
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,7 +20,8 @@ import kotlinx.coroutines.launch
 
 class BodyViewModel(
     private val bodyMetricRepository: BodyMetricRepository,
-    private val userProfileRepository: UserProfileRepository
+    private val userProfileRepository: UserProfileRepository,
+    private val habitAutoUpdateUseCase: HabitAutoUpdateUseCase
 ) : ViewModel() {
     private val today = LocalDate.now().toString()
     private val formState = MutableStateFlow(BodyMetricFormUiState())
@@ -82,6 +84,7 @@ class BodyViewModel(
                     notes = form.notes.ifBlank { null }
                 )
             )
+            habitAutoUpdateUseCase(today)
             formState.value = form.copy(isDirty = false)
         }
     }
@@ -223,14 +226,16 @@ private fun calculateBodyFatPercent(height: Double?, waist: Double?, neck: Doubl
 
 class BodyViewModelFactory(
     private val bodyMetricRepository: BodyMetricRepository,
-    private val userProfileRepository: UserProfileRepository
+    private val userProfileRepository: UserProfileRepository,
+    private val habitAutoUpdateUseCase: HabitAutoUpdateUseCase
 ) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(BodyViewModel::class.java)) {
             return BodyViewModel(
                 bodyMetricRepository = bodyMetricRepository,
-                userProfileRepository = userProfileRepository
+                userProfileRepository = userProfileRepository,
+                habitAutoUpdateUseCase = habitAutoUpdateUseCase
             ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")

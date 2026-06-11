@@ -9,6 +9,7 @@ import com.dailyhealthcoach.domain.model.FoodEntry
 import com.dailyhealthcoach.domain.model.FoodEntryInput
 import com.dailyhealthcoach.domain.repository.MacroTargetRepository
 import com.dailyhealthcoach.domain.repository.NutritionRepository
+import com.dailyhealthcoach.domain.usecase.HabitAutoUpdateUseCase
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -26,7 +27,8 @@ class NutritionViewModel(
     private val nutritionRepository: NutritionRepository,
     macroTargetRepository: MacroTargetRepository,
     private val foodLookupService: FoodLookupService,
-    private val aiFoodLoggingService: AiFoodLoggingService
+    private val aiFoodLoggingService: AiFoodLoggingService,
+    private val habitAutoUpdateUseCase: HabitAutoUpdateUseCase
 ) : ViewModel() {
     private val today = LocalDate.now().toString()
     private val formState = MutableStateFlow(FormVisibilityState())
@@ -117,6 +119,7 @@ class NutritionViewModel(
                     source = form.source
                 )
             )
+            habitAutoUpdateUseCase(today)
             formState.value = FormVisibilityState()
         }
     }
@@ -154,6 +157,7 @@ class NutritionViewModel(
                     isFermented = food.isFermented
                 )
             )
+            habitAutoUpdateUseCase(today)
         }
     }
 
@@ -184,6 +188,7 @@ class NutritionViewModel(
                     )
                 )
             }
+            habitAutoUpdateUseCase(today)
         }
     }
 
@@ -218,6 +223,7 @@ class NutritionViewModel(
                     isFermented = meal.isFermented
                 )
             )
+            habitAutoUpdateUseCase(today)
         }
     }
 
@@ -461,7 +467,8 @@ class NutritionViewModelFactory(
     private val nutritionRepository: NutritionRepository,
     private val macroTargetRepository: MacroTargetRepository,
     private val foodLookupService: FoodLookupService,
-    private val aiFoodLoggingService: AiFoodLoggingService
+    private val aiFoodLoggingService: AiFoodLoggingService,
+    private val habitAutoUpdateUseCase: HabitAutoUpdateUseCase
 ) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -470,7 +477,8 @@ class NutritionViewModelFactory(
                 nutritionRepository = nutritionRepository,
                 macroTargetRepository = macroTargetRepository,
                 foodLookupService = foodLookupService,
-                aiFoodLoggingService = aiFoodLoggingService
+                aiFoodLoggingService = aiFoodLoggingService,
+                habitAutoUpdateUseCase = habitAutoUpdateUseCase
             ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")

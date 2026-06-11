@@ -174,6 +174,14 @@ private fun HabitCard(
                 color = MutedText
             )
 
+            if (habit.autoCompleteSource != null) {
+                Text(
+                    text = habit.autoCompleteSource,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = CyanAccent.copy(alpha = 0.75f)
+                )
+            }
+
             if (habit.isTodayTrackable) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),

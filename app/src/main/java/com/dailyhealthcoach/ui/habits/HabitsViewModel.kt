@@ -61,7 +61,8 @@ private fun List<HabitToday>.toUiState(): HabitsUiState {
                 frequencyLabel = habit.frequencyLabel,
                 targetText = habit.targetPerWeek?.let { "$it/week" },
                 status = habit.status,
-                isTodayTrackable = habit.isTodayTrackable
+                isTodayTrackable = habit.isTodayTrackable,
+                autoCompleteSource = habit.notes?.takeIf { it.startsWith("Auto-completed from") }
             )
         }
     )

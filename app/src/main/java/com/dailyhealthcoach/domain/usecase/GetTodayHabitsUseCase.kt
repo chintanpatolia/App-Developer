@@ -31,7 +31,8 @@ class GetTodayHabitsUseCase(
                     frequencyLabel = HabitFrequency.labelFor(habit.frequencyType),
                     targetPerWeek = habit.targetPerWeek,
                     status = HabitStatus.fromStorageValue(logsByHabitId[habit.id]?.status),
-                    isTodayTrackable = isTodayTrackable
+                    isTodayTrackable = isTodayTrackable,
+                    notes = logsByHabitId[habit.id]?.notes
                 )
             }
         }

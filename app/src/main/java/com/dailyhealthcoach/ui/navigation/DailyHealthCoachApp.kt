@@ -169,7 +169,8 @@ fun DailyHealthCoachApp(appContainer: AppContainer) {
                     val bodyViewModel: BodyViewModel = viewModel(
                         factory = BodyViewModelFactory(
                             bodyMetricRepository = appContainer.bodyMetricRepository,
-                            userProfileRepository = appContainer.userProfileRepository
+                            userProfileRepository = appContainer.userProfileRepository,
+                            habitAutoUpdateUseCase = appContainer.habitAutoUpdateUseCase
                         )
                     )
                     BodyRoute(
@@ -218,6 +219,7 @@ private fun MainShellContent(
                         dailyRecommendationRepository = appContainer.dailyRecommendationRepository,
                         recoveryActivityRepository = appContainer.recoveryActivityRepository,
                         generateWorkoutPlanUseCase = appContainer.generateWorkoutPlanUseCase,
+                        habitAutoUpdateUseCase = appContainer.habitAutoUpdateUseCase,
                         today = LocalDate.now().toString()
                     )
                 )
@@ -230,7 +232,8 @@ private fun MainShellContent(
                         nutritionRepository = appContainer.nutritionRepository,
                         macroTargetRepository = appContainer.macroTargetRepository,
                         foodLookupService = appContainer.foodLookupService,
-                        aiFoodLoggingService = appContainer.aiFoodLoggingService
+                        aiFoodLoggingService = appContainer.aiFoodLoggingService,
+                        habitAutoUpdateUseCase = appContainer.habitAutoUpdateUseCase
                     )
                 )
                 NutritionRoute(viewModel = nutritionViewModel)

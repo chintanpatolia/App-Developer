@@ -32,6 +32,7 @@ import com.dailyhealthcoach.data.export.DataRestoreService
 import com.dailyhealthcoach.domain.usecase.GenerateWorkoutPlanUseCase
 import com.dailyhealthcoach.domain.usecase.GetDashboardSummaryUseCase
 import com.dailyhealthcoach.domain.usecase.GetTodayHabitsUseCase
+import com.dailyhealthcoach.domain.usecase.HabitAutoUpdateUseCase
 import com.dailyhealthcoach.domain.usecase.SetHabitStatusForTodayUseCase
 
 class AppContainer(context: Context) {
@@ -102,6 +103,15 @@ class AppContainer(context: Context) {
     )
 
     val generateWorkoutPlanUseCase = GenerateWorkoutPlanUseCase()
+
+    val habitAutoUpdateUseCase = HabitAutoUpdateUseCase(
+        habitRepository = habitRepository,
+        nutritionRepository = nutritionRepository,
+        workoutRepository = workoutRepository,
+        bodyMetricRepository = bodyMetricRepository,
+        macroTargetRepository = macroTargetRepository,
+        userProfileRepository = userProfileRepository
+    )
 
     val foodLookupService: FoodLookupService = MockFoodLookupService()
     val aiFoodLoggingService: AiFoodLoggingService = AiFoodLoggingService()

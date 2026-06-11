@@ -15,6 +15,7 @@ import com.dailyhealthcoach.domain.repository.ExerciseRepository
 import com.dailyhealthcoach.domain.repository.RecoveryActivityRepository
 import com.dailyhealthcoach.domain.repository.WorkoutRepository
 import com.dailyhealthcoach.domain.usecase.GenerateWorkoutPlanUseCase
+import com.dailyhealthcoach.domain.usecase.HabitAutoUpdateUseCase
 import java.time.LocalDate
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -30,6 +31,7 @@ class WorkoutViewModel(
     private val dailyRecommendationRepository: DailyRecommendationRepository,
     private val recoveryActivityRepository: RecoveryActivityRepository,
     private val generateWorkoutPlanUseCase: GenerateWorkoutPlanUseCase,
+    private val habitAutoUpdateUseCase: HabitAutoUpdateUseCase,
     private val today: String
 ) : ViewModel() {
     private val draftState = MutableStateFlow(WorkoutDraftState())
@@ -203,6 +205,7 @@ class WorkoutViewModel(
                     }
                 }
             )
+            habitAutoUpdateUseCase(today)
             draftState.value = WorkoutDraftState()
         }
     }
@@ -474,6 +477,7 @@ class WorkoutViewModelFactory(
     private val dailyRecommendationRepository: DailyRecommendationRepository,
     private val recoveryActivityRepository: RecoveryActivityRepository,
     private val generateWorkoutPlanUseCase: GenerateWorkoutPlanUseCase,
+    private val habitAutoUpdateUseCase: HabitAutoUpdateUseCase,
     private val today: String
 ) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
@@ -485,6 +489,7 @@ class WorkoutViewModelFactory(
                 dailyRecommendationRepository = dailyRecommendationRepository,
                 recoveryActivityRepository = recoveryActivityRepository,
                 generateWorkoutPlanUseCase = generateWorkoutPlanUseCase,
+                habitAutoUpdateUseCase = habitAutoUpdateUseCase,
                 today = today
             ) as T
         }

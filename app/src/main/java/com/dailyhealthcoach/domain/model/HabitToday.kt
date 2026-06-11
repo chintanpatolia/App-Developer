@@ -8,5 +8,6 @@ data class HabitToday(
     val frequencyLabel: String,
     val targetPerWeek: Int?,
     val status: HabitStatus,
-    val isTodayTrackable: Boolean
+    val isTodayTrackable: Boolean,
+    val notes: String? = null
 )

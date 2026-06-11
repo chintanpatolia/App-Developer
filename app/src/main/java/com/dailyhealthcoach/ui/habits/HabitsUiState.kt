@@ -17,5 +17,6 @@ data class HabitRowUiState(
     val frequencyLabel: String,
     val targetText: String?,
     val status: HabitStatus,
-    val isTodayTrackable: Boolean
+    val isTodayTrackable: Boolean,
+    val autoCompleteSource: String? = null
 )
