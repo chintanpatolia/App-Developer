@@ -116,7 +116,12 @@ fun NutritionRoute(viewModel: NutritionViewModel) {
             onDeleteEntry = viewModel::deleteEntry,
             onFormChange = viewModel::updateForm,
             onToggleSaved = { id, saved -> viewModel.toggleSaved(id, saved) },
-            onQuickAddFood = viewModel::quickAddFood,
+            onQuickAddFood = viewModel::showQuickAddDialog,
+            onDismissQuickAdd = viewModel::hideQuickAddDialog,
+            onConfirmQuickAdd = viewModel::confirmQuickAdd,
+            onQuickAddMealChange = viewModel::updateQuickAddMealName,
+            onQuickAddQuantityChange = viewModel::updateQuickAddQuantity,
+            onQuickAddTimeChange = viewModel::updateQuickAddTime,
             onCopyYesterday = viewModel::copyYesterday
         )
     }
@@ -1068,6 +1073,11 @@ fun NutritionPlanScreen(
     onFormChange: ((FoodEntryFormUiState) -> FoodEntryFormUiState) -> Unit,
     onToggleSaved: (Long, Boolean) -> Unit,
     onQuickAddFood: (QuickAddFoodUiState) -> Unit,
+    onDismissQuickAdd: () -> Unit,
+    onConfirmQuickAdd: () -> Unit,
+    onQuickAddMealChange: (String) -> Unit,
+    onQuickAddQuantityChange: (String) -> Unit,
+    onQuickAddTimeChange: (String) -> Unit,
     onCopyYesterday: () -> Unit
 ) {
     Box(modifier = Modifier.fillMaxWidth()) {
@@ -1121,6 +1131,19 @@ fun NutritionPlanScreen(
                         onInputChange = onAiInputChange,
                         onSubmit = onSubmitAiLog,
                         onCancel = onHideAiLog
+                    )
+                }
+                uiState.quickAddDialogFood?.let { food ->
+                    QuickAddDialog(
+                        food = food,
+                        mealName = uiState.quickAddMealName,
+                        quantity = uiState.quickAddQuantity,
+                        time = uiState.quickAddTime,
+                        onMealChange = onQuickAddMealChange,
+                        onQuantityChange = onQuickAddQuantityChange,
+                        onTimeChange = onQuickAddTimeChange,
+                        onConfirm = onConfirmQuickAdd,
+                        onDismiss = onDismissQuickAdd
                     )
                 }
                 if (uiState.isFormVisible) {
@@ -1603,6 +1626,96 @@ private fun UsualMealRow(
         }
         TextButton(onClick = onLog) {
             Text("Choose Meal", color = CyanAccent, fontWeight = FontWeight.Bold)
+        }
+    }
+}
+
+@Composable
+private fun QuickAddDialog(
+    food: QuickAddFoodUiState,
+    mealName: String,
+    quantity: String,
+    time: String,
+    onMealChange: (String) -> Unit,
+    onQuantityChange: (String) -> Unit,
+    onTimeChange: (String) -> Unit,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            shape = RoundedCornerShape(20.dp),
+            color = MainCard
+        ) {
+            Column(
+                modifier = Modifier.padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                Text(
+                    text = food.foodName,
+                    color = PrimaryText,
+                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.titleMedium
+                )
+                food.brandName?.let {
+                    Text(it, color = MutedText, style = MaterialTheme.typography.bodySmall)
+                }
+                val qty = quantity.toDoubleOrNull()?.coerceAtLeast(0.01) ?: 1.0
+                val scaledCal = (food.calories * qty).toInt()
+                val scaledP = food.proteinGrams * qty
+                val scaledC = food.carbGrams * qty
+                val scaledF = food.fatGrams * qty
+                val macroLine = buildString {
+                    if (scaledCal > 0) append("${scaledCal} kcal")
+                    if (scaledP > 0) append("  P${scaledP.clean()}g")
+                    if (scaledC > 0) append("  C${scaledC.clean()}g")
+                    if (scaledF > 0) append("  F${scaledF.clean()}g")
+                }
+                if (macroLine.isNotEmpty()) {
+                    Text(macroLine, color = CyanAccent, style = MaterialTheme.typography.bodySmall)
+                }
+                MealChips(selectedMeal = mealName, onMealSelected = onMealChange)
+                OutlinedTextField(
+                    value = quantity,
+                    onValueChange = onQuantityChange,
+                    label = { Text("Servings") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+                OutlinedTextField(
+                    value = time,
+                    onValueChange = onTimeChange,
+                    label = { Text("Time (HH:mm)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(999.dp)
+                    ) {
+                        Text("Cancel", color = MutedText)
+                    }
+                    Button(
+                        onClick = onConfirm,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(999.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = CyanAccent)
+                    ) {
+                        Text("Add", color = Color.Black, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
         }
     }
 }

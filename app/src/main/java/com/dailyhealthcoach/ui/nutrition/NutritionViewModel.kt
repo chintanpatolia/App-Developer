@@ -199,28 +199,87 @@ class NutritionViewModel(
         }
     }
 
-    fun quickAddFood(food: QuickAddFoodUiState) {
+    fun showQuickAddDialog(food: QuickAddFoodUiState) {
+        formState.update {
+            it.copy(
+                quickAddFood = food,
+                quickAddMealName = food.defaultMealName,
+                quickAddQuantity = "1",
+                quickAddTime = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm"))
+            )
+        }
+    }
+
+    fun hideQuickAddDialog() {
+        formState.update { it.copy(quickAddFood = null) }
+    }
+
+    fun updateQuickAddMealName(name: String) {
+        formState.update { it.copy(quickAddMealName = name) }
+    }
+
+    fun updateQuickAddQuantity(q: String) {
+        formState.update { it.copy(quickAddQuantity = q) }
+    }
+
+    fun updateQuickAddTime(t: String) {
+        formState.update { it.copy(quickAddTime = t) }
+    }
+
+    fun confirmQuickAdd() {
+        val state = formState.value
+        val food = state.quickAddFood ?: return
+        val qty = state.quickAddQuantity.toDoubleOrNull()?.coerceAtLeast(0.01) ?: 1.0
         viewModelScope.launch {
             nutritionRepository.saveFoodEntry(
                 FoodEntryInput(
                     id = 0,
                     date = today,
-                    mealName = food.defaultMealName,
+                    mealName = state.quickAddMealName.ifBlank { food.defaultMealName },
                     foodName = food.foodName,
                     brandName = food.brandName,
                     servingDescription = food.servingDescription,
-                    calories = food.calories.takeIf { it > 0 },
-                    proteinGrams = food.proteinGrams.takeIf { it > 0.0 },
-                    carbGrams = food.carbGrams.takeIf { it > 0.0 },
-                    fatGrams = food.fatGrams.takeIf { it > 0.0 },
-                    fiberGrams = food.fiberGrams.takeIf { it > 0.0 },
-                    mealTime = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm")),
+                    calories = food.calories.takeIf { it > 0 }?.let { (it * qty).toInt() },
+                    proteinGrams = food.proteinGrams.takeIf { it > 0.0 }?.let { it * qty },
+                    carbGrams = food.carbGrams.takeIf { it > 0.0 }?.let { it * qty },
+                    fatGrams = food.fatGrams.takeIf { it > 0.0 }?.let { it * qty },
+                    fiberGrams = food.fiberGrams.takeIf { it > 0.0 }?.let { it * qty },
+                    mealTime = state.quickAddTime.ifBlank { null },
                     isWholeFoodBased = food.isWholeFoodBased,
                     isProcessed = food.isProcessed,
-                    isFermented = food.isFermented
+                    isFermented = food.isFermented,
+                    barcode = food.barcode,
+                    source = food.source,
+                    vitaminA = food.vitaminA,
+                    vitaminC = food.vitaminC,
+                    vitaminD = food.vitaminD,
+                    vitaminB12 = food.vitaminB12,
+                    calcium = food.calcium,
+                    iron = food.iron,
+                    potassium = food.potassium,
+                    magnesium = food.magnesium,
+                    sodium = food.sodium,
+                    zinc = food.zinc,
+                    vitaminE = food.vitaminE,
+                    vitaminK = food.vitaminK,
+                    vitaminB1 = food.vitaminB1,
+                    vitaminB2 = food.vitaminB2,
+                    vitaminB3 = food.vitaminB3,
+                    vitaminB6 = food.vitaminB6,
+                    folate = food.folate,
+                    biotin = food.biotin,
+                    pantothenicAcid = food.pantothenicAcid,
+                    phosphorus = food.phosphorus,
+                    iodine = food.iodine,
+                    selenium = food.selenium,
+                    copper = food.copper,
+                    manganese = food.manganese,
+                    chromium = food.chromium,
+                    molybdenum = food.molybdenum
                 )
             )
             habitAutoUpdateUseCase(today)
+            formState.update { it.copy(quickAddFood = null) }
         }
     }
 
@@ -450,7 +509,11 @@ private data class FormVisibilityState(
     val isAiLogVisible: Boolean = false,
     val aiInput: String = "",
     val isAiParsing: Boolean = false,
-    val aiConfidenceMessage: String? = null
+    val aiConfidenceMessage: String? = null,
+    val quickAddFood: QuickAddFoodUiState? = null,
+    val quickAddMealName: String = "",
+    val quickAddQuantity: String = "1",
+    val quickAddTime: String = ""
 )
 
 private fun List<FoodEntry>.toUiState(
@@ -503,7 +566,11 @@ private fun List<FoodEntry>.toUiState(
         isAiLogVisible = form.isAiLogVisible,
         aiInput = form.aiInput,
         isAiParsing = form.isAiParsing,
-        aiConfidenceMessage = form.aiConfidenceMessage
+        aiConfidenceMessage = form.aiConfidenceMessage,
+        quickAddDialogFood = form.quickAddFood,
+        quickAddMealName = form.quickAddMealName,
+        quickAddQuantity = form.quickAddQuantity,
+        quickAddTime = form.quickAddTime
     )
 }
 
@@ -571,7 +638,35 @@ private fun FoodEntry.toQuickAddUiState(): QuickAddFoodUiState {
         isSaved = isSaved,
         isWholeFoodBased = isWholeFoodBased,
         isProcessed = isProcessed,
-        isFermented = isFermented
+        isFermented = isFermented,
+        barcode = barcode,
+        source = source,
+        vitaminA = vitaminA,
+        vitaminC = vitaminC,
+        vitaminD = vitaminD,
+        vitaminB12 = vitaminB12,
+        calcium = calcium,
+        iron = iron,
+        potassium = potassium,
+        magnesium = magnesium,
+        sodium = sodium,
+        zinc = zinc,
+        vitaminE = vitaminE,
+        vitaminK = vitaminK,
+        vitaminB1 = vitaminB1,
+        vitaminB2 = vitaminB2,
+        vitaminB3 = vitaminB3,
+        vitaminB6 = vitaminB6,
+        folate = folate,
+        biotin = biotin,
+        pantothenicAcid = pantothenicAcid,
+        phosphorus = phosphorus,
+        iodine = iodine,
+        selenium = selenium,
+        copper = copper,
+        manganese = manganese,
+        chromium = chromium,
+        molybdenum = molybdenum
     )
 }
 

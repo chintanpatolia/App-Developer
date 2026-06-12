@@ -23,7 +23,11 @@ data class NutritionUiState(
     val isAiLogVisible: Boolean = false,
     val aiInput: String = "",
     val isAiParsing: Boolean = false,
-    val aiConfidenceMessage: String? = null
+    val aiConfidenceMessage: String? = null,
+    val quickAddDialogFood: QuickAddFoodUiState? = null,
+    val quickAddMealName: String = "",
+    val quickAddQuantity: String = "1",
+    val quickAddTime: String = ""
 )
 
 data class UsualMealUiState(
@@ -57,7 +61,35 @@ data class QuickAddFoodUiState(
     val isSaved: Boolean,
     val isWholeFoodBased: Boolean,
     val isProcessed: Boolean,
-    val isFermented: Boolean
+    val isFermented: Boolean,
+    val barcode: String? = null,
+    val source: String = "MANUAL",
+    val vitaminA: Double? = null,
+    val vitaminC: Double? = null,
+    val vitaminD: Double? = null,
+    val vitaminB12: Double? = null,
+    val calcium: Double? = null,
+    val iron: Double? = null,
+    val potassium: Double? = null,
+    val magnesium: Double? = null,
+    val sodium: Double? = null,
+    val zinc: Double? = null,
+    val vitaminE: Double? = null,
+    val vitaminK: Double? = null,
+    val vitaminB1: Double? = null,
+    val vitaminB2: Double? = null,
+    val vitaminB3: Double? = null,
+    val vitaminB6: Double? = null,
+    val folate: Double? = null,
+    val biotin: Double? = null,
+    val pantothenicAcid: Double? = null,
+    val phosphorus: Double? = null,
+    val iodine: Double? = null,
+    val selenium: Double? = null,
+    val copper: Double? = null,
+    val manganese: Double? = null,
+    val chromium: Double? = null,
+    val molybdenum: Double? = null
 )
 
 data class MealSectionUiState(
