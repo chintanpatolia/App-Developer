@@ -75,6 +75,9 @@ import com.dailyhealthcoach.ui.theme.PrimaryText
 import com.dailyhealthcoach.ui.theme.SecondaryCard
 import com.dailyhealthcoach.ui.nutrition.NutritionViewModel
 import com.dailyhealthcoach.ui.nutrition.NutritionViewModelFactory
+import com.dailyhealthcoach.ui.recipes.RecipesRoute
+import com.dailyhealthcoach.ui.recipes.RecipesViewModel
+import com.dailyhealthcoach.ui.recipes.RecipesViewModelFactory
 import com.dailyhealthcoach.ui.workout.WorkoutViewModel
 import com.dailyhealthcoach.ui.workout.WorkoutViewModelFactory
 
@@ -205,7 +208,8 @@ fun DailyHealthCoachApp(appContainer: AppContainer) {
                 }
 
                 AppScreen.WORKOUT,
-                AppScreen.NUTRITION -> MainShellContent(
+                AppScreen.NUTRITION,
+                AppScreen.RECIPES -> MainShellContent(
                     selectedScreen = selectedScreen,
                     appContainer = appContainer
                 )
@@ -287,12 +291,25 @@ private fun MainShellContent(
                     factory = NutritionViewModelFactory(
                         nutritionRepository = appContainer.nutritionRepository,
                         macroTargetRepository = appContainer.macroTargetRepository,
+                        userProfileRepository = appContainer.userProfileRepository,
                         foodLookupService = appContainer.foodLookupService,
                         aiFoodLoggingService = appContainer.aiFoodLoggingService,
                         habitAutoUpdateUseCase = appContainer.habitAutoUpdateUseCase
                     )
                 )
                 NutritionRoute(viewModel = nutritionViewModel)
+            }
+
+            AppScreen.RECIPES -> {
+                val recipesViewModel: RecipesViewModel = viewModel(
+                    factory = RecipesViewModelFactory(
+                        nutritionRepository = appContainer.nutritionRepository,
+                        macroTargetRepository = appContainer.macroTargetRepository,
+                        userProfileRepository = appContainer.userProfileRepository,
+                        habitAutoUpdateUseCase = appContainer.habitAutoUpdateUseCase
+                    )
+                )
+                RecipesRoute(viewModel = recipesViewModel)
             }
 
             AppScreen.BODY,

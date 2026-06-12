@@ -8,8 +8,10 @@ import com.dailyhealthcoach.barcode.FoodLookupService
 import com.dailyhealthcoach.barcode.NutritionLabelOcrParser
 import com.dailyhealthcoach.domain.model.FoodEntry
 import com.dailyhealthcoach.domain.model.FoodEntryInput
+import com.dailyhealthcoach.domain.model.MacroTarget
 import com.dailyhealthcoach.domain.repository.MacroTargetRepository
 import com.dailyhealthcoach.domain.repository.NutritionRepository
+import com.dailyhealthcoach.domain.repository.UserProfileRepository
 import com.dailyhealthcoach.domain.usecase.HabitAutoUpdateUseCase
 import java.time.LocalDate
 import java.time.LocalTime
@@ -27,12 +29,16 @@ import kotlinx.coroutines.launch
 class NutritionViewModel(
     private val nutritionRepository: NutritionRepository,
     macroTargetRepository: MacroTargetRepository,
+    private val userProfileRepository: UserProfileRepository,
     private val foodLookupService: FoodLookupService,
     private val aiFoodLoggingService: AiFoodLoggingService,
     private val habitAutoUpdateUseCase: HabitAutoUpdateUseCase
 ) : ViewModel() {
     private val today = LocalDate.now().toString()
     private val formState = MutableStateFlow(FormVisibilityState())
+
+    private val userProfileState = userProfileRepository.observeUserProfile()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     val uiState: StateFlow<NutritionUiState> = combine(
         nutritionRepository.observeFoodEntriesForDate(today),
@@ -43,6 +49,9 @@ class NutritionViewModel(
         entries.toUiState(
             proteinGoalMin = macroTarget?.proteinMinGrams ?: 170,
             proteinGoalMax = macroTarget?.proteinMaxGrams ?: 200,
+            macroTarget = macroTarget,
+            goal = userProfileState.value?.nutritionGoal,
+            dietPreference = userProfileState.value?.dietPreference,
             form = form,
             allEntries = allEntries,
             hour = LocalTime.now().hour
@@ -519,6 +528,9 @@ private data class FormVisibilityState(
 private fun List<FoodEntry>.toUiState(
     proteinGoalMin: Int,
     proteinGoalMax: Int,
+    macroTarget: MacroTarget?,
+    goal: String?,
+    dietPreference: String?,
     form: FormVisibilityState,
     allEntries: List<FoodEntry>,
     hour: Int
@@ -538,6 +550,15 @@ private fun List<FoodEntry>.toUiState(
         .sortedByDescending { it.id }
         .distinctBy { it.foodName.lowercase() + "|" + (it.brandName?.lowercase() ?: "") }
         .map { it.toQuickAddUiState() }
+    val suggestions = RecipeSuggestionEngine.suggest(
+        savedFoods = savedFoods,
+        recentFoods = recentFoods,
+        consumedCalories = uiEntries.sumOf { it.calories },
+        consumedProtein = uiEntries.sumOf { it.proteinGrams },
+        macroTarget = macroTarget,
+        goal = goal,
+        dietPreference = dietPreference
+    )
     return NutritionUiState(
         calories = uiEntries.sumOf { it.calories },
         proteinGrams = uiEntries.sumOf { it.proteinGrams },
@@ -570,7 +591,8 @@ private fun List<FoodEntry>.toUiState(
         quickAddDialogFood = form.quickAddFood,
         quickAddMealName = form.quickAddMealName,
         quickAddQuantity = form.quickAddQuantity,
-        quickAddTime = form.quickAddTime
+        quickAddTime = form.quickAddTime,
+        suggestions = suggestions
     )
 }
 
@@ -721,6 +743,7 @@ private fun mealTimeScore(mealName: String, hour: Int): Int = when {
 class NutritionViewModelFactory(
     private val nutritionRepository: NutritionRepository,
     private val macroTargetRepository: MacroTargetRepository,
+    private val userProfileRepository: UserProfileRepository,
     private val foodLookupService: FoodLookupService,
     private val aiFoodLoggingService: AiFoodLoggingService,
     private val habitAutoUpdateUseCase: HabitAutoUpdateUseCase
@@ -731,6 +754,7 @@ class NutritionViewModelFactory(
             return NutritionViewModel(
                 nutritionRepository = nutritionRepository,
                 macroTargetRepository = macroTargetRepository,
+                userProfileRepository = userProfileRepository,
                 foodLookupService = foodLookupService,
                 aiFoodLoggingService = aiFoodLoggingService,
                 habitAutoUpdateUseCase = habitAutoUpdateUseCase

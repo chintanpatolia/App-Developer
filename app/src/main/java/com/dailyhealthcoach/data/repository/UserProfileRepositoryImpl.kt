@@ -33,6 +33,8 @@ class UserProfileRepositoryImpl(
                 stepMaxTarget = profile.stepMaxTarget,
                 sleepTargetHours = profile.sleepTargetHours,
                 strengthTrainingDaysPerWeek = profile.strengthTrainingDaysPerWeek,
+                nutritionGoal = profile.nutritionGoal,
+                dietPreference = profile.dietPreference,
                 createdAt = existing?.createdAt ?: now,
                 updatedAt = now
             )
@@ -54,6 +56,8 @@ private fun UserProfileEntity.toDomain(): UserProfile {
         stepMinTarget = stepMinTarget,
         stepMaxTarget = stepMaxTarget,
         sleepTargetHours = sleepTargetHours,
-        strengthTrainingDaysPerWeek = strengthTrainingDaysPerWeek
+        strengthTrainingDaysPerWeek = strengthTrainingDaysPerWeek,
+        nutritionGoal = nutritionGoal,
+        dietPreference = dietPreference
     )
 }

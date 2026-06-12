@@ -18,6 +18,8 @@ data class UserProfileEntity(
     val stepMaxTarget: Int? = null,
     val sleepTargetHours: Double? = null,
     val strengthTrainingDaysPerWeek: Int? = null,
+    val nutritionGoal: String? = null,
+    val dietPreference: String? = null,
     val createdAt: String,
     val updatedAt: String
 )

@@ -22,6 +22,8 @@ data class ProfileUiState(
     val stepMax: String = "10000",
     val sleepTarget: String = "7",
     val strengthTarget: String = "3",
+    val nutritionGoal: String = "Maintain",
+    val dietPreference: String = "No Restriction",
     val error: String? = null,
     val savedSuccess: Boolean = false,
     val hcImportConflict: HcImportConflict? = null,

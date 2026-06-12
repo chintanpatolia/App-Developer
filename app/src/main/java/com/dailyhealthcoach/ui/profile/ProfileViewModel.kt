@@ -62,7 +62,9 @@ class ProfileViewModel(
                 stepMin = profile?.stepMinTarget?.toString() ?: "8000",
                 stepMax = profile?.stepMaxTarget?.toString() ?: "10000",
                 sleepTarget = profile?.sleepTargetHours?.cleanString() ?: "7",
-                strengthTarget = profile?.strengthTrainingDaysPerWeek?.toString() ?: "3"
+                strengthTarget = profile?.strengthTrainingDaysPerWeek?.toString() ?: "3",
+                nutritionGoal = profile?.nutritionGoal ?: "Maintain",
+                dietPreference = profile?.dietPreference ?: "No Restriction"
             )
         }
     }
@@ -120,7 +122,9 @@ class ProfileViewModel(
                     stepMinTarget = stepMin,
                     stepMaxTarget = stepMax,
                     sleepTargetHours = sleepTarget,
-                    strengthTrainingDaysPerWeek = strengthTarget
+                    strengthTrainingDaysPerWeek = strengthTarget,
+                    nutritionGoal = s.nutritionGoal.ifBlank { null },
+                    dietPreference = s.dietPreference.ifBlank { null }
                 )
             )
             macroTargetRepository.saveTarget(

@@ -55,6 +55,7 @@ import com.dailyhealthcoach.ui.nutrition.MealSectionUiState
 import com.dailyhealthcoach.ui.nutrition.NutritionUiState
 import com.dailyhealthcoach.ui.nutrition.NutritionViewModel
 import com.dailyhealthcoach.ui.nutrition.QuickAddFoodUiState
+import com.dailyhealthcoach.ui.nutrition.RecipeSuggestionUiState
 import com.dailyhealthcoach.ui.nutrition.UsualMealUiState
 import com.dailyhealthcoach.ui.workout.ActivityDraft
 import com.dailyhealthcoach.ui.workout.DraftWorkoutSetUiState
@@ -1626,6 +1627,54 @@ private fun UsualMealRow(
         }
         TextButton(onClick = onLog) {
             Text("Choose Meal", color = CyanAccent, fontWeight = FontWeight.Bold)
+        }
+    }
+}
+
+@Composable
+private fun RecipeSuggestionsSection(
+    suggestions: List<RecipeSuggestionUiState>,
+    onAdd: (QuickAddFoodUiState) -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            text = "Recipe Suggestions",
+            color = PrimaryText,
+            fontWeight = FontWeight.Bold
+        )
+        suggestions.forEach { suggestion ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(SecondaryCard.copy(alpha = 0.55f))
+                    .padding(horizontal = 14.dp, vertical = 10.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = suggestion.mealName,
+                        color = MutedText,
+                        style = MaterialTheme.typography.labelSmall
+                    )
+                    Text(
+                        text = suggestion.food.foodName,
+                        color = PrimaryText,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    val info = buildString {
+                        if (suggestion.food.calories > 0) append("${suggestion.food.calories} kcal")
+                        if (suggestion.food.proteinGrams > 0) append("  P${suggestion.food.proteinGrams.clean()}g")
+                    }
+                    if (info.isNotEmpty()) {
+                        Text(info, color = MutedText, style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+                TextButton(onClick = { onAdd(suggestion.food) }) {
+                    Text("Add", color = CyanAccent, fontWeight = FontWeight.Bold)
+                }
+            }
         }
     }
 }

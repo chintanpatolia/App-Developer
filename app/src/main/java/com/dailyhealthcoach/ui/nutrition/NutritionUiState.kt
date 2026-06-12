@@ -27,7 +27,13 @@ data class NutritionUiState(
     val quickAddDialogFood: QuickAddFoodUiState? = null,
     val quickAddMealName: String = "",
     val quickAddQuantity: String = "1",
-    val quickAddTime: String = ""
+    val quickAddTime: String = "",
+    val suggestions: List<RecipeSuggestionUiState> = emptyList()
+)
+
+data class RecipeSuggestionUiState(
+    val mealName: String,
+    val food: QuickAddFoodUiState
 )
 
 data class UsualMealUiState(

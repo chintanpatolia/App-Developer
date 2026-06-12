@@ -13,5 +13,7 @@ data class UserProfile(
     val stepMinTarget: Int? = null,
     val stepMaxTarget: Int? = null,
     val sleepTargetHours: Double? = null,
-    val strengthTrainingDaysPerWeek: Int? = null
+    val strengthTrainingDaysPerWeek: Int? = null,
+    val nutritionGoal: String? = null,
+    val dietPreference: String? = null
 )
