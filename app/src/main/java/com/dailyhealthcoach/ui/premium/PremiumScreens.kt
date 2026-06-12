@@ -67,6 +67,11 @@ import com.dailyhealthcoach.ui.workout.WorkoutPlanUiState
 import com.dailyhealthcoach.ui.workout.WorkoutUiState
 import com.dailyhealthcoach.ui.workout.WorkoutViewModel
 import com.dailyhealthcoach.barcode.BarcodeScannerScreen
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 
 @Composable
 fun NutritionRoute(viewModel: NutritionViewModel) {
@@ -406,8 +411,12 @@ private fun ActiveWorkoutScreen(
                 OutlinedTextField(
                     value = uiState.overallRpe,
                     onValueChange = onOverallRpeChange,
-                    label = { Text("RPE") },
+                    label = { Text("RPE 1–10") },
                     singleLine = true,
+                    isError = uiState.overallRpeError != null,
+                    supportingText = uiState.overallRpeError?.let { err ->
+                        { Text(err, color = WarningAccent, style = MaterialTheme.typography.bodySmall) }
+                    },
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -525,7 +534,7 @@ private fun ActivityDraftCard(
     }
     ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(22.dp),
+        shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(containerColor = SecondaryCard),
         elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp)
     ) {
@@ -683,7 +692,7 @@ private fun CollapsedExerciseRow(
     OutlinedButton(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(22.dp),
+        shape = RoundedCornerShape(18.dp),
         colors = ButtonDefaults.outlinedButtonColors(
             containerColor = Color.Transparent,
             contentColor = PrimaryText
@@ -726,7 +735,7 @@ private fun ExerciseCard(
 ) {
     ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(26.dp),
+        shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(containerColor = SecondaryCard),
         elevation = CardDefaults.elevatedCardElevation(defaultElevation = 5.dp)
     ) {
@@ -1108,34 +1117,48 @@ fun NutritionPlanScreen(
                     )
                 }
                 if (uiState.isFormVisible) {
-                    uiState.barcodeMessage?.let { msg ->
-                        Text(
-                            msg,
-                            color = WarningAccent,
-                            style = MaterialTheme.typography.bodySmall,
-                            modifier = Modifier.padding(horizontal = 4.dp)
-                        )
+                    Dialog(
+                        onDismissRequest = onCancelForm,
+                        properties = DialogProperties(usePlatformDefaultWidth = false)
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .fillMaxHeight(0.92f)
+                                .padding(horizontal = 16.dp)
+                                .verticalScroll(rememberScrollState()),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            uiState.barcodeMessage?.let { msg ->
+                                Text(
+                                    msg,
+                                    color = WarningAccent,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    modifier = Modifier.padding(horizontal = 4.dp)
+                                )
+                            }
+                            uiState.aiConfidenceMessage?.let { msg ->
+                                Text(
+                                    msg,
+                                    color = WarningAccent,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    modifier = Modifier.padding(horizontal = 4.dp)
+                                )
+                                Text(
+                                    "AI estimates can be inaccurate. Review and edit before saving.",
+                                    color = MutedText,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    modifier = Modifier.padding(horizontal = 4.dp)
+                                )
+                            }
+                            FoodEntryForm(
+                                form = uiState.form,
+                                onFormChange = onFormChange,
+                                onSave = onSaveForm,
+                                onCancel = onCancelForm
+                            )
+                        }
                     }
-                    uiState.aiConfidenceMessage?.let { msg ->
-                        Text(
-                            msg,
-                            color = WarningAccent,
-                            style = MaterialTheme.typography.bodySmall,
-                            modifier = Modifier.padding(horizontal = 4.dp)
-                        )
-                        Text(
-                            "AI estimates can be inaccurate. Review and edit before saving.",
-                            color = MutedText,
-                            style = MaterialTheme.typography.bodySmall,
-                            modifier = Modifier.padding(horizontal = 4.dp)
-                        )
-                    }
-                    FoodEntryForm(
-                        form = uiState.form,
-                        onFormChange = onFormChange,
-                        onSave = onSaveForm,
-                        onCancel = onCancelForm
-                    )
                 }
                 UsualMealsSection(
                     meals = uiState.usualMeals,
@@ -1255,7 +1278,7 @@ private fun FoodEntryForm(
     ElevatedCard(
         modifier = Modifier
             .fillMaxWidth(),
-        shape = RoundedCornerShape(26.dp),
+        shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(containerColor = SecondaryCard),
         elevation = CardDefaults.elevatedCardElevation(defaultElevation = 5.dp)
     ) {
@@ -1264,7 +1287,11 @@ private fun FoodEntryForm(
             MealChips(selectedMeal = form.mealName, onMealSelected = { meal -> onFormChange { it.copy(mealName = meal) } })
             OutlinedTextField(value = form.foodName, onValueChange = { value -> onFormChange { it.copy(foodName = value) } }, label = { Text("Food name") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
             OutlinedTextField(value = form.brandName, onValueChange = { value -> onFormChange { it.copy(brandName = value) } }, label = { Text("Brand optional") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
-            OutlinedTextField(value = form.servingDescription, onValueChange = { value -> onFormChange { it.copy(servingDescription = value) } }, label = { Text("Serving size") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                OutlinedTextField(value = form.servingDescription, onValueChange = { value -> onFormChange { it.copy(servingDescription = value) } }, label = { Text("Serving size") }, modifier = Modifier.weight(2f), singleLine = true)
+                MacroInput("Quantity", form.quantity, Modifier.weight(1f)) { value -> onFormChange { it.copy(quantity = value.filterDecimal().ifBlank { "1" }) } }
+            }
+            Text(text = "Macros per 1 serving", color = MutedText, style = MaterialTheme.typography.labelSmall)
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 MacroInput("Calories", form.calories, Modifier.weight(1f)) { value -> onFormChange { it.copy(calories = value.filterDigits()) } }
                 MacroInput("Protein", form.proteinGrams, Modifier.weight(1f)) { value -> onFormChange { it.copy(proteinGrams = value.filterDecimal()) } }
@@ -1276,11 +1303,57 @@ private fun FoodEntryForm(
             }
             OutlinedTextField(value = form.mealTime, onValueChange = { value -> onFormChange { it.copy(mealTime = value) } }, label = { Text("Time eaten HH:mm") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
             FoodFlagChips(form = form, onFormChange = onFormChange)
+            VitaminsMineralsSection(form = form, onFormChange = onFormChange)
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 OutlinedButton(onClick = onCancel, modifier = Modifier.weight(1f), shape = RoundedCornerShape(999.dp)) {
                     Text("Cancel", color = MutedText)
                 }
                 PrimaryBlueButton(text = "Save Food", onClick = onSave, modifier = Modifier.weight(1f))
+            }
+        }
+    }
+}
+
+@Composable
+private fun VitaminsMineralsSection(
+    form: FoodEntryFormUiState,
+    onFormChange: ((FoodEntryFormUiState) -> FoodEntryFormUiState) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+    Column {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { expanded = !expanded }
+                .padding(vertical = 4.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("Vitamins & Minerals", color = MutedText, style = MaterialTheme.typography.labelMedium)
+            Text(if (expanded) "▲" else "▼", color = MutedText, style = MaterialTheme.typography.labelSmall)
+        }
+        if (expanded) {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    MacroInput("Vit A (mg)", form.vitaminA, Modifier.weight(1f)) { v -> onFormChange { it.copy(vitaminA = v.filterDecimal()) } }
+                    MacroInput("Vit C (mg)", form.vitaminC, Modifier.weight(1f)) { v -> onFormChange { it.copy(vitaminC = v.filterDecimal()) } }
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    MacroInput("Vit D (mg)", form.vitaminD, Modifier.weight(1f)) { v -> onFormChange { it.copy(vitaminD = v.filterDecimal()) } }
+                    MacroInput("B12 (mg)", form.vitaminB12, Modifier.weight(1f)) { v -> onFormChange { it.copy(vitaminB12 = v.filterDecimal()) } }
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    MacroInput("Calcium (mg)", form.calcium, Modifier.weight(1f)) { v -> onFormChange { it.copy(calcium = v.filterDecimal()) } }
+                    MacroInput("Iron (mg)", form.iron, Modifier.weight(1f)) { v -> onFormChange { it.copy(iron = v.filterDecimal()) } }
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    MacroInput("Potassium (mg)", form.potassium, Modifier.weight(1f)) { v -> onFormChange { it.copy(potassium = v.filterDecimal()) } }
+                    MacroInput("Magnesium (mg)", form.magnesium, Modifier.weight(1f)) { v -> onFormChange { it.copy(magnesium = v.filterDecimal()) } }
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    MacroInput("Sodium (mg)", form.sodium, Modifier.weight(1f)) { v -> onFormChange { it.copy(sodium = v.filterDecimal()) } }
+                    MacroInput("Zinc (mg)", form.zinc, Modifier.weight(1f)) { v -> onFormChange { it.copy(zinc = v.filterDecimal()) } }
+                }
             }
         }
     }
@@ -1537,7 +1610,7 @@ private fun FoodEntryRow(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(22.dp))
+            .clip(RoundedCornerShape(18.dp))
             .background(SecondaryCard.copy(alpha = 0.72f))
             .padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)

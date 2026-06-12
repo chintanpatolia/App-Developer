@@ -16,6 +16,7 @@ data class FoodEntryEntity(
     val brandName: String? = null,
     val barcode: String? = null,
     val servingDescription: String? = null,
+    val quantity: Double = 1.0,
     val calories: Int? = null,
     val proteinGrams: Double? = null,
     val carbGrams: Double? = null,
@@ -29,5 +30,15 @@ data class FoodEntryEntity(
     val notes: String? = null,
     val isSaved: Boolean = false,
     val createdAt: String,
-    val updatedAt: String
+    val updatedAt: String,
+    val vitaminA: Double? = null,
+    val vitaminC: Double? = null,
+    val vitaminD: Double? = null,
+    val vitaminB12: Double? = null,
+    val calcium: Double? = null,
+    val iron: Double? = null,
+    val potassium: Double? = null,
+    val magnesium: Double? = null,
+    val sodium: Double? = null,
+    val zinc: Double? = null
 )

@@ -31,6 +31,7 @@ class NutritionRepositoryImpl(
                 brandName = input.brandName,
                 barcode = input.barcode,
                 servingDescription = input.servingDescription,
+                quantity = input.quantity,
                 calories = input.calories,
                 proteinGrams = input.proteinGrams,
                 carbGrams = input.carbGrams,
@@ -42,7 +43,17 @@ class NutritionRepositoryImpl(
                 isFermented = input.isFermented,
                 source = input.source,
                 createdAt = now,
-                updatedAt = now
+                updatedAt = now,
+                vitaminA = input.vitaminA,
+                vitaminC = input.vitaminC,
+                vitaminD = input.vitaminD,
+                vitaminB12 = input.vitaminB12,
+                calcium = input.calcium,
+                iron = input.iron,
+                potassium = input.potassium,
+                magnesium = input.magnesium,
+                sodium = input.sodium,
+                zinc = input.zinc
             )
         )
     }
@@ -68,6 +79,7 @@ private fun FoodEntryEntity.toDomain(): FoodEntry {
         foodName = foodName,
         brandName = brandName,
         servingDescription = servingDescription,
+        quantity = quantity,
         calories = calories,
         proteinGrams = proteinGrams,
         carbGrams = carbGrams,
@@ -79,6 +91,16 @@ private fun FoodEntryEntity.toDomain(): FoodEntry {
         isFermented = isFermented,
         isSaved = isSaved,
         barcode = barcode,
-        source = source
+        source = source,
+        vitaminA = vitaminA,
+        vitaminC = vitaminC,
+        vitaminD = vitaminD,
+        vitaminB12 = vitaminB12,
+        calcium = calcium,
+        iron = iron,
+        potassium = potassium,
+        magnesium = magnesium,
+        sodium = sodium,
+        zinc = zinc
     )
 }

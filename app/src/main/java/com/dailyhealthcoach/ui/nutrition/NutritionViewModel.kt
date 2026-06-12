@@ -72,6 +72,7 @@ class NutritionViewModel(
     }
 
     fun editEntry(entry: FoodEntryUiState) {
+        val q = entry.quantity.coerceAtLeast(0.01)
         formState.value = FormVisibilityState(
             isVisible = true,
             form = FoodEntryFormUiState(
@@ -80,17 +81,34 @@ class NutritionViewModel(
                 foodName = entry.foodName,
                 brandName = entry.brandName.orEmpty(),
                 servingDescription = entry.servingDescription.orEmpty(),
-                calories = entry.calories.takeIf { it > 0 }?.toString().orEmpty(),
-                proteinGrams = entry.proteinGrams.takeIf { it > 0.0 }?.toString().orEmpty(),
-                carbGrams = entry.carbGrams.takeIf { it > 0.0 }?.toString().orEmpty(),
-                fatGrams = entry.fatGrams.takeIf { it > 0.0 }?.toString().orEmpty(),
-                fiberGrams = entry.fiberGrams.takeIf { it > 0.0 }?.toString().orEmpty(),
+                quantity = q.let { if (it == 1.0) "1" else it.toString() },
+                calories = entry.calories.takeIf { it > 0 }?.let { (it / q).toInt().takeIf { v -> v > 0 }?.toString() }.orEmpty(),
+                proteinGrams = entry.proteinGrams.takeIf { it > 0.0 }?.let { formatMacro(it / q) }.orEmpty(),
+                carbGrams = entry.carbGrams.takeIf { it > 0.0 }?.let { formatMacro(it / q) }.orEmpty(),
+                fatGrams = entry.fatGrams.takeIf { it > 0.0 }?.let { formatMacro(it / q) }.orEmpty(),
+                fiberGrams = entry.fiberGrams.takeIf { it > 0.0 }?.let { formatMacro(it / q) }.orEmpty(),
                 mealTime = entry.mealTime.orEmpty(),
                 isWholeFoodBased = entry.isWholeFoodBased,
                 isProcessed = entry.isProcessed,
-                isFermented = entry.isFermented
+                isFermented = entry.isFermented,
+                barcode = entry.barcode.orEmpty(),
+                source = entry.source,
+                vitaminA = entry.vitaminA?.let { formatMacro(it) }.orEmpty(),
+                vitaminC = entry.vitaminC?.let { formatMacro(it) }.orEmpty(),
+                vitaminD = entry.vitaminD?.let { formatMacro(it) }.orEmpty(),
+                vitaminB12 = entry.vitaminB12?.let { formatMacro(it) }.orEmpty(),
+                calcium = entry.calcium?.let { formatMacro(it) }.orEmpty(),
+                iron = entry.iron?.let { formatMacro(it) }.orEmpty(),
+                potassium = entry.potassium?.let { formatMacro(it) }.orEmpty(),
+                magnesium = entry.magnesium?.let { formatMacro(it) }.orEmpty(),
+                sodium = entry.sodium?.let { formatMacro(it) }.orEmpty(),
+                zinc = entry.zinc?.let { formatMacro(it) }.orEmpty()
             )
         )
+    }
+
+    private fun formatMacro(v: Double): String {
+        return if (v == v.toLong().toDouble()) v.toLong().toString() else "%.1f".format(v)
     }
 
     fun saveForm() {
@@ -98,6 +116,7 @@ class NutritionViewModel(
         if (form.foodName.isBlank()) return
 
         viewModelScope.launch {
+            val qty = form.quantity.toDoubleOrNull()?.coerceAtLeast(0.01) ?: 1.0
             nutritionRepository.saveFoodEntry(
                 FoodEntryInput(
                     id = form.editingId,
@@ -106,17 +125,28 @@ class NutritionViewModel(
                     foodName = form.foodName.trim(),
                     brandName = form.brandName.ifBlank { null },
                     servingDescription = form.servingDescription.ifBlank { null },
-                    calories = form.calories.toIntOrNull(),
-                    proteinGrams = form.proteinGrams.toDoubleOrNull(),
-                    carbGrams = form.carbGrams.toDoubleOrNull(),
-                    fatGrams = form.fatGrams.toDoubleOrNull(),
-                    fiberGrams = form.fiberGrams.toDoubleOrNull(),
+                    quantity = qty,
+                    calories = form.calories.toIntOrNull()?.let { (it * qty).toInt() },
+                    proteinGrams = form.proteinGrams.toDoubleOrNull()?.let { it * qty },
+                    carbGrams = form.carbGrams.toDoubleOrNull()?.let { it * qty },
+                    fatGrams = form.fatGrams.toDoubleOrNull()?.let { it * qty },
+                    fiberGrams = form.fiberGrams.toDoubleOrNull()?.let { it * qty },
                     mealTime = form.mealTime.ifBlank { null },
                     isWholeFoodBased = form.isWholeFoodBased,
                     isProcessed = form.isProcessed,
                     isFermented = form.isFermented,
                     barcode = form.barcode.ifBlank { null },
-                    source = form.source
+                    source = form.source,
+                    vitaminA = form.vitaminA.toDoubleOrNull(),
+                    vitaminC = form.vitaminC.toDoubleOrNull(),
+                    vitaminD = form.vitaminD.toDoubleOrNull(),
+                    vitaminB12 = form.vitaminB12.toDoubleOrNull(),
+                    calcium = form.calcium.toDoubleOrNull(),
+                    iron = form.iron.toDoubleOrNull(),
+                    potassium = form.potassium.toDoubleOrNull(),
+                    magnesium = form.magnesium.toDoubleOrNull(),
+                    sodium = form.sodium.toDoubleOrNull(),
+                    zinc = form.zinc.toDoubleOrNull()
                 )
             )
             habitAutoUpdateUseCase(today)
@@ -276,32 +306,56 @@ class NutritionViewModel(
         formState.update { it.copy(isScannerVisible = false) }
         val mealTimeNow = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm"))
         viewModelScope.launch {
-            val result = foodLookupService.lookup(barcode)
-            if (result != null) {
-                formState.update {
-                    it.copy(
-                        isVisible = true,
-                        barcodeMessage = null,
-                        form = FoodEntryFormUiState(
-                            mealTime = mealTimeNow,
-                            foodName = result.foodName,
-                            brandName = result.brandName.orEmpty(),
-                            servingDescription = result.servingDescription.orEmpty(),
-                            calories = result.calories?.toString().orEmpty(),
-                            proteinGrams = result.proteinGrams?.toString().orEmpty(),
-                            carbGrams = result.carbGrams?.toString().orEmpty(),
-                            fatGrams = result.fatGrams?.toString().orEmpty(),
-                            fiberGrams = result.fiberGrams?.toString().orEmpty(),
-                            barcode = barcode,
-                            source = result.source
+            try {
+                val result = foodLookupService.lookup(barcode)
+                if (result != null) {
+                    formState.update {
+                        it.copy(
+                            isVisible = true,
+                            barcodeMessage = null,
+                            form = FoodEntryFormUiState(
+                                mealTime = mealTimeNow,
+                                foodName = result.foodName,
+                                brandName = result.brandName.orEmpty(),
+                                servingDescription = result.servingDescription.orEmpty(),
+                                calories = result.calories?.toString().orEmpty(),
+                                proteinGrams = result.proteinGrams?.toString().orEmpty(),
+                                carbGrams = result.carbGrams?.toString().orEmpty(),
+                                fatGrams = result.fatGrams?.toString().orEmpty(),
+                                fiberGrams = result.fiberGrams?.toString().orEmpty(),
+                                barcode = barcode,
+                                source = result.source,
+                                vitaminA = result.vitaminA?.let { formatMacro(it) }.orEmpty(),
+                                vitaminC = result.vitaminC?.let { formatMacro(it) }.orEmpty(),
+                                vitaminD = result.vitaminD?.let { formatMacro(it) }.orEmpty(),
+                                vitaminB12 = result.vitaminB12?.let { formatMacro(it) }.orEmpty(),
+                                calcium = result.calcium?.let { formatMacro(it) }.orEmpty(),
+                                iron = result.iron?.let { formatMacro(it) }.orEmpty(),
+                                potassium = result.potassium?.let { formatMacro(it) }.orEmpty(),
+                                magnesium = result.magnesium?.let { formatMacro(it) }.orEmpty(),
+                                sodium = result.sodium?.let { formatMacro(it) }.orEmpty(),
+                                zinc = result.zinc?.let { formatMacro(it) }.orEmpty()
+                            )
                         )
-                    )
+                    }
+                } else {
+                    formState.update {
+                        it.copy(
+                            isVisible = true,
+                            barcodeMessage = "Food not found. Enter details manually.",
+                            form = FoodEntryFormUiState(
+                                mealTime = mealTimeNow,
+                                barcode = barcode,
+                                source = "BARCODE_MANUAL"
+                            )
+                        )
+                    }
                 }
-            } else {
+            } catch (_: java.io.IOException) {
                 formState.update {
                     it.copy(
                         isVisible = true,
-                        barcodeMessage = "Barcode $barcode not found. Enter food details manually.",
+                        barcodeMessage = "Network error. Check your connection and try again.",
                         form = FoodEntryFormUiState(
                             mealTime = mealTimeNow,
                             barcode = barcode,
@@ -383,6 +437,7 @@ private fun FoodEntry.toUiState(): FoodEntryUiState {
         foodName = foodName,
         brandName = brandName,
         servingDescription = servingDescription,
+        quantity = quantity,
         calories = calories ?: 0,
         proteinGrams = proteinGrams ?: 0.0,
         carbGrams = carbGrams ?: 0.0,
@@ -392,7 +447,19 @@ private fun FoodEntry.toUiState(): FoodEntryUiState {
         isWholeFoodBased = isWholeFoodBased,
         isProcessed = isProcessed,
         isFermented = isFermented,
-        isSaved = isSaved
+        isSaved = isSaved,
+        barcode = barcode,
+        source = source,
+        vitaminA = vitaminA,
+        vitaminC = vitaminC,
+        vitaminD = vitaminD,
+        vitaminB12 = vitaminB12,
+        calcium = calcium,
+        iron = iron,
+        potassium = potassium,
+        magnesium = magnesium,
+        sodium = sodium,
+        zinc = zinc
     )
 }
 

@@ -68,6 +68,7 @@ data class FoodEntryUiState(
     val foodName: String,
     val brandName: String?,
     val servingDescription: String?,
+    val quantity: Double = 1.0,
     val calories: Int,
     val proteinGrams: Double,
     val carbGrams: Double,
@@ -77,7 +78,19 @@ data class FoodEntryUiState(
     val isWholeFoodBased: Boolean,
     val isProcessed: Boolean,
     val isFermented: Boolean,
-    val isSaved: Boolean = false
+    val isSaved: Boolean = false,
+    val barcode: String? = null,
+    val source: String = "MANUAL",
+    val vitaminA: Double? = null,
+    val vitaminC: Double? = null,
+    val vitaminD: Double? = null,
+    val vitaminB12: Double? = null,
+    val calcium: Double? = null,
+    val iron: Double? = null,
+    val potassium: Double? = null,
+    val magnesium: Double? = null,
+    val sodium: Double? = null,
+    val zinc: Double? = null
 )
 
 data class FoodEntryFormUiState(
@@ -86,6 +99,7 @@ data class FoodEntryFormUiState(
     val foodName: String = "",
     val brandName: String = "",
     val servingDescription: String = "",
+    val quantity: String = "1",
     val calories: String = "",
     val proteinGrams: String = "",
     val carbGrams: String = "",
@@ -96,5 +110,15 @@ data class FoodEntryFormUiState(
     val isProcessed: Boolean = false,
     val isFermented: Boolean = false,
     val barcode: String = "",
-    val source: String = "MANUAL"
+    val source: String = "MANUAL",
+    val vitaminA: String = "",
+    val vitaminC: String = "",
+    val vitaminD: String = "",
+    val vitaminB12: String = "",
+    val calcium: String = "",
+    val iron: String = "",
+    val potassium: String = "",
+    val magnesium: String = "",
+    val sodium: String = "",
+    val zinc: String = ""
 )

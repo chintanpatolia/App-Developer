@@ -7,6 +7,7 @@ data class FoodEntryInput(
     val foodName: String,
     val brandName: String?,
     val servingDescription: String?,
+    val quantity: Double = 1.0,
     val calories: Int?,
     val proteinGrams: Double?,
     val carbGrams: Double?,
@@ -17,5 +18,15 @@ data class FoodEntryInput(
     val isProcessed: Boolean,
     val isFermented: Boolean,
     val barcode: String? = null,
-    val source: String = "MANUAL"
+    val source: String = "MANUAL",
+    val vitaminA: Double? = null,
+    val vitaminC: Double? = null,
+    val vitaminD: Double? = null,
+    val vitaminB12: Double? = null,
+    val calcium: Double? = null,
+    val iron: Double? = null,
+    val potassium: Double? = null,
+    val magnesium: Double? = null,
+    val sodium: Double? = null,
+    val zinc: Double? = null
 )
