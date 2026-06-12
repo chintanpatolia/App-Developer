@@ -31,6 +31,8 @@ data class FoodEntryEntity(
     val isSaved: Boolean = false,
     val createdAt: String,
     val updatedAt: String,
+    // vitamins in mcg: vitaminA, vitaminD, vitaminK, vitaminB12, folate, biotin, iodine, selenium, chromium, molybdenum
+    // vitamins in mg:  vitaminC, vitaminE, vitaminB1-B3, B5, B6, and all minerals below
     val vitaminA: Double? = null,
     val vitaminC: Double? = null,
     val vitaminD: Double? = null,
@@ -40,5 +42,21 @@ data class FoodEntryEntity(
     val potassium: Double? = null,
     val magnesium: Double? = null,
     val sodium: Double? = null,
-    val zinc: Double? = null
+    val zinc: Double? = null,
+    val vitaminE: Double? = null,
+    val vitaminK: Double? = null,
+    val vitaminB1: Double? = null,
+    val vitaminB2: Double? = null,
+    val vitaminB3: Double? = null,
+    val vitaminB6: Double? = null,
+    val folate: Double? = null,
+    val biotin: Double? = null,
+    val pantothenicAcid: Double? = null,
+    val phosphorus: Double? = null,
+    val iodine: Double? = null,
+    val selenium: Double? = null,
+    val copper: Double? = null,
+    val manganese: Double? = null,
+    val chromium: Double? = null,
+    val molybdenum: Double? = null
 )

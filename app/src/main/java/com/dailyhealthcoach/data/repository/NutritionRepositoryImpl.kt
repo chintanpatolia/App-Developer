@@ -53,7 +53,23 @@ class NutritionRepositoryImpl(
                 potassium = input.potassium,
                 magnesium = input.magnesium,
                 sodium = input.sodium,
-                zinc = input.zinc
+                zinc = input.zinc,
+                vitaminE = input.vitaminE,
+                vitaminK = input.vitaminK,
+                vitaminB1 = input.vitaminB1,
+                vitaminB2 = input.vitaminB2,
+                vitaminB3 = input.vitaminB3,
+                vitaminB6 = input.vitaminB6,
+                folate = input.folate,
+                biotin = input.biotin,
+                pantothenicAcid = input.pantothenicAcid,
+                phosphorus = input.phosphorus,
+                iodine = input.iodine,
+                selenium = input.selenium,
+                copper = input.copper,
+                manganese = input.manganese,
+                chromium = input.chromium,
+                molybdenum = input.molybdenum
             )
         )
     }
@@ -101,6 +117,22 @@ private fun FoodEntryEntity.toDomain(): FoodEntry {
         potassium = potassium,
         magnesium = magnesium,
         sodium = sodium,
-        zinc = zinc
+        zinc = zinc,
+        vitaminE = vitaminE,
+        vitaminK = vitaminK,
+        vitaminB1 = vitaminB1,
+        vitaminB2 = vitaminB2,
+        vitaminB3 = vitaminB3,
+        vitaminB6 = vitaminB6,
+        folate = folate,
+        biotin = biotin,
+        pantothenicAcid = pantothenicAcid,
+        phosphorus = phosphorus,
+        iodine = iodine,
+        selenium = selenium,
+        copper = copper,
+        manganese = manganese,
+        chromium = chromium,
+        molybdenum = molybdenum
     )
 }

@@ -47,6 +47,7 @@ class OpenFoodFactsService : FoodLookupService {
             }
 
             fun nutrMg(key: String): Double? = nutr(key)?.let { it * 1000.0 }
+            fun nutrMcg(key: String): Double? = nutr(key)?.let { it * 1_000_000.0 }
 
             FoodLookupResult(
                 barcode = barcode,
@@ -59,16 +60,32 @@ class OpenFoodFactsService : FoodLookupService {
                 fatGrams = nutr("fat"),
                 fiberGrams = nutr("fiber"),
                 source = "OPEN_FOOD_FACTS",
-                vitaminA = nutrMg("vitamin-a"),
+                vitaminA = nutrMcg("vitamin-a"),
                 vitaminC = nutrMg("vitamin-c"),
-                vitaminD = nutrMg("vitamin-d"),
-                vitaminB12 = nutrMg("vitamin-b12"),
+                vitaminD = nutrMcg("vitamin-d"),
+                vitaminB12 = nutrMcg("vitamin-b12"),
                 calcium = nutrMg("calcium"),
                 iron = nutrMg("iron"),
                 potassium = nutrMg("potassium"),
                 magnesium = nutrMg("magnesium"),
                 sodium = nutrMg("sodium"),
-                zinc = nutrMg("zinc")
+                zinc = nutrMg("zinc"),
+                vitaminE = nutrMg("vitamin-e"),
+                vitaminK = nutrMcg("vitamin-k"),
+                vitaminB1 = nutrMg("vitamin-b1") ?: nutrMg("thiamin"),
+                vitaminB2 = nutrMg("vitamin-b2") ?: nutrMg("riboflavin"),
+                vitaminB3 = nutrMg("vitamin-pp") ?: nutrMg("niacin"),
+                vitaminB6 = nutrMg("vitamin-b6"),
+                folate = nutrMcg("vitamin-b9") ?: nutrMcg("folates"),
+                biotin = nutrMcg("biotin"),
+                pantothenicAcid = nutrMg("pantothenic-acid"),
+                phosphorus = nutrMg("phosphorus"),
+                iodine = nutrMcg("iodine"),
+                selenium = nutrMcg("selenium"),
+                copper = nutrMg("copper"),
+                manganese = nutrMg("manganese"),
+                chromium = nutrMcg("chromium"),
+                molybdenum = nutrMcg("molybdenum")
             )
         } catch (e: IOException) {
             throw e

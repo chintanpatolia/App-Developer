@@ -90,7 +90,23 @@ data class FoodEntryUiState(
     val potassium: Double? = null,
     val magnesium: Double? = null,
     val sodium: Double? = null,
-    val zinc: Double? = null
+    val zinc: Double? = null,
+    val vitaminE: Double? = null,
+    val vitaminK: Double? = null,
+    val vitaminB1: Double? = null,
+    val vitaminB2: Double? = null,
+    val vitaminB3: Double? = null,
+    val vitaminB6: Double? = null,
+    val folate: Double? = null,
+    val biotin: Double? = null,
+    val pantothenicAcid: Double? = null,
+    val phosphorus: Double? = null,
+    val iodine: Double? = null,
+    val selenium: Double? = null,
+    val copper: Double? = null,
+    val manganese: Double? = null,
+    val chromium: Double? = null,
+    val molybdenum: Double? = null
 )
 
 data class FoodEntryFormUiState(
@@ -120,5 +136,21 @@ data class FoodEntryFormUiState(
     val potassium: String = "",
     val magnesium: String = "",
     val sodium: String = "",
-    val zinc: String = ""
+    val zinc: String = "",
+    val vitaminE: String = "",
+    val vitaminK: String = "",
+    val vitaminB1: String = "",
+    val vitaminB2: String = "",
+    val vitaminB3: String = "",
+    val vitaminB6: String = "",
+    val folate: String = "",
+    val biotin: String = "",
+    val pantothenicAcid: String = "",
+    val phosphorus: String = "",
+    val iodine: String = "",
+    val selenium: String = "",
+    val copper: String = "",
+    val manganese: String = "",
+    val chromium: String = "",
+    val molybdenum: String = ""
 )

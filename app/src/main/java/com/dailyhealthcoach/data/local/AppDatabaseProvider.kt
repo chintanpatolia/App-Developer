@@ -16,7 +16,7 @@ object AppDatabaseProvider {
                 AppDatabase::class.java,
                 "daily_health_coach.db"
             )
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10)
                 .build()
                 .also { database = it }
         }
@@ -72,6 +72,33 @@ object AppDatabaseProvider {
     private val MIGRATION_7_8 = object : Migration(7, 8) {
         override fun migrate(db: SupportSQLiteDatabase) {
             db.execSQL("ALTER TABLE food_entries ADD COLUMN quantity REAL NOT NULL DEFAULT 1.0")
+        }
+    }
+
+    private val MIGRATION_9_10 = object : Migration(9, 10) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            // Fix existing vitamins from mg to mcg (multiply ×1000)
+            db.execSQL("UPDATE food_entries SET vitaminA = vitaminA * 1000 WHERE vitaminA IS NOT NULL")
+            db.execSQL("UPDATE food_entries SET vitaminD = vitaminD * 1000 WHERE vitaminD IS NOT NULL")
+            db.execSQL("UPDATE food_entries SET vitaminB12 = vitaminB12 * 1000 WHERE vitaminB12 IS NOT NULL")
+            // New vitamin columns
+            db.execSQL("ALTER TABLE food_entries ADD COLUMN vitaminE REAL")
+            db.execSQL("ALTER TABLE food_entries ADD COLUMN vitaminK REAL")
+            db.execSQL("ALTER TABLE food_entries ADD COLUMN vitaminB1 REAL")
+            db.execSQL("ALTER TABLE food_entries ADD COLUMN vitaminB2 REAL")
+            db.execSQL("ALTER TABLE food_entries ADD COLUMN vitaminB3 REAL")
+            db.execSQL("ALTER TABLE food_entries ADD COLUMN vitaminB6 REAL")
+            db.execSQL("ALTER TABLE food_entries ADD COLUMN folate REAL")
+            db.execSQL("ALTER TABLE food_entries ADD COLUMN biotin REAL")
+            db.execSQL("ALTER TABLE food_entries ADD COLUMN pantothenicAcid REAL")
+            // New mineral columns
+            db.execSQL("ALTER TABLE food_entries ADD COLUMN phosphorus REAL")
+            db.execSQL("ALTER TABLE food_entries ADD COLUMN iodine REAL")
+            db.execSQL("ALTER TABLE food_entries ADD COLUMN selenium REAL")
+            db.execSQL("ALTER TABLE food_entries ADD COLUMN copper REAL")
+            db.execSQL("ALTER TABLE food_entries ADD COLUMN manganese REAL")
+            db.execSQL("ALTER TABLE food_entries ADD COLUMN chromium REAL")
+            db.execSQL("ALTER TABLE food_entries ADD COLUMN molybdenum REAL")
         }
     }
 

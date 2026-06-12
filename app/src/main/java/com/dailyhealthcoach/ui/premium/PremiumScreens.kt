@@ -1334,14 +1334,36 @@ private fun VitaminsMineralsSection(
         }
         if (expanded) {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text("Vitamins", color = MutedText, style = MaterialTheme.typography.labelSmall)
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    MacroInput("Vit A (mg)", form.vitaminA, Modifier.weight(1f)) { v -> onFormChange { it.copy(vitaminA = v.filterDecimal()) } }
+                    MacroInput("Vit A (mcg)", form.vitaminA, Modifier.weight(1f)) { v -> onFormChange { it.copy(vitaminA = v.filterDecimal()) } }
                     MacroInput("Vit C (mg)", form.vitaminC, Modifier.weight(1f)) { v -> onFormChange { it.copy(vitaminC = v.filterDecimal()) } }
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    MacroInput("Vit D (mg)", form.vitaminD, Modifier.weight(1f)) { v -> onFormChange { it.copy(vitaminD = v.filterDecimal()) } }
-                    MacroInput("B12 (mg)", form.vitaminB12, Modifier.weight(1f)) { v -> onFormChange { it.copy(vitaminB12 = v.filterDecimal()) } }
+                    MacroInput("Vit D (mcg)", form.vitaminD, Modifier.weight(1f)) { v -> onFormChange { it.copy(vitaminD = v.filterDecimal()) } }
+                    MacroInput("Vit E (mg)", form.vitaminE, Modifier.weight(1f)) { v -> onFormChange { it.copy(vitaminE = v.filterDecimal()) } }
                 }
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    MacroInput("Vit K (mcg)", form.vitaminK, Modifier.weight(1f)) { v -> onFormChange { it.copy(vitaminK = v.filterDecimal()) } }
+                    MacroInput("B1/Thiamin (mg)", form.vitaminB1, Modifier.weight(1f)) { v -> onFormChange { it.copy(vitaminB1 = v.filterDecimal()) } }
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    MacroInput("B2/Riboflavin (mg)", form.vitaminB2, Modifier.weight(1f)) { v -> onFormChange { it.copy(vitaminB2 = v.filterDecimal()) } }
+                    MacroInput("B3/Niacin (mg)", form.vitaminB3, Modifier.weight(1f)) { v -> onFormChange { it.copy(vitaminB3 = v.filterDecimal()) } }
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    MacroInput("B5/Pantothenic (mg)", form.pantothenicAcid, Modifier.weight(1f)) { v -> onFormChange { it.copy(pantothenicAcid = v.filterDecimal()) } }
+                    MacroInput("B6 (mg)", form.vitaminB6, Modifier.weight(1f)) { v -> onFormChange { it.copy(vitaminB6 = v.filterDecimal()) } }
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    MacroInput("B12 (mcg)", form.vitaminB12, Modifier.weight(1f)) { v -> onFormChange { it.copy(vitaminB12 = v.filterDecimal()) } }
+                    MacroInput("Folate (mcg)", form.folate, Modifier.weight(1f)) { v -> onFormChange { it.copy(folate = v.filterDecimal()) } }
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    MacroInput("Biotin (mcg)", form.biotin, Modifier.weight(1f)) { v -> onFormChange { it.copy(biotin = v.filterDecimal()) } }
+                    Spacer(Modifier.weight(1f))
+                }
+                Text("Minerals", color = MutedText, style = MaterialTheme.typography.labelSmall)
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     MacroInput("Calcium (mg)", form.calcium, Modifier.weight(1f)) { v -> onFormChange { it.copy(calcium = v.filterDecimal()) } }
                     MacroInput("Iron (mg)", form.iron, Modifier.weight(1f)) { v -> onFormChange { it.copy(iron = v.filterDecimal()) } }
@@ -1353,6 +1375,22 @@ private fun VitaminsMineralsSection(
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     MacroInput("Sodium (mg)", form.sodium, Modifier.weight(1f)) { v -> onFormChange { it.copy(sodium = v.filterDecimal()) } }
                     MacroInput("Zinc (mg)", form.zinc, Modifier.weight(1f)) { v -> onFormChange { it.copy(zinc = v.filterDecimal()) } }
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    MacroInput("Phosphorus (mg)", form.phosphorus, Modifier.weight(1f)) { v -> onFormChange { it.copy(phosphorus = v.filterDecimal()) } }
+                    MacroInput("Iodine (mcg)", form.iodine, Modifier.weight(1f)) { v -> onFormChange { it.copy(iodine = v.filterDecimal()) } }
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    MacroInput("Selenium (mcg)", form.selenium, Modifier.weight(1f)) { v -> onFormChange { it.copy(selenium = v.filterDecimal()) } }
+                    MacroInput("Copper (mg)", form.copper, Modifier.weight(1f)) { v -> onFormChange { it.copy(copper = v.filterDecimal()) } }
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    MacroInput("Manganese (mg)", form.manganese, Modifier.weight(1f)) { v -> onFormChange { it.copy(manganese = v.filterDecimal()) } }
+                    MacroInput("Chromium (mcg)", form.chromium, Modifier.weight(1f)) { v -> onFormChange { it.copy(chromium = v.filterDecimal()) } }
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    MacroInput("Molybdenum (mcg)", form.molybdenum, Modifier.weight(1f)) { v -> onFormChange { it.copy(molybdenum = v.filterDecimal()) } }
+                    Spacer(Modifier.weight(1f))
                 }
             }
         }

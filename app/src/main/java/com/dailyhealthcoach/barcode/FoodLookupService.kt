@@ -20,7 +20,23 @@ data class FoodLookupResult(
     val potassium: Double? = null,
     val magnesium: Double? = null,
     val sodium: Double? = null,
-    val zinc: Double? = null
+    val zinc: Double? = null,
+    val vitaminE: Double? = null,
+    val vitaminK: Double? = null,
+    val vitaminB1: Double? = null,
+    val vitaminB2: Double? = null,
+    val vitaminB3: Double? = null,
+    val vitaminB6: Double? = null,
+    val folate: Double? = null,
+    val biotin: Double? = null,
+    val pantothenicAcid: Double? = null,
+    val phosphorus: Double? = null,
+    val iodine: Double? = null,
+    val selenium: Double? = null,
+    val copper: Double? = null,
+    val manganese: Double? = null,
+    val chromium: Double? = null,
+    val molybdenum: Double? = null
 )
 
 interface FoodLookupService {

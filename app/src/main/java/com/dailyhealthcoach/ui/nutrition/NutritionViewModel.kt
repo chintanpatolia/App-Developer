@@ -102,7 +102,23 @@ class NutritionViewModel(
                 potassium = entry.potassium?.let { formatMacro(it) }.orEmpty(),
                 magnesium = entry.magnesium?.let { formatMacro(it) }.orEmpty(),
                 sodium = entry.sodium?.let { formatMacro(it) }.orEmpty(),
-                zinc = entry.zinc?.let { formatMacro(it) }.orEmpty()
+                zinc = entry.zinc?.let { formatMacro(it) }.orEmpty(),
+                vitaminE = entry.vitaminE?.let { formatMacro(it) }.orEmpty(),
+                vitaminK = entry.vitaminK?.let { formatMacro(it) }.orEmpty(),
+                vitaminB1 = entry.vitaminB1?.let { formatMacro(it) }.orEmpty(),
+                vitaminB2 = entry.vitaminB2?.let { formatMacro(it) }.orEmpty(),
+                vitaminB3 = entry.vitaminB3?.let { formatMacro(it) }.orEmpty(),
+                vitaminB6 = entry.vitaminB6?.let { formatMacro(it) }.orEmpty(),
+                folate = entry.folate?.let { formatMacro(it) }.orEmpty(),
+                biotin = entry.biotin?.let { formatMacro(it) }.orEmpty(),
+                pantothenicAcid = entry.pantothenicAcid?.let { formatMacro(it) }.orEmpty(),
+                phosphorus = entry.phosphorus?.let { formatMacro(it) }.orEmpty(),
+                iodine = entry.iodine?.let { formatMacro(it) }.orEmpty(),
+                selenium = entry.selenium?.let { formatMacro(it) }.orEmpty(),
+                copper = entry.copper?.let { formatMacro(it) }.orEmpty(),
+                manganese = entry.manganese?.let { formatMacro(it) }.orEmpty(),
+                chromium = entry.chromium?.let { formatMacro(it) }.orEmpty(),
+                molybdenum = entry.molybdenum?.let { formatMacro(it) }.orEmpty()
             )
         )
     }
@@ -146,7 +162,23 @@ class NutritionViewModel(
                     potassium = form.potassium.toDoubleOrNull(),
                     magnesium = form.magnesium.toDoubleOrNull(),
                     sodium = form.sodium.toDoubleOrNull(),
-                    zinc = form.zinc.toDoubleOrNull()
+                    zinc = form.zinc.toDoubleOrNull(),
+                    vitaminE = form.vitaminE.toDoubleOrNull(),
+                    vitaminK = form.vitaminK.toDoubleOrNull(),
+                    vitaminB1 = form.vitaminB1.toDoubleOrNull(),
+                    vitaminB2 = form.vitaminB2.toDoubleOrNull(),
+                    vitaminB3 = form.vitaminB3.toDoubleOrNull(),
+                    vitaminB6 = form.vitaminB6.toDoubleOrNull(),
+                    folate = form.folate.toDoubleOrNull(),
+                    biotin = form.biotin.toDoubleOrNull(),
+                    pantothenicAcid = form.pantothenicAcid.toDoubleOrNull(),
+                    phosphorus = form.phosphorus.toDoubleOrNull(),
+                    iodine = form.iodine.toDoubleOrNull(),
+                    selenium = form.selenium.toDoubleOrNull(),
+                    copper = form.copper.toDoubleOrNull(),
+                    manganese = form.manganese.toDoubleOrNull(),
+                    chromium = form.chromium.toDoubleOrNull(),
+                    molybdenum = form.molybdenum.toDoubleOrNull()
                 )
             )
             habitAutoUpdateUseCase(today)
@@ -334,7 +366,23 @@ class NutritionViewModel(
                                 potassium = result.potassium?.let { formatMacro(it) }.orEmpty(),
                                 magnesium = result.magnesium?.let { formatMacro(it) }.orEmpty(),
                                 sodium = result.sodium?.let { formatMacro(it) }.orEmpty(),
-                                zinc = result.zinc?.let { formatMacro(it) }.orEmpty()
+                                zinc = result.zinc?.let { formatMacro(it) }.orEmpty(),
+                                vitaminE = result.vitaminE?.let { formatMacro(it) }.orEmpty(),
+                                vitaminK = result.vitaminK?.let { formatMacro(it) }.orEmpty(),
+                                vitaminB1 = result.vitaminB1?.let { formatMacro(it) }.orEmpty(),
+                                vitaminB2 = result.vitaminB2?.let { formatMacro(it) }.orEmpty(),
+                                vitaminB3 = result.vitaminB3?.let { formatMacro(it) }.orEmpty(),
+                                vitaminB6 = result.vitaminB6?.let { formatMacro(it) }.orEmpty(),
+                                folate = result.folate?.let { formatMacro(it) }.orEmpty(),
+                                biotin = result.biotin?.let { formatMacro(it) }.orEmpty(),
+                                pantothenicAcid = result.pantothenicAcid?.let { formatMacro(it) }.orEmpty(),
+                                phosphorus = result.phosphorus?.let { formatMacro(it) }.orEmpty(),
+                                iodine = result.iodine?.let { formatMacro(it) }.orEmpty(),
+                                selenium = result.selenium?.let { formatMacro(it) }.orEmpty(),
+                                copper = result.copper?.let { formatMacro(it) }.orEmpty(),
+                                manganese = result.manganese?.let { formatMacro(it) }.orEmpty(),
+                                chromium = result.chromium?.let { formatMacro(it) }.orEmpty(),
+                                molybdenum = result.molybdenum?.let { formatMacro(it) }.orEmpty()
                             )
                         )
                     }
@@ -459,7 +507,23 @@ private fun FoodEntry.toUiState(): FoodEntryUiState {
         potassium = potassium,
         magnesium = magnesium,
         sodium = sodium,
-        zinc = zinc
+        zinc = zinc,
+        vitaminE = vitaminE,
+        vitaminK = vitaminK,
+        vitaminB1 = vitaminB1,
+        vitaminB2 = vitaminB2,
+        vitaminB3 = vitaminB3,
+        vitaminB6 = vitaminB6,
+        folate = folate,
+        biotin = biotin,
+        pantothenicAcid = pantothenicAcid,
+        phosphorus = phosphorus,
+        iodine = iodine,
+        selenium = selenium,
+        copper = copper,
+        manganese = manganese,
+        chromium = chromium,
+        molybdenum = molybdenum
     )
 }
 
