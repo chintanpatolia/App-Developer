@@ -57,6 +57,16 @@ dependencies {
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
 
+    // Health Connect
+    implementation("androidx.health.connect:connect-client:1.1.0-alpha11")
+
+    // Guava android needed on compile classpath so CameraX's ListenableFuture is visible
+    // (HC strict-pins listenablefuture to the empty artifact; full guava carries the class itself)
+    implementation("com.google.guava:guava:31.1-android")
+
+    // WorkManager for periodic HC background sync
+    implementation("androidx.work:work-runtime-ktx:2.9.0")
+
     // CameraX + ML Kit for barcode scanning (Phase 17)
     implementation("androidx.camera:camera-core:1.4.0")
     implementation("androidx.camera:camera-camera2:1.4.0")

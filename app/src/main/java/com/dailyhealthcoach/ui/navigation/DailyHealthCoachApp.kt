@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.padding
@@ -15,16 +16,26 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import kotlinx.coroutines.launch
+import com.dailyhealthcoach.healthconnect.HealthConnectManager
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Modifier
 import android.app.Application
 import androidx.compose.ui.draw.clip
@@ -69,12 +80,46 @@ import com.dailyhealthcoach.ui.workout.WorkoutViewModelFactory
 
 @Composable
 fun DailyHealthCoachApp(appContainer: AppContainer) {
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    // Re-schedule the periodic worker on every app start (restores it after reboot/reinstall)
+    LaunchedEffect(Unit) {
+        HealthConnectManager.scheduleIfEnabled(context.applicationContext)
+    }
+
+    // Sync HC data every time the app comes to foreground
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                coroutineScope.launch {
+                    HealthConnectManager.syncToday(
+                        context.applicationContext,
+                        appContainer.bodyMetricRepository,
+                        appContainer.habitAutoUpdateUseCase
+                    )
+                }
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
     var selectedScreen by remember { mutableStateOf(AppScreen.DASHBOARD) }
 
     AppBackground {
         Box(modifier = Modifier.fillMaxSize()) {
             when (selectedScreen) {
                 AppScreen.DASHBOARD -> {
+                    val dashboardContext = LocalContext.current
+                    LaunchedEffect(Unit) {
+                        HealthConnectManager.syncToday(
+                            dashboardContext.applicationContext,
+                            appContainer.bodyMetricRepository,
+                            appContainer.habitAutoUpdateUseCase
+                        )
+                    }
                     val dashboardViewModel: DashboardViewModel = viewModel(
                         factory = DashboardViewModelFactory(
                             getDashboardSummaryUseCase = appContainer.getDashboardSummaryUseCase
@@ -166,11 +211,20 @@ fun DailyHealthCoachApp(appContainer: AppContainer) {
                 )
 
                 AppScreen.BODY -> {
+                    val bodyContext = LocalContext.current
+                    LaunchedEffect(Unit) {
+                        HealthConnectManager.syncToday(
+                            bodyContext.applicationContext,
+                            appContainer.bodyMetricRepository,
+                            appContainer.habitAutoUpdateUseCase
+                        )
+                    }
                     val bodyViewModel: BodyViewModel = viewModel(
                         factory = BodyViewModelFactory(
                             bodyMetricRepository = appContainer.bodyMetricRepository,
                             userProfileRepository = appContainer.userProfileRepository,
-                            habitAutoUpdateUseCase = appContainer.habitAutoUpdateUseCase
+                            habitAutoUpdateUseCase = appContainer.habitAutoUpdateUseCase,
+                            context = bodyContext.applicationContext
                         )
                     )
                     BodyRoute(
@@ -205,7 +259,9 @@ private fun MainShellContent(
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .statusBarsPadding()
-            .padding(start = 18.dp, top = 24.dp, end = 18.dp, bottom = 148.dp),
+            .navigationBarsPadding()
+            .imePadding()
+            .padding(start = 18.dp, top = 24.dp, end = 18.dp, bottom = 116.dp),
         verticalArrangement = Arrangement.spacedBy(22.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -258,11 +314,11 @@ private fun BottomNavCapsule(
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(999.dp),
-        color = MainCard.copy(alpha = 0.96f),
-        shadowElevation = 12.dp
+        color = MainCard,
+        shadowElevation = 16.dp
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
+            modifier = Modifier.padding(horizontal = 6.dp, vertical = 6.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -275,22 +331,24 @@ private fun BottomNavCapsule(
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Box(
                             modifier = Modifier
-                                .size(if (selected) 34.dp else 28.dp)
+                                .size(if (selected) 30.dp else 26.dp)
                                 .clip(CircleShape)
-                                .background(if (selected) AccentBlue else SecondaryCard.copy(alpha = 0.55f)),
+                                .background(if (selected) AccentBlue else Color.Transparent),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
                                 text = screen.label.take(1),
-                                color = PrimaryText,
-                                fontWeight = FontWeight.Bold
+                                color = if (selected) PrimaryText else MutedText,
+                                fontWeight = FontWeight.Bold,
+                                style = MaterialTheme.typography.bodySmall
                             )
                         }
                         Text(
                             text = screen.label.take(5),
                             color = if (selected) CyanAccent else MutedText,
                             textAlign = TextAlign.Center,
-                            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
+                            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+                            style = MaterialTheme.typography.labelSmall
                         )
                     }
                 }

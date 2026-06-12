@@ -1,5 +1,6 @@
 package com.dailyhealthcoach.ui.body
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -8,6 +9,7 @@ import com.dailyhealthcoach.domain.model.BodyMetricLogInput
 import com.dailyhealthcoach.domain.repository.BodyMetricRepository
 import com.dailyhealthcoach.domain.repository.UserProfileRepository
 import com.dailyhealthcoach.domain.usecase.HabitAutoUpdateUseCase
+import com.dailyhealthcoach.healthconnect.HealthConnectManager
 import java.time.LocalDate
 import kotlin.math.log10
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,8 +23,13 @@ import kotlinx.coroutines.launch
 class BodyViewModel(
     private val bodyMetricRepository: BodyMetricRepository,
     private val userProfileRepository: UserProfileRepository,
-    private val habitAutoUpdateUseCase: HabitAutoUpdateUseCase
+    private val habitAutoUpdateUseCase: HabitAutoUpdateUseCase,
+    private val context: Context
 ) : ViewModel() {
+
+    init {
+        syncHealthConnectIfEnabled()
+    }
     private val today = LocalDate.now().toString()
     private val formState = MutableStateFlow(BodyMetricFormUiState())
 
@@ -48,6 +55,12 @@ class BodyViewModel(
         started = SharingStarted.WhileSubscribed(5_000),
         initialValue = BodyUiState()
     )
+
+    private fun syncHealthConnectIfEnabled() {
+        viewModelScope.launch {
+            HealthConnectManager.syncToday(context, bodyMetricRepository, habitAutoUpdateUseCase)
+        }
+    }
 
     fun updateForm(transform: (BodyMetricFormUiState) -> BodyMetricFormUiState) {
         formState.update { transform(it).copy(isDirty = true) }
@@ -227,7 +240,8 @@ private fun calculateBodyFatPercent(height: Double?, waist: Double?, neck: Doubl
 class BodyViewModelFactory(
     private val bodyMetricRepository: BodyMetricRepository,
     private val userProfileRepository: UserProfileRepository,
-    private val habitAutoUpdateUseCase: HabitAutoUpdateUseCase
+    private val habitAutoUpdateUseCase: HabitAutoUpdateUseCase,
+    private val context: Context
 ) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -235,7 +249,8 @@ class BodyViewModelFactory(
             return BodyViewModel(
                 bodyMetricRepository = bodyMetricRepository,
                 userProfileRepository = userProfileRepository,
-                habitAutoUpdateUseCase = habitAutoUpdateUseCase
+                habitAutoUpdateUseCase = habitAutoUpdateUseCase,
+                context = context
             ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")

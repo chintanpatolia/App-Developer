@@ -39,6 +39,7 @@ import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.Switch
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -380,7 +381,7 @@ private fun ProfileCard(
 ) {
     ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(22.dp),
+        shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(containerColor = SecondaryCard),
         elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp)
     ) {
@@ -418,8 +419,37 @@ private fun HealthConnectCard(
             }
             HcStatus.AVAILABLE -> {
                 var launchFailed by remember { mutableStateOf(false) }
+                val prefs = remember { context.getSharedPreferences("app_settings", android.content.Context.MODE_PRIVATE) }
+                var useHc by remember { mutableStateOf(prefs.getBoolean("use_health_connect", false)) }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Use Health Connect Data", color = PrimaryText, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+                    Switch(
+                        checked = useHc,
+                        onCheckedChange = { checked ->
+                            useHc = checked
+                            prefs.edit().putBoolean("use_health_connect", checked).apply()
+                            if (checked) HealthConnectManager.schedulePeriodicSync(context)
+                            else HealthConnectManager.cancelPeriodicSync(context)
+                        }
+                    )
+                }
+                Text(
+                    "When ON, steps, sleep, weight, and resting heart rate are auto-imported each day (only for fields not yet logged manually).",
+                    color = MutedText,
+                    style = MaterialTheme.typography.bodySmall
+                )
+                Text(
+                    "If using Samsung Health, make sure Samsung Health is connected to Health Connect and sharing data.",
+                    color = MutedText,
+                    style = MaterialTheme.typography.bodySmall
+                )
                 HcDataPreview(
-                    hcImportConflict = hcImportConflict,
+                    autoSync = useHc,
+                    hcImportConflict = if (useHc) null else hcImportConflict,
                     hcImportMessage = hcImportMessage,
                     onImportSteps = onImportSteps,
                     onImportSleep = onImportSleep,
@@ -457,6 +487,7 @@ private fun HealthConnectCard(
 
 @Composable
 private fun HcDataPreview(
+    autoSync: Boolean,
     hcImportConflict: HcImportConflict?,
     hcImportMessage: String?,
     onImportSteps: (Long) -> Unit,
@@ -495,26 +526,27 @@ private fun HcDataPreview(
         HcImportRow(
             label = "Steps today",
             value = data.steps?.let { "%,d steps".format(it) },
-            onImport = data.steps?.let { steps -> { onImportSteps(steps) } }
+            onImport = if (autoSync) null else data.steps?.let { steps -> { onImportSteps(steps) } }
         )
         HcImportRow(
             label = "Sleep last night",
             value = data.sleepHours?.let { "%.1f h".format(it) },
-            onImport = data.sleepHours?.let { h -> { onImportSleep(h) } }
+            onImport = if (autoSync) null else data.sleepHours?.let { h -> { onImportSleep(h) } }
         )
         HcImportRow(
             label = "Weight (latest)",
             value = data.weightLbs?.let { "%.1f lbs".format(it) },
-            onImport = data.weightLbs?.let { w -> { onImportWeight(w) } }
+            onImport = if (autoSync) null else data.weightLbs?.let { w -> { onImportWeight(w) } }
         )
         HcImportRow(
             label = "Resting HR",
             value = data.restingHr?.let { "$it bpm" },
-            onImport = data.restingHr?.let { hr -> { onImportHr(hr) } }
+            onImport = if (autoSync) null else data.restingHr?.let { hr -> { onImportHr(hr) } }
         )
     }
     Text(
-        "Tap Import to save a value to your local data.",
+        if (autoSync) "Data syncs automatically to Body and Dashboard when the app opens."
+        else "Tap Import to save a value to your local data.",
         color = MutedText,
         style = MaterialTheme.typography.bodySmall
     )
