@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
@@ -67,6 +68,7 @@ import com.dailyhealthcoach.ui.workout.WorkoutPlanUiState
 import com.dailyhealthcoach.ui.workout.WorkoutUiState
 import com.dailyhealthcoach.ui.workout.WorkoutViewModel
 import com.dailyhealthcoach.barcode.BarcodeScannerScreen
+import com.dailyhealthcoach.barcode.NutritionLabelScannerScreen
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -89,16 +91,20 @@ fun NutritionRoute(viewModel: NutritionViewModel) {
         )
     }
 
-    if (uiState.isScannerVisible) {
-        BarcodeScannerScreen(
+    when {
+        uiState.isScannerVisible -> BarcodeScannerScreen(
             onBarcodeDetected = viewModel::onBarcodeDetected,
             onBack = viewModel::hideScanner
         )
-    } else {
-        NutritionPlanScreen(
+        uiState.isLabelScannerVisible -> NutritionLabelScannerScreen(
+            onTextRecognized = viewModel::onLabelOcrText,
+            onBack = viewModel::hideLabelScanner
+        )
+        else -> NutritionPlanScreen(
             uiState = uiState,
             onAddFood = viewModel::showAddForm,
             onScanBarcode = viewModel::showScanner,
+            onScanLabel = viewModel::showLabelScanner,
             onAiLog = viewModel::showAiLog,
             onHideAiLog = viewModel::hideAiLog,
             onAiInputChange = viewModel::onAiInputChange,
@@ -1049,6 +1055,7 @@ fun NutritionPlanScreen(
     uiState: NutritionUiState,
     onAddFood: () -> Unit,
     onScanBarcode: () -> Unit,
+    onScanLabel: () -> Unit,
     onAiLog: () -> Unit,
     onHideAiLog: () -> Unit,
     onAiInputChange: (String) -> Unit,
@@ -1133,6 +1140,46 @@ fun NutritionPlanScreen(
                                 Text(
                                     msg,
                                     color = WarningAccent,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    modifier = Modifier.padding(horizontal = 4.dp)
+                                )
+                            }
+                            uiState.labelScanMessage?.let {
+                                ElevatedCard(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = CardDefaults.elevatedCardColors(containerColor = SecondaryCard),
+                                    shape = RoundedCornerShape(12.dp)
+                                ) {
+                                    Column(
+                                        modifier = Modifier.padding(14.dp),
+                                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                                    ) {
+                                        Text(
+                                            "Missing nutrition details?",
+                                            color = PrimaryText,
+                                            fontWeight = FontWeight.Bold,
+                                            style = MaterialTheme.typography.bodyMedium
+                                        )
+                                        Text(
+                                            "Scan the Nutrition Facts or Supplement Facts label to fill macros, vitamins, and minerals.",
+                                            color = MutedText,
+                                            style = MaterialTheme.typography.bodySmall
+                                        )
+                                        Button(
+                                            onClick = onScanLabel,
+                                            modifier = Modifier.fillMaxWidth(),
+                                            shape = RoundedCornerShape(999.dp),
+                                            colors = ButtonDefaults.buttonColors(containerColor = CyanAccent)
+                                        ) {
+                                            Text("Scan Label", color = Color.Black, fontWeight = FontWeight.Bold)
+                                        }
+                                    }
+                                }
+                            }
+                            uiState.ocrConfirmMessage?.let { msg ->
+                                Text(
+                                    msg,
+                                    color = PositiveAccent,
                                     style = MaterialTheme.typography.bodySmall,
                                     modifier = Modifier.padding(horizontal = 4.dp)
                                 )

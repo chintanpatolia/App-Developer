@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.dailyhealthcoach.ai.AiFoodLoggingService
 import com.dailyhealthcoach.barcode.FoodLookupService
+import com.dailyhealthcoach.barcode.NutritionLabelOcrParser
 import com.dailyhealthcoach.domain.model.FoodEntry
 import com.dailyhealthcoach.domain.model.FoodEntryInput
 import com.dailyhealthcoach.domain.repository.MacroTargetRepository
@@ -264,6 +265,27 @@ class NutritionViewModel(
         formState.update { it.copy(isScannerVisible = false) }
     }
 
+    // ── Nutrition Label OCR ──────────────────────────────────────────────────
+
+    fun showLabelScanner() {
+        formState.update { it.copy(isLabelScannerVisible = true) }
+    }
+
+    fun hideLabelScanner() {
+        formState.update { it.copy(isLabelScannerVisible = false) }
+    }
+
+    fun onLabelOcrText(text: String) {
+        formState.update { state ->
+            state.copy(
+                isLabelScannerVisible = false,
+                labelScanMessage = null,
+                ocrConfirmMessage = "Label scan added nutrition details. Please review before saving.",
+                form = NutritionLabelOcrParser.parse(text, state.form)
+            )
+        }
+    }
+
     fun logUsualMeal(meal: UsualMealUiState, mealName: String) {
         viewModelScope.launch {
             nutritionRepository.saveFoodEntry(
@@ -383,7 +405,8 @@ class NutritionViewModel(
                                 manganese = result.manganese?.let { formatMacro(it) }.orEmpty(),
                                 chromium = result.chromium?.let { formatMacro(it) }.orEmpty(),
                                 molybdenum = result.molybdenum?.let { formatMacro(it) }.orEmpty()
-                            )
+                            ),
+                            labelScanMessage = "Nutrition facts incomplete. Scan label?"
                         )
                     }
                 } else {
@@ -420,7 +443,10 @@ private data class FormVisibilityState(
     val isVisible: Boolean = false,
     val form: FoodEntryFormUiState = FoodEntryFormUiState(),
     val isScannerVisible: Boolean = false,
+    val isLabelScannerVisible: Boolean = false,
     val barcodeMessage: String? = null,
+    val labelScanMessage: String? = null,
+    val ocrConfirmMessage: String? = null,
     val isAiLogVisible: Boolean = false,
     val aiInput: String = "",
     val isAiParsing: Boolean = false,
@@ -470,7 +496,10 @@ private fun List<FoodEntry>.toUiState(
         savedFoods = savedFoods,
         usualMeals = usualMeals,
         isScannerVisible = form.isScannerVisible,
+        isLabelScannerVisible = form.isLabelScannerVisible,
         barcodeMessage = form.barcodeMessage,
+        labelScanMessage = form.labelScanMessage,
+        ocrConfirmMessage = form.ocrConfirmMessage,
         isAiLogVisible = form.isAiLogVisible,
         aiInput = form.aiInput,
         isAiParsing = form.isAiParsing,

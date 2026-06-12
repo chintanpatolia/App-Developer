@@ -37,6 +37,7 @@ class OpenFoodFactsService : FoodLookupService {
             val servingSize = product.optString("serving_size").ifBlank { null }
 
             val nutriments = product.optJSONObject("nutriments")
+
             fun nutr(key: String): Double? {
                 val v = nutriments?.opt("${key}_serving") ?: nutriments?.opt("${key}_100g") ?: nutriments?.opt(key)
                 return when (v) {
@@ -46,8 +47,28 @@ class OpenFoodFactsService : FoodLookupService {
                 }
             }
 
-            fun nutrMg(key: String): Double? = nutr(key)?.let { it * 1000.0 }
-            fun nutrMcg(key: String): Double? = nutr(key)?.let { it * 1_000_000.0 }
+            // OFF stores micronutrients in the native unit declared by _unit (mg, µg, or g).
+            // Using _unit avoids the 1000x error that occurs when a product stores mg values directly.
+            fun nutrUnit(key: String): String =
+                nutriments?.optString("${key}_unit").orEmpty().lowercase().trim()
+
+            fun toMg(key: String): Double? {
+                val v = nutr(key) ?: return null
+                return when (nutrUnit(key)) {
+                    "mg" -> v
+                    "µg", "mcg", "ug", "μg" -> v / 1000.0
+                    else -> v * 1000.0  // assume grams (OFF default for most macros)
+                }
+            }
+
+            fun toMcg(key: String): Double? {
+                val v = nutr(key) ?: return null
+                return when (nutrUnit(key)) {
+                    "µg", "mcg", "ug", "μg" -> v
+                    "mg" -> v * 1000.0
+                    else -> v * 1_000_000.0  // assume grams
+                }
+            }
 
             FoodLookupResult(
                 barcode = barcode,
@@ -60,32 +81,32 @@ class OpenFoodFactsService : FoodLookupService {
                 fatGrams = nutr("fat"),
                 fiberGrams = nutr("fiber"),
                 source = "OPEN_FOOD_FACTS",
-                vitaminA = nutrMcg("vitamin-a"),
-                vitaminC = nutrMg("vitamin-c"),
-                vitaminD = nutrMcg("vitamin-d"),
-                vitaminB12 = nutrMcg("vitamin-b12"),
-                calcium = nutrMg("calcium"),
-                iron = nutrMg("iron"),
-                potassium = nutrMg("potassium"),
-                magnesium = nutrMg("magnesium"),
-                sodium = nutrMg("sodium"),
-                zinc = nutrMg("zinc"),
-                vitaminE = nutrMg("vitamin-e"),
-                vitaminK = nutrMcg("vitamin-k"),
-                vitaminB1 = nutrMg("vitamin-b1") ?: nutrMg("thiamin"),
-                vitaminB2 = nutrMg("vitamin-b2") ?: nutrMg("riboflavin"),
-                vitaminB3 = nutrMg("vitamin-pp") ?: nutrMg("niacin"),
-                vitaminB6 = nutrMg("vitamin-b6"),
-                folate = nutrMcg("vitamin-b9") ?: nutrMcg("folates"),
-                biotin = nutrMcg("biotin"),
-                pantothenicAcid = nutrMg("pantothenic-acid"),
-                phosphorus = nutrMg("phosphorus"),
-                iodine = nutrMcg("iodine"),
-                selenium = nutrMcg("selenium"),
-                copper = nutrMg("copper"),
-                manganese = nutrMg("manganese"),
-                chromium = nutrMcg("chromium"),
-                molybdenum = nutrMcg("molybdenum")
+                vitaminA = toMcg("vitamin-a"),
+                vitaminC = toMg("vitamin-c"),
+                vitaminD = toMcg("vitamin-d"),
+                vitaminB12 = toMcg("vitamin-b12"),
+                calcium = toMg("calcium"),
+                iron = toMg("iron"),
+                potassium = toMg("potassium"),
+                magnesium = toMg("magnesium"),
+                sodium = toMg("sodium"),
+                zinc = toMg("zinc"),
+                vitaminE = toMg("vitamin-e"),
+                vitaminK = toMcg("vitamin-k"),
+                vitaminB1 = toMg("vitamin-b1") ?: toMg("thiamin"),
+                vitaminB2 = toMg("vitamin-b2") ?: toMg("riboflavin"),
+                vitaminB3 = toMg("vitamin-pp") ?: toMg("niacin") ?: toMg("vitamin-b3"),
+                vitaminB6 = toMg("vitamin-b6"),
+                folate = toMcg("vitamin-b9") ?: toMcg("folates") ?: toMcg("folic-acid"),
+                biotin = toMcg("biotin"),
+                pantothenicAcid = toMg("pantothenic-acid"),
+                phosphorus = toMg("phosphorus"),
+                iodine = toMcg("iodine"),
+                selenium = toMcg("selenium"),
+                copper = toMg("copper"),
+                manganese = toMg("manganese"),
+                chromium = toMcg("chromium"),
+                molybdenum = toMcg("molybdenum")
             )
         } catch (e: IOException) {
             throw e
