@@ -1,11 +1,15 @@
 package com.dailyhealthcoach.ui.recipes
 
+import android.content.Intent
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -15,6 +19,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
@@ -33,7 +39,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -49,6 +59,25 @@ import com.dailyhealthcoach.ui.theme.WarningAccent
 @Composable
 fun RecipesRoute(viewModel: RecipesViewModel) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
+    val clipboard = LocalClipboardManager.current
+
+    if (uiState.groceryListOpen) {
+        GroceryListDialog(
+            items = uiState.groceryItems,
+            checkedKeys = uiState.checkedGroceryKeys,
+            onToggleItem = viewModel::toggleGroceryItem,
+            onCopy = { clipboard.setText(AnnotatedString(viewModel.getGroceryShareText())) },
+            onShare = {
+                val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                    type = "text/plain"
+                    putExtra(Intent.EXTRA_TEXT, viewModel.getGroceryShareText())
+                }
+                context.startActivity(Intent.createChooser(shareIntent, "Share Grocery List"))
+            },
+            onDismiss = viewModel::closeGroceryList
+        )
+    }
 
     uiState.selectedRecipe?.let { recipe ->
         RecipeDetailDialog(
@@ -63,24 +92,61 @@ fun RecipesRoute(viewModel: RecipesViewModel) {
             modifier = Modifier.padding(top = 16.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(
-                    "Recipes",
-                    color = PrimaryText,
-                    fontWeight = FontWeight.Bold,
-                    style = MaterialTheme.typography.titleLarge
-                )
-                Text(
-                    "Meal ideas based on your goals and remaining macros.",
-                    color = MutedText,
-                    style = MaterialTheme.typography.bodySmall
-                )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
+            ) {
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        "Recipes",
+                        color = PrimaryText,
+                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.titleLarge
+                    )
+                    Text(
+                        "Meal ideas based on your goals and remaining macros.",
+                        color = MutedText,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+                OutlinedButton(
+                    onClick = viewModel::openGroceryList,
+                    shape = RoundedCornerShape(999.dp),
+                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
+                ) {
+                    Text(
+                        "Grocery List",
+                        color = CyanAccent,
+                        fontWeight = FontWeight.SemiBold,
+                        style = MaterialTheme.typography.labelMedium
+                    )
+                }
             }
 
             RemainingMacrosCard(
                 remainingCalories = uiState.remainingCalories,
                 remainingProtein = uiState.remainingProtein
             )
+
+            uiState.noAlternateMessage?.let { msg ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(msg, color = MutedText, style = MaterialTheme.typography.bodySmall)
+                    TextButton(
+                        onClick = viewModel::dismissNoAlternate,
+                        contentPadding = PaddingValues(4.dp)
+                    ) {
+                        Text("✕", color = MutedText, style = MaterialTheme.typography.labelSmall)
+                    }
+                }
+            }
 
             uiState.logSuccessMessage?.let { msg ->
                 Row(
@@ -99,7 +165,10 @@ fun RecipesRoute(viewModel: RecipesViewModel) {
                 RecipeSection(
                     title = "Recommended for Today",
                     recipes = uiState.recommendedRecipes,
-                    onViewRecipe = viewModel::selectRecipe
+                    selectedIds = uiState.selectedRecipeIds,
+                    onViewRecipe = viewModel::selectRecipe,
+                    onToggleSelect = viewModel::toggleSelection,
+                    onTryAnother = viewModel::tryAnother
                 )
             }
 
@@ -107,7 +176,10 @@ fun RecipesRoute(viewModel: RecipesViewModel) {
                 RecipeSection(
                     title = "Breakfast",
                     recipes = uiState.breakfastRecipes,
-                    onViewRecipe = viewModel::selectRecipe
+                    selectedIds = uiState.selectedRecipeIds,
+                    onViewRecipe = viewModel::selectRecipe,
+                    onToggleSelect = viewModel::toggleSelection,
+                    onTryAnother = null
                 )
             }
 
@@ -115,7 +187,10 @@ fun RecipesRoute(viewModel: RecipesViewModel) {
                 RecipeSection(
                     title = "Lunch",
                     recipes = uiState.lunchRecipes,
-                    onViewRecipe = viewModel::selectRecipe
+                    selectedIds = uiState.selectedRecipeIds,
+                    onViewRecipe = viewModel::selectRecipe,
+                    onToggleSelect = viewModel::toggleSelection,
+                    onTryAnother = null
                 )
             }
 
@@ -123,7 +198,10 @@ fun RecipesRoute(viewModel: RecipesViewModel) {
                 RecipeSection(
                     title = "Dinner",
                     recipes = uiState.dinnerRecipes,
-                    onViewRecipe = viewModel::selectRecipe
+                    selectedIds = uiState.selectedRecipeIds,
+                    onViewRecipe = viewModel::selectRecipe,
+                    onToggleSelect = viewModel::toggleSelection,
+                    onTryAnother = null
                 )
             }
 
@@ -131,7 +209,10 @@ fun RecipesRoute(viewModel: RecipesViewModel) {
                 RecipeSection(
                     title = "Snacks",
                     recipes = uiState.snackRecipes,
-                    onViewRecipe = viewModel::selectRecipe
+                    selectedIds = uiState.selectedRecipeIds,
+                    onViewRecipe = viewModel::selectRecipe,
+                    onToggleSelect = viewModel::toggleSelection,
+                    onTryAnother = null
                 )
             }
         }
@@ -177,23 +258,42 @@ private fun RemainingMacrosCard(remainingCalories: Int, remainingProtein: Double
 private fun RecipeSection(
     title: String,
     recipes: List<Recipe>,
-    onViewRecipe: (Recipe) -> Unit
+    selectedIds: Set<String>,
+    onViewRecipe: (Recipe) -> Unit,
+    onToggleSelect: (String) -> Unit,
+    onTryAnother: ((String) -> Unit)?
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Text(title, color = PrimaryText, fontWeight = FontWeight.Bold)
         recipes.forEach { recipe ->
-            RecipeCard(recipe = recipe, onView = { onViewRecipe(recipe) })
+            RecipeCard(
+                recipe = recipe,
+                isSelected = recipe.id in selectedIds,
+                onView = { onViewRecipe(recipe) },
+                onToggleSelect = { onToggleSelect(recipe.id) },
+                onTryAnother = onTryAnother?.let { { it(recipe.id) } }
+            )
         }
     }
 }
 
 @Composable
-private fun RecipeCard(recipe: Recipe, onView: () -> Unit) {
+private fun RecipeCard(
+    recipe: Recipe,
+    isSelected: Boolean,
+    onView: () -> Unit,
+    onToggleSelect: () -> Unit,
+    onTryAnother: (() -> Unit)?
+) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .background(SecondaryCard.copy(alpha = 0.72f))
+            .background(if (isSelected) CyanAccent.copy(alpha = 0.10f) else SecondaryCard.copy(alpha = 0.72f))
+            .then(
+                if (isSelected) Modifier.border(1.dp, CyanAccent.copy(alpha = 0.6f), RoundedCornerShape(16.dp))
+                else Modifier
+            )
             .padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
@@ -243,12 +343,168 @@ private fun RecipeCard(recipe: Recipe, onView: () -> Unit) {
             color = MutedText,
             style = MaterialTheme.typography.bodySmall
         )
-        OutlinedButton(
-            onClick = onView,
+        Row(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(999.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("View Recipe", color = CyanAccent, fontWeight = FontWeight.SemiBold)
+            OutlinedButton(
+                onClick = onView,
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(999.dp),
+                contentPadding = PaddingValues(vertical = 8.dp)
+            ) {
+                Text(
+                    "View Recipe",
+                    color = CyanAccent,
+                    fontWeight = FontWeight.SemiBold,
+                    style = MaterialTheme.typography.labelMedium
+                )
+            }
+            FilterChip(
+                selected = isSelected,
+                onClick = onToggleSelect,
+                label = {
+                    Text(
+                        if (isSelected) "Selected" else "Select",
+                        style = MaterialTheme.typography.labelSmall
+                    )
+                },
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = CyanAccent,
+                    selectedLabelColor = Color.Black
+                )
+            )
+        }
+        if (onTryAnother != null) {
+            TextButton(
+                onClick = onTryAnother,
+                modifier = Modifier.fillMaxWidth(),
+                contentPadding = PaddingValues(vertical = 2.dp)
+            ) {
+                Text(
+                    "Try Another →",
+                    color = MutedText,
+                    style = MaterialTheme.typography.labelSmall
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun GroceryListDialog(
+    items: List<GroceryItem>,
+    checkedKeys: Set<String>,
+    onToggleItem: (String) -> Unit,
+    onCopy: () -> Unit,
+    onShare: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight(0.92f)
+                .padding(horizontal = 16.dp),
+            shape = RoundedCornerShape(20.dp),
+            color = MainCard
+        ) {
+            Column(modifier = Modifier.fillMaxSize().padding(20.dp)) {
+                Text(
+                    "Grocery List",
+                    color = PrimaryText,
+                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Spacer(Modifier.height(12.dp))
+
+                if (items.isEmpty()) {
+                    Text(
+                        "Select recipes to build a grocery list.",
+                        color = MutedText,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                    Spacer(Modifier.weight(1f))
+                } else {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.padding(bottom = 12.dp)
+                    ) {
+                        OutlinedButton(
+                            onClick = onCopy,
+                            shape = RoundedCornerShape(999.dp),
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp)
+                        ) {
+                            Text("Copy", color = CyanAccent, style = MaterialTheme.typography.labelSmall)
+                        }
+                        OutlinedButton(
+                            onClick = onShare,
+                            shape = RoundedCornerShape(999.dp),
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp)
+                        ) {
+                            Text("Share", color = CyanAccent, style = MaterialTheme.typography.labelSmall)
+                        }
+                    }
+
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .verticalScroll(rememberScrollState()),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        val grouped = items.groupBy { it.category }
+                        GroceryCategory.values().forEach { cat ->
+                            val catItems = grouped[cat] ?: return@forEach
+                            Text(
+                                cat.name.replace("_", "/")
+                                    .lowercase()
+                                    .replaceFirstChar { it.uppercase() },
+                                color = PrimaryText,
+                                fontWeight = FontWeight.SemiBold,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                            catItems.forEach { item ->
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    Checkbox(
+                                        checked = item.key in checkedKeys,
+                                        onCheckedChange = { onToggleItem(item.key) },
+                                        colors = CheckboxDefaults.colors(checkedColor = CyanAccent)
+                                    )
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            item.ingredient,
+                                            color = if (item.key in checkedKeys) MutedText else PrimaryText,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            textDecoration = if (item.key in checkedKeys)
+                                                TextDecoration.LineThrough else null
+                                        )
+                                        Text(
+                                            item.recipeSource,
+                                            color = MutedText,
+                                            style = MaterialTheme.typography.labelSmall
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                TextButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
+                ) {
+                    Text("Close", color = MutedText)
+                }
+            }
         }
     }
 }
@@ -318,22 +574,14 @@ private fun RecipeDetailDialog(
 
                 Spacer(Modifier.height(4.dp))
 
-                Text(
-                    "Ingredients",
-                    color = PrimaryText,
-                    fontWeight = FontWeight.Bold
-                )
+                Text("Ingredients", color = PrimaryText, fontWeight = FontWeight.Bold)
                 recipe.ingredients.forEach { ingredient ->
                     Text("• $ingredient", color = MutedText, style = MaterialTheme.typography.bodySmall)
                 }
 
                 Spacer(Modifier.height(4.dp))
 
-                Text(
-                    "Instructions",
-                    color = PrimaryText,
-                    fontWeight = FontWeight.Bold
-                )
+                Text("Instructions", color = PrimaryText, fontWeight = FontWeight.Bold)
                 recipe.instructions.forEachIndexed { index, step ->
                     Text(
                         "${index + 1}. $step",
@@ -344,11 +592,7 @@ private fun RecipeDetailDialog(
 
                 Spacer(Modifier.height(8.dp))
 
-                Text(
-                    "Log this meal",
-                    color = PrimaryText,
-                    fontWeight = FontWeight.Bold
-                )
+                Text("Log this meal", color = PrimaryText, fontWeight = FontWeight.Bold)
 
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),

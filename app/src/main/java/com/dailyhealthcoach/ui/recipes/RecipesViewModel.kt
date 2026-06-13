@@ -18,7 +18,19 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+
+private data class RecipeSelectionState(
+    val selectedRecipeIds: Set<String> = emptySet(),
+    val recommendedOverrides: List<String> = emptyList(),
+    val groceryListOpen: Boolean = false,
+    val checkedGroceryKeys: Set<String> = emptySet(),
+    val noAlternateMessage: String? = null
+)
+
+private fun String.containsAny(vararg keywords: String) =
+    keywords.any { this.contains(it, ignoreCase = true) }
 
 class RecipesViewModel(
     private val nutritionRepository: NutritionRepository,
@@ -28,8 +40,9 @@ class RecipesViewModel(
 ) : ViewModel() {
 
     private val today = LocalDate.now().toString()
-    private val selectedState = MutableStateFlow<Recipe?>(null)
+    private val selectedDialogState = MutableStateFlow<Recipe?>(null)
     private val logMessageState = MutableStateFlow<String?>(null)
+    private val selectionState = MutableStateFlow(RecipeSelectionState())
 
     private val userProfileState = userProfileRepository.observeUserProfile()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
@@ -37,9 +50,10 @@ class RecipesViewModel(
     val uiState: StateFlow<RecipesUiState> = combine(
         nutritionRepository.observeFoodEntriesForDate(today),
         macroTargetRepository.observeActiveTarget(),
-        selectedState,
-        logMessageState
-    ) { entries, macroTarget, selected, logMsg ->
+        selectedDialogState,
+        logMessageState,
+        selectionState
+    ) { entries, macroTarget, selected, logMsg, sel ->
         val consumedCal = entries.sumOf { it.calories ?: 0 }
         val consumedProtein = entries.sumOf { it.proteinGrams ?: 0.0 }
         val calTarget = macroTarget?.calorieTarget ?: 2000
@@ -52,18 +66,30 @@ class RecipesViewModel(
         val filtered = filterByDiet(RecipeCatalog.ALL, dietPref)
         val ranked = rankRecipes(filtered, remainCal, remainProtein, goal)
 
+        val recommendedRecipes = if (sel.recommendedOverrides.size == 3) {
+            sel.recommendedOverrides.mapNotNull { id -> filtered.find { it.id == id } }
+                .ifEmpty { ranked.take(3) }
+        } else {
+            ranked.take(3)
+        }
+
         RecipesUiState(
             remainingCalories = remainCal,
             remainingProtein = remainProtein,
             calorieTarget = calTarget,
             proteinTarget = protTarget,
-            recommendedRecipes = ranked.take(3),
+            recommendedRecipes = recommendedRecipes,
             breakfastRecipes = ranked.filter { it.mealType == "Breakfast" },
             lunchRecipes = ranked.filter { it.mealType == "Lunch" },
             dinnerRecipes = ranked.filter { it.mealType == "Dinner" },
             snackRecipes = ranked.filter { it.mealType == "Snack" },
             selectedRecipe = selected,
-            logSuccessMessage = logMsg
+            logSuccessMessage = logMsg,
+            selectedRecipeIds = sel.selectedRecipeIds,
+            groceryListOpen = sel.groceryListOpen,
+            groceryItems = buildGroceryItems(sel.selectedRecipeIds),
+            checkedGroceryKeys = sel.checkedGroceryKeys,
+            noAlternateMessage = sel.noAlternateMessage
         )
     }
     .flowOn(Dispatchers.Default)
@@ -73,12 +99,78 @@ class RecipesViewModel(
         initialValue = RecipesUiState()
     )
 
-    fun selectRecipe(recipe: Recipe) {
-        selectedState.value = recipe
+    fun selectRecipe(recipe: Recipe) { selectedDialogState.value = recipe }
+    fun deselectRecipe() { selectedDialogState.value = null }
+    fun dismissLogMessage() { logMessageState.value = null }
+
+    fun toggleSelection(recipeId: String) {
+        selectionState.update { s ->
+            val updated = if (recipeId in s.selectedRecipeIds)
+                s.selectedRecipeIds - recipeId else s.selectedRecipeIds + recipeId
+            s.copy(selectedRecipeIds = updated)
+        }
     }
 
-    fun deselectRecipe() {
-        selectedState.value = null
+    fun openGroceryList() { selectionState.update { it.copy(groceryListOpen = true) } }
+    fun closeGroceryList() { selectionState.update { it.copy(groceryListOpen = false) } }
+
+    fun toggleGroceryItem(key: String) {
+        selectionState.update { s ->
+            val updated = if (key in s.checkedGroceryKeys)
+                s.checkedGroceryKeys - key else s.checkedGroceryKeys + key
+            s.copy(checkedGroceryKeys = updated)
+        }
+    }
+
+    fun dismissNoAlternate() {
+        selectionState.update { it.copy(noAlternateMessage = null) }
+    }
+
+    fun tryAnother(recipeId: String) {
+        val sel = selectionState.value
+        val currentIds = if (sel.recommendedOverrides.size == 3)
+            sel.recommendedOverrides
+        else
+            uiState.value.recommendedRecipes.map { it.id }
+
+        val currentRecipe = RecipeCatalog.ALL.find { it.id == recipeId } ?: return
+        val dietPref = userProfileState.value?.dietPreference
+        val goal = userProfileState.value?.nutritionGoal
+        val curr = uiState.value
+        val filtered = filterByDiet(RecipeCatalog.ALL, dietPref)
+
+        val alternatives = rankRecipes(
+            filtered.filter { it.mealType == currentRecipe.mealType && it.id !in currentIds },
+            curr.remainingCalories, curr.remainingProtein, goal
+        )
+
+        val replacement = alternatives.firstOrNull()
+        if (replacement == null) {
+            selectionState.update { it.copy(noAlternateMessage = "No alternate available yet.") }
+            return
+        }
+
+        val newOverrides = currentIds.toMutableList()
+        val idx = newOverrides.indexOf(recipeId)
+        if (idx < 0) return
+        newOverrides[idx] = replacement.id
+        selectionState.update { it.copy(recommendedOverrides = newOverrides, noAlternateMessage = null) }
+    }
+
+    fun getGroceryShareText(): String {
+        val items = uiState.value.groceryItems
+        if (items.isEmpty()) return "No items in grocery list."
+        val grouped = items.groupBy { it.category }
+        return buildString {
+            GroceryCategory.values().forEach { cat ->
+                val catItems = grouped[cat] ?: return@forEach
+                appendLine(cat.name.replace("_", "/"))
+                catItems.forEach { item ->
+                    appendLine("• ${item.ingredient} (${item.recipeSource})")
+                }
+                appendLine()
+            }
+        }.trim()
     }
 
     fun logRecipe(recipe: Recipe, mealName: String) {
@@ -108,13 +200,38 @@ class RecipesViewModel(
                 )
             )
             habitAutoUpdateUseCase(today)
-            selectedState.value = null
+            selectedDialogState.value = null
             logMessageState.value = "${recipe.name} added to your log."
         }
     }
 
-    fun dismissLogMessage() {
-        logMessageState.value = null
+    private fun buildGroceryItems(selectedIds: Set<String>): List<GroceryItem> =
+        selectedIds.flatMap { id ->
+            val recipe = RecipeCatalog.ALL.find { it.id == id } ?: return@flatMap emptyList()
+            recipe.ingredients.map { ingredient ->
+                GroceryItem(
+                    key = "$id:$ingredient",
+                    ingredient = ingredient,
+                    recipeSource = recipe.name,
+                    category = categorizeIngredient(ingredient)
+                )
+            }
+        }
+
+    private fun categorizeIngredient(ingredient: String): GroceryCategory {
+        val lower = ingredient.lowercase()
+        return when {
+            lower.containsAny("spinach", "tomato", "cucumber", "berr", "banana",
+                "bell pepper", "mushroom", "onion", "cherry", "broccoli",
+                "snap peas", "carrot", "lemon") -> GroceryCategory.PRODUCE
+            lower.containsAny("yogurt", "milk", "cottage cheese", "paneer") -> GroceryCategory.DAIRY
+            lower.containsAny("egg", "tofu", "protein powder", "premier protein",
+                "protein shake") -> GroceryCategory.PROTEIN
+            lower.containsAny("oat", "rice", "bread", "granola", "chickpea", "lentil",
+                "black bean", "chia", "almond milk", "broth", "olive oil",
+                "sesame oil", "soy sauce", "honey", "almond butter", "vanilla") -> GroceryCategory.PANTRY
+            else -> GroceryCategory.SPICES_OTHER
+        }
     }
 
     private fun rankRecipes(
