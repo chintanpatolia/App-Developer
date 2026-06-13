@@ -7,6 +7,7 @@ data class WorkoutUiState(
     val workoutName: String = "Strength Session",
     val durationMinutes: String = "",
     val overallRpe: String = "",
+    val overallRpeError: String? = null,
     val workoutNotes: String = "",
     val selectedStatus: WorkoutStatus = WorkoutStatus.COMPLETED,
     val exercises: List<ExerciseOptionUiState> = emptyList(),

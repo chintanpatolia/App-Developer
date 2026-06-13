@@ -29,12 +29,23 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -48,8 +59,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.dailyhealthcoach.ui.premium.MainFeatureCard
+import com.dailyhealthcoach.ui.theme.AccentBlue
 import com.dailyhealthcoach.ui.theme.CyanAccent
 import com.dailyhealthcoach.ui.theme.MainCard
+import com.dailyhealthcoach.ui.theme.MutedControl
 import com.dailyhealthcoach.ui.theme.MutedText
 import com.dailyhealthcoach.ui.theme.PositiveAccent
 import com.dailyhealthcoach.ui.theme.PrimaryText
@@ -127,9 +140,11 @@ fun RecipesRoute(viewModel: RecipesViewModel) {
                 }
             }
 
-            RemainingMacrosCard(
+            MacroHeroBanner(
                 remainingCalories = uiState.remainingCalories,
-                remainingProtein = uiState.remainingProtein
+                remainingProtein = uiState.remainingProtein,
+                calorieTarget = uiState.calorieTarget,
+                proteinTarget = uiState.proteinTarget
             )
 
             uiState.noAlternateMessage?.let { msg ->
@@ -168,7 +183,8 @@ fun RecipesRoute(viewModel: RecipesViewModel) {
                     selectedIds = uiState.selectedRecipeIds,
                     onViewRecipe = viewModel::selectRecipe,
                     onToggleSelect = viewModel::toggleSelection,
-                    onTryAnother = viewModel::tryAnother
+                    onTryAnother = viewModel::tryAnother,
+                    highlightFirst = true
                 )
             }
 
@@ -220,35 +236,73 @@ fun RecipesRoute(viewModel: RecipesViewModel) {
 }
 
 @Composable
-private fun RemainingMacrosCard(remainingCalories: Int, remainingProtein: Double) {
-    ElevatedCard(
+private fun MacroHeroBanner(
+    remainingCalories: Int,
+    remainingProtein: Double,
+    calorieTarget: Int,
+    proteinTarget: Double
+) {
+    Row(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.elevatedCardColors(containerColor = SecondaryCard)
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly
+        val calConsumed = (calorieTarget - remainingCalories).coerceAtLeast(0)
+        val proConsumed = (proteinTarget - remainingProtein).coerceAtLeast(0.0)
+        MacroHeroTile(
+            value = "${remainingCalories.coerceAtLeast(0)}",
+            label = "kcal remaining",
+            progress = (calConsumed.toFloat() / calorieTarget.toFloat()).coerceIn(0f, 1f),
+            color = AccentBlue,
+            modifier = Modifier.weight(1f)
+        )
+        MacroHeroTile(
+            value = "${remainingProtein.coerceAtLeast(0.0).let { if (it == kotlin.math.floor(it)) it.toLong().toString() else "%.0f".format(it) }}g",
+            label = "protein remaining",
+            progress = (proConsumed / proteinTarget).coerceIn(0.0, 1.0).toFloat(),
+            color = if (remainingProtein > 30) WarningAccent else PositiveAccent,
+            modifier = Modifier.weight(1f)
+        )
+    }
+}
+
+@Composable
+private fun MacroHeroTile(
+    value: String,
+    label: String,
+    progress: Float,
+    color: Color,
+    modifier: Modifier = Modifier
+) {
+    androidx.compose.material3.Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(16.dp),
+        color = SecondaryCard
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 14.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    "${remainingCalories.coerceAtLeast(0)}",
-                    color = CyanAccent,
-                    fontWeight = FontWeight.Bold,
-                    style = MaterialTheme.typography.titleMedium
+            Text(
+                text = value,
+                color = color,
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold
+            )
+            Text(text = label, color = MutedText, style = MaterialTheme.typography.labelSmall)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(4.dp)
+                    .clip(RoundedCornerShape(999.dp))
+                    .background(MutedControl.copy(alpha = 0.4f))
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(progress)
+                        .height(4.dp)
+                        .clip(RoundedCornerShape(999.dp))
+                        .background(color)
                 )
-                Text("kcal remaining", color = MutedText, style = MaterialTheme.typography.labelSmall)
-            }
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    "${remainingProtein.coerceAtLeast(0.0).let { if (it == kotlin.math.floor(it)) it.toLong().toString() else "%.1f".format(it) }}g",
-                    color = if (remainingProtein > 30) WarningAccent else PositiveAccent,
-                    fontWeight = FontWeight.Bold,
-                    style = MaterialTheme.typography.titleMedium
-                )
-                Text("protein remaining", color = MutedText, style = MaterialTheme.typography.labelSmall)
             }
         }
     }
@@ -261,10 +315,35 @@ private fun RecipeSection(
     selectedIds: Set<String>,
     onViewRecipe: (Recipe) -> Unit,
     onToggleSelect: (String) -> Unit,
-    onTryAnother: ((String) -> Unit)?
+    onTryAnother: ((String) -> Unit)?,
+    highlightFirst: Boolean = false
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Text(title, color = PrimaryText, fontWeight = FontWeight.Bold)
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                title,
+                color = PrimaryText,
+                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.titleSmall
+            )
+            if (highlightFirst) {
+                androidx.compose.material3.Surface(
+                    shape = RoundedCornerShape(999.dp),
+                    color = AccentBlue.copy(alpha = 0.18f)
+                ) {
+                    Text(
+                        text = "AI Pick",
+                        color = AccentBlue,
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.padding(horizontal = 9.dp, vertical = 3.dp)
+                    )
+                }
+            }
+        }
         recipes.forEach { recipe ->
             RecipeCard(
                 recipe = recipe,
@@ -285,15 +364,32 @@ private fun RecipeCard(
     onToggleSelect: () -> Unit,
     onTryAnother: (() -> Unit)?
 ) {
+    val bgColor by animateColorAsState(
+        if (isSelected) CyanAccent.copy(alpha = 0.10f) else SecondaryCard.copy(alpha = 0.72f),
+        label = "recipe_bg"
+    )
+    val borderColor by animateColorAsState(
+        if (isSelected) CyanAccent.copy(alpha = 0.6f) else Color.Transparent,
+        label = "recipe_border"
+    )
+    val pressScale = remember { Animatable(1f) }
+    val scope = rememberCoroutineScope()
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(if (isSelected) CyanAccent.copy(alpha = 0.10f) else SecondaryCard.copy(alpha = 0.72f))
-            .then(
-                if (isSelected) Modifier.border(1.dp, CyanAccent.copy(alpha = 0.6f), RoundedCornerShape(16.dp))
-                else Modifier
-            )
+            .graphicsLayer { scaleX = pressScale.value; scaleY = pressScale.value }
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onPress = {
+                        scope.launch { pressScale.animateTo(0.97f, tween(80)) }
+                        tryAwaitRelease()
+                        scope.launch { pressScale.animateTo(1f, spring(stiffness = Spring.StiffnessMediumLow)) }
+                    }
+                )
+            }
+            .clip(RoundedCornerShape(18.dp))
+            .border(1.dp, borderColor, RoundedCornerShape(18.dp))
+            .background(bgColor)
             .padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {

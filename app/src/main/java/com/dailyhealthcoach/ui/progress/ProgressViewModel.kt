@@ -88,8 +88,8 @@ private fun buildBodyTrend(
     return TrendData(
         label = label,
         unit = unit,
-        currentValue = "%.1f $unit".format(current),
-        sevenDayAvg = "avg %.1f $unit".format(avg),
+        currentValue = "${"%.1f".format(current)} $unit",
+        sevenDayAvg = "avg ${"%.1f".format(avg)} $unit",
         changeLabel = changeLabel(current, prev),
         changePositive = changePositive(label, current, prev),
         last7 = entries.map { TrendEntry(it.first, "%.1f".format(it.second)) },

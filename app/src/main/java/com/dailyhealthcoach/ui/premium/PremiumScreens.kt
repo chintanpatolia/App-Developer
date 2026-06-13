@@ -70,6 +70,18 @@ import com.dailyhealthcoach.ui.workout.WorkoutUiState
 import com.dailyhealthcoach.ui.workout.WorkoutViewModel
 import com.dailyhealthcoach.barcode.BarcodeScannerScreen
 import com.dailyhealthcoach.barcode.NutritionLabelScannerScreen
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.FitnessCenter
+import androidx.compose.material.icons.filled.LocalFireDepartment
+import androidx.compose.material.icons.filled.Restaurant
+import androidx.compose.material.icons.filled.Grain
+import androidx.compose.material.icons.filled.WaterDrop
+import androidx.compose.material3.Icon
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -278,7 +290,22 @@ private fun PremiumWorkoutPlanCard(
                     PlaceholderVisual(label = "Muscle\nfocus", size = 168.dp)
                     PrimaryBlueButton(text = "Start Workout", onClick = onStartWorkout, modifier = Modifier.fillMaxWidth())
                 } else {
-                    Text(text = "Today's plan", color = MutedText, style = MaterialTheme.typography.bodyMedium)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Text(text = "Today's plan", color = MutedText, style = MaterialTheme.typography.bodyMedium)
+                        val dayBadgeColor = if (workoutPlan.isStrengthDay) AccentBlue else PositiveAccent
+                        Surface(
+                            shape = RoundedCornerShape(999.dp),
+                            color = dayBadgeColor.copy(alpha = 0.18f)
+                        ) {
+                            Text(
+                                text = if (workoutPlan.isStrengthDay) "STRENGTH" else "RECOVERY",
+                                color = dayBadgeColor,
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                            )
+                        }
+                    }
                     Text(
                         text = workoutPlan.focus,
                         color = PrimaryText,
@@ -329,8 +356,28 @@ private fun PremiumWorkoutPlanCard(
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Text(text = ex.name, color = PrimaryText, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, modifier = Modifier.weight(1f))
-                                    Text(text = ex.muscleGroup, color = CyanAccent, style = MaterialTheme.typography.labelSmall)
+                                    Row(
+                                        modifier = Modifier.weight(1f),
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Box(
+                                            modifier = Modifier.size(6.dp).clip(CircleShape).background(muscleGroupColor(ex.muscleGroup))
+                                        )
+                                        Text(text = ex.name, color = PrimaryText, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+                                    }
+                                    Surface(
+                                        shape = RoundedCornerShape(999.dp),
+                                        color = muscleGroupColor(ex.muscleGroup).copy(alpha = 0.15f)
+                                    ) {
+                                        Text(
+                                            text = ex.muscleGroup,
+                                            color = muscleGroupColor(ex.muscleGroup),
+                                            style = MaterialTheme.typography.labelSmall,
+                                            fontWeight = FontWeight.Medium,
+                                            modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp)
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -1322,20 +1369,43 @@ private fun AiQuickLogInput(
 @Composable
 private fun MacroSummaryCard(uiState: NutritionUiState) {
     Column(verticalArrangement = Arrangement.spacedBy(14.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-        ProgressRing(progress = uiState.proteinProgress(), modifier = Modifier.size(178.dp)) {
+        ProgressRing(progress = uiState.proteinProgress(), modifier = Modifier.size(156.dp)) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(text = "${uiState.proteinGrams.clean()}g", color = PrimaryText, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
                 Text(text = "protein", color = MutedText)
             }
         }
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            StatTile("Calories", uiState.calories.toString(), Modifier.weight(1f))
-            StatTile("Carbs", "${uiState.carbGrams.clean()}g", Modifier.weight(1f))
+        // Calorie + macro strip
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            MacroMiniTile("kcal", "${uiState.calories}", Color(0xFFFF8C42), Modifier.weight(1f))
+            MacroMiniTile("carbs", "${uiState.carbGrams.clean()}g", WarningAccent, Modifier.weight(1f))
+            MacroMiniTile("fat", "${uiState.fatGrams.clean()}g", AccentBlue, Modifier.weight(1f))
+            MacroMiniTile("fiber", "${uiState.fiberGrams.clean()}g", PositiveAccent, Modifier.weight(1f))
         }
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            StatTile("Fat", "${uiState.fatGrams.clean()}g", Modifier.weight(1f))
-            StatTile("Fiber", "${uiState.fiberGrams.clean()}g", Modifier.weight(1f))
-        }
+        // Protein progress bar
+        MacroProgressRow(
+            icon = Icons.Default.Restaurant,
+            iconColor = CyanAccent,
+            label = "Protein",
+            current = "${uiState.proteinGrams.clean()}g",
+            goal = "${uiState.proteinGoalMin}–${uiState.proteinGoalMax}g",
+            progress = uiState.proteinProgress()
+        )
+    }
+}
+
+@Composable
+private fun MacroMiniTile(label: String, value: String, color: Color, modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(12.dp))
+            .background(color.copy(alpha = 0.10f))
+            .padding(horizontal = 6.dp, vertical = 8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(2.dp)
+    ) {
+        Text(value, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = color, maxLines = 1)
+        Text(label, style = MaterialTheme.typography.labelSmall, color = MutedText)
     }
 }
 
@@ -1565,11 +1635,6 @@ private fun UsualMealsSection(
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(text = "Suggested Meals", color = PrimaryText, fontWeight = FontWeight.Bold)
-        Text(
-            text = "Your frequent foods — tap Log to choose a meal and add to today's log",
-            color = MutedText,
-            style = MaterialTheme.typography.bodySmall
-        )
         if (meals.isEmpty()) {
             Text(
                 text = "Log the same food 3 or more times to see suggestions here.",
@@ -1577,8 +1642,57 @@ private fun UsualMealsSection(
                 style = MaterialTheme.typography.bodySmall
             )
         } else {
-            meals.forEach { meal ->
-                UsualMealRow(meal = meal, onLog = { onLog(meal) })
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                contentPadding = PaddingValues(horizontal = 2.dp)
+            ) {
+                items(meals) { meal ->
+                    UsualMealChip(meal = meal, onLog = { onLog(meal) })
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun UsualMealChip(meal: UsualMealUiState, onLog: () -> Unit) {
+    Surface(
+        modifier = Modifier.width(164.dp),
+        shape = RoundedCornerShape(14.dp),
+        color = SecondaryCard,
+        shadowElevation = 2.dp
+    ) {
+        Column(
+            modifier = Modifier.padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(
+                text = meal.foodName,
+                color = PrimaryText,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Text(text = meal.mealName, color = CyanAccent, style = MaterialTheme.typography.labelSmall)
+            if (meal.calories > 0) {
+                Text(
+                    text = "${meal.calories} kcal · P${meal.proteinGrams.clean()}g",
+                    color = MutedText,
+                    style = MaterialTheme.typography.labelSmall,
+                    maxLines = 1
+                )
+            }
+            Text(
+                text = "×${meal.timesLogged}",
+                color = MutedText,
+                style = MaterialTheme.typography.labelSmall
+            )
+            TextButton(
+                onClick = onLog,
+                contentPadding = PaddingValues(0.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Log", color = CyanAccent, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelMedium)
             }
         }
     }
@@ -1778,8 +1892,63 @@ private fun QuickAddSection(
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(text = title, color = PrimaryText, fontWeight = FontWeight.Bold)
-        foods.forEach { food ->
-            QuickAddFoodRow(food = food, onAdd = onAdd, onToggleSaved = onToggleSaved)
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            contentPadding = PaddingValues(horizontal = 2.dp)
+        ) {
+            items(foods) { food ->
+                QuickAddFoodChip(food = food, onAdd = onAdd, onToggleSaved = onToggleSaved)
+            }
+        }
+    }
+}
+
+@Composable
+private fun QuickAddFoodChip(
+    food: QuickAddFoodUiState,
+    onAdd: (QuickAddFoodUiState) -> Unit,
+    onToggleSaved: (QuickAddFoodUiState) -> Unit
+) {
+    Surface(
+        modifier = Modifier.width(164.dp),
+        shape = RoundedCornerShape(14.dp),
+        color = SecondaryCard,
+        shadowElevation = 2.dp
+    ) {
+        Column(
+            modifier = Modifier.padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(
+                text = food.foodName,
+                color = PrimaryText,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            if (food.calories > 0) {
+                Text(
+                    text = "${food.calories} kcal · P${food.proteinGrams.clean()}g",
+                    color = MutedText,
+                    style = MaterialTheme.typography.labelSmall,
+                    maxLines = 1
+                )
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                TextButton(onClick = { onToggleSaved(food) }, contentPadding = PaddingValues(0.dp)) {
+                    Text(
+                        text = if (food.isSaved) "♥" else "♡",
+                        color = if (food.isSaved) PositiveAccent else MutedText
+                    )
+                }
+                TextButton(onClick = { onAdd(food) }, contentPadding = PaddingValues(0.dp)) {
+                    Text("Add", color = CyanAccent, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelMedium)
+                }
+            }
         }
     }
 }
@@ -1963,6 +2132,20 @@ private fun NutritionUiState.proteinProgress(): Float {
 
 private fun String.filterDigits(): String {
     return filter { it.isDigit() }
+}
+
+private fun muscleGroupColor(group: String): Color {
+    val g = group.lowercase()
+    return when {
+        "chest" in g -> Color(0xFFFF7AA2)
+        "back" in g -> AccentBlue
+        "leg" in g || "quad" in g || "hamstring" in g || "glute" in g -> PositiveAccent
+        "shoulder" in g || "delt" in g -> Color(0xFF9C77E0)
+        "arm" in g || "bicep" in g || "tricep" in g -> WarningAccent
+        "core" in g || "abs" in g -> CyanAccent
+        "cardio" in g || "hiit" in g -> Color(0xFFFF8C42)
+        else -> MutedText
+    }
 }
 
 private fun String.filterDecimal(): String {

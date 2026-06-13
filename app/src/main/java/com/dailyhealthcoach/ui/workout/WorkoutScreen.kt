@@ -30,6 +30,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.dailyhealthcoach.domain.model.WorkoutStatus
 
@@ -288,8 +290,11 @@ private fun WorkoutDetailsCard(
                 OutlinedTextField(
                     value = uiState.overallRpe,
                     onValueChange = onOverallRpeChange,
-                    label = { Text("RPE") },
+                    label = { Text("RPE 1-10") },
                     singleLine = true,
+                    isError = uiState.overallRpeError != null,
+                    supportingText = uiState.overallRpeError?.let { { Text(it) } },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     shape = RoundedCornerShape(14.dp),
                     modifier = Modifier.weight(1f)
                 )

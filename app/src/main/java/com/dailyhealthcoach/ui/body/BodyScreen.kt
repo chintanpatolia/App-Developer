@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.padding
@@ -39,8 +40,10 @@ import com.dailyhealthcoach.ui.premium.StatTile
 import com.dailyhealthcoach.ui.theme.CyanAccent
 import com.dailyhealthcoach.ui.theme.MainCard
 import com.dailyhealthcoach.ui.theme.MutedText
+import com.dailyhealthcoach.ui.theme.PositiveAccent
 import com.dailyhealthcoach.ui.theme.PrimaryText
 import com.dailyhealthcoach.ui.theme.SecondaryCard
+import com.dailyhealthcoach.ui.theme.WarningAccent
 
 @Composable
 fun BodyRoute(
@@ -70,6 +73,7 @@ fun BodyScreen(
                 .verticalScroll(rememberScrollState())
                 .statusBarsPadding()
                 .navigationBarsPadding()
+                .imePadding()
                 .padding(start = 18.dp, top = 24.dp, end = 18.dp, bottom = 36.dp),
             verticalArrangement = Arrangement.spacedBy(18.dp),
             horizontalAlignment = Alignment.CenterHorizontally
@@ -198,9 +202,9 @@ private fun BodyFatEstimateSection(
 ) {
     ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = SecondaryCard.copy(alpha = 0.72f)),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp)
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = SecondaryCard),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Row(
@@ -282,8 +286,8 @@ private fun RecentHistoryCard(logs: List<BodyMetricLogUiState>) {
             if (logs.isEmpty()) {
                 Text(text = "Saved body metrics will appear here.", color = MutedText)
             } else {
-                logs.forEach { log ->
-                    HistoryRow(log = log)
+                logs.forEachIndexed { index, log ->
+                    HistoryRow(log = log, prevLog = logs.getOrNull(index + 1))
                 }
             }
         }
@@ -291,27 +295,67 @@ private fun RecentHistoryCard(logs: List<BodyMetricLogUiState>) {
 }
 
 @Composable
-private fun HistoryRow(log: BodyMetricLogUiState) {
+private fun HistoryRow(log: BodyMetricLogUiState, prevLog: BodyMetricLogUiState? = null) {
+    val weightDelta = if (log.bodyWeight != null && prevLog?.bodyWeight != null)
+        log.bodyWeight - prevLog.bodyWeight else null
+    val trendSymbol = when {
+        weightDelta == null -> null
+        weightDelta > 0.05 -> "▲"
+        weightDelta < -0.05 -> "▼"
+        else -> "─"
+    }
+    val trendColor = when (trendSymbol) {
+        "▲" -> WarningAccent
+        "▼" -> PositiveAccent
+        else -> MutedText
+    }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(22.dp))
+            .clip(RoundedCornerShape(16.dp))
             .background(SecondaryCard.copy(alpha = 0.72f))
             .padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Text(text = log.date, color = PrimaryText, fontWeight = FontWeight.Bold)
-            Text(text = log.bodyWeight.value("lb"), color = CyanAccent, fontWeight = FontWeight.Bold)
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                if (trendSymbol != null) {
+                    Text(
+                        text = trendSymbol,
+                        color = trendColor,
+                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    if (weightDelta != null) {
+                        Text(
+                            text = String.format("%.1f", kotlin.math.abs(weightDelta)),
+                            color = trendColor,
+                            style = MaterialTheme.typography.labelSmall
+                        )
+                    }
+                }
+                Text(text = log.bodyWeight.value("lb"), color = CyanAccent, fontWeight = FontWeight.Bold)
+            }
         }
-        Text(
-            text = "Body fat ${log.bodyFatDisplay()} ${log.bodyFatSourceShort()} | Sleep ${log.sleepHours.value("h")} | Energy ${log.energyLevel.level()} | Stress ${log.stressLevel.level()} | Sore ${log.sorenessLevel.level()}",
-            color = MutedText,
-            style = MaterialTheme.typography.bodySmall
-        )
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            MetricChip("Fat", log.bodyFatDisplay(), Modifier)
+            MetricChip("Sleep", log.sleepHours.value("h"), Modifier)
+            MetricChip("Energy", log.energyLevel.level(), Modifier)
+            MetricChip("Stress", log.stressLevel.level(), Modifier)
+        }
         if (!log.notes.isNullOrBlank()) {
             Text(text = log.notes, color = MutedText, style = MaterialTheme.typography.bodySmall)
         }
+    }
+}
+
+@Composable
+private fun MetricChip(label: String, value: String, modifier: Modifier = Modifier) {
+    Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(1.dp)) {
+        Text(text = value, color = PrimaryText, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
+        Text(text = label, color = MutedText, style = MaterialTheme.typography.labelSmall)
     }
 }
 

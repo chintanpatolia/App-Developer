@@ -20,6 +20,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -67,6 +69,15 @@ import com.dailyhealthcoach.ui.profile.ProfileViewModelFactory
 import com.dailyhealthcoach.ui.reminders.ReminderRoute
 import com.dailyhealthcoach.ui.reminders.ReminderViewModel
 import com.dailyhealthcoach.ui.reminders.ReminderViewModelFactory
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Bolt
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.DinnerDining
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.LocalDining
+import androidx.compose.material.icons.filled.MonitorWeight
+import androidx.compose.material3.Icon
+import androidx.compose.ui.graphics.vector.ImageVector
 import com.dailyhealthcoach.ui.theme.AccentBlue
 import com.dailyhealthcoach.ui.theme.CyanAccent
 import com.dailyhealthcoach.ui.theme.MainCard
@@ -341,6 +352,18 @@ private fun BottomNavCapsule(
         ) {
             AppScreen.entries.filter { it.showInNav }.forEach { screen ->
                 val selected = selectedScreen == screen
+                val indicatorSize by animateDpAsState(if (selected) 32.dp else 28.dp, label = "nav_size")
+                val indicatorColor by animateColorAsState(if (selected) AccentBlue else Color.Transparent, label = "nav_color")
+                val labelColor by animateColorAsState(if (selected) CyanAccent else MutedText, label = "nav_label")
+                val navIcon: ImageVector = when (screen) {
+                    AppScreen.DASHBOARD -> Icons.Default.Home
+                    AppScreen.HABITS -> Icons.Default.CheckCircle
+                    AppScreen.WORKOUT -> Icons.Default.Bolt
+                    AppScreen.NUTRITION -> Icons.Default.LocalDining
+                    AppScreen.RECIPES -> Icons.Default.DinnerDining
+                    AppScreen.BODY -> Icons.Default.MonitorWeight
+                    else -> Icons.Default.Home
+                }
                 TextButton(
                     onClick = { onScreenSelected(screen) },
                     modifier = Modifier.weight(1f)
@@ -348,21 +371,21 @@ private fun BottomNavCapsule(
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Box(
                             modifier = Modifier
-                                .size(if (selected) 30.dp else 26.dp)
+                                .size(indicatorSize)
                                 .clip(CircleShape)
-                                .background(if (selected) AccentBlue else Color.Transparent),
+                                .background(indicatorColor),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(
-                                text = screen.label.take(1),
-                                color = if (selected) PrimaryText else MutedText,
-                                fontWeight = FontWeight.Bold,
-                                style = MaterialTheme.typography.bodySmall
+                            Icon(
+                                imageVector = navIcon,
+                                contentDescription = screen.label,
+                                tint = if (selected) PrimaryText else MutedText,
+                                modifier = Modifier.size(16.dp)
                             )
                         }
                         Text(
                             text = screen.label.take(5),
-                            color = if (selected) CyanAccent else MutedText,
+                            color = labelColor,
                             textAlign = TextAlign.Center,
                             fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
                             style = MaterialTheme.typography.labelSmall

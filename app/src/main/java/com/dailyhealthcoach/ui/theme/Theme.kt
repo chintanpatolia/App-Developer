@@ -5,16 +5,17 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
-val AppBackground = Color(0xFF1E214B)
-val MainCard = Color(0xFF38388C)
-val SecondaryCard = Color(0xFF4B4BB2)
-val AccentBlue = Color(0xFF168BFF)
-val CyanAccent = Color(0xFF19C6D3)
-val PrimaryText = Color(0xFFF5F7FF)
-val MutedText = Color(0xFFB7B9D9)
-val MutedControl = Color(0xFF6E70A8)
+val AppBackground = Color(0xFF0E0F17)   // near-black, faint navy tint
+val MainCard = Color(0xFF181B27)        // dark charcoal — replaces heavy purple
+val SecondaryCard = Color(0xFF1F2235)   // slightly lighter charcoal for elevated surfaces
+val AccentBlue = Color(0xFF2A8FFF)
+val CyanAccent = Color(0xFF1EC8D5)
+val PrimaryText = Color(0xFFF3F5FF)
+val MutedText = Color(0xFF8C8FA8)       // cooler gray, less lavender-purple
+val MutedControl = Color(0xFF353852)    // dark muted for track/bg fills
 val PositiveAccent = Color(0xFF36D987)
 val WarningAccent = Color(0xFFFFB15C)
+val CardStroke = Color(0xFF252840)
 
 @Composable
 fun DailyHealthCoachTheme(

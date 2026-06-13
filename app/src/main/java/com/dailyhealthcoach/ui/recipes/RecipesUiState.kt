@@ -4,8 +4,8 @@ enum class GroceryCategory { PRODUCE, DAIRY, PROTEIN, PANTRY, SPICES_OTHER }
 
 data class GroceryItem(
     val key: String,
-    val ingredient: String,
-    val recipeSource: String,
+    val displayLine: String,
+    val recipeSources: List<String>,
     val category: GroceryCategory
 )
 

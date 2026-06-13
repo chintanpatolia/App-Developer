@@ -69,7 +69,14 @@ class WorkoutViewModel(
     }
 
     fun updateOverallRpe(value: String) {
-        draftState.update { it.copy(overallRpe = value.filter { char -> char.isDigit() }.take(2)) }
+        val filtered = value.filter { it.isDigit() }.take(2)
+        val rpe = filtered.toIntOrNull()
+        val error = when {
+            filtered.isEmpty() -> null
+            rpe == null || rpe < 1 || rpe > 10 -> "RPE must be between 1 and 10."
+            else -> null
+        }
+        draftState.update { it.copy(overallRpe = filtered, overallRpeError = error) }
     }
 
     fun updateWorkoutNotes(value: String) {
@@ -265,6 +272,7 @@ private data class WorkoutDraftState(
     val workoutName: String = "Strength Session",
     val durationMinutes: String = "",
     val overallRpe: String = "",
+    val overallRpeError: String? = null,
     val workoutNotes: String = "",
     val selectedStatus: WorkoutStatus = WorkoutStatus.COMPLETED,
     val selectedExercises: List<DraftExerciseState> = emptyList(),
@@ -380,6 +388,7 @@ private fun buildUiState(
         workoutName = draft.workoutName,
         durationMinutes = draft.durationMinutes,
         overallRpe = draft.overallRpe,
+        overallRpeError = draft.overallRpeError,
         workoutNotes = draft.workoutNotes,
         selectedStatus = draft.selectedStatus,
         exercises = exercises.map {
