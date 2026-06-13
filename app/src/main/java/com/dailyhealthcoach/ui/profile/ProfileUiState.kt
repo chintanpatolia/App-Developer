@@ -31,5 +31,6 @@ data class ProfileUiState(
     val pendingShareUri: Uri? = null,
     val exportStatus: String? = null,
     val showRestoreDialog: Boolean = false,
-    val restoreStatus: String? = null
+    val restoreStatus: String? = null,
+    val profilePhotoPath: String? = null
 )

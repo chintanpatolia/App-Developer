@@ -1,19 +1,26 @@
 package com.dailyhealthcoach.ui.dashboard
 
+import android.graphics.BitmapFactory
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -21,13 +28,20 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.dailyhealthcoach.ui.theme.AccentBlue
 import com.dailyhealthcoach.ui.theme.CyanAccent
 import com.dailyhealthcoach.ui.theme.MainCard
+import com.dailyhealthcoach.ui.theme.MutedControl
 import com.dailyhealthcoach.ui.theme.MutedText
 import com.dailyhealthcoach.ui.theme.PositiveAccent
 import com.dailyhealthcoach.ui.theme.PrimaryText
@@ -92,8 +106,40 @@ private fun DashboardHeader(onNavigateToSettings: () -> Unit) {
                 color = MutedText
             )
         }
-        TextButton(onClick = onNavigateToSettings) {
-            Text("⚙", color = MutedText, style = MaterialTheme.typography.titleLarge)
+        ProfileAvatarButton(onClick = onNavigateToSettings)
+    }
+}
+
+@Composable
+private fun ProfileAvatarButton(onClick: () -> Unit) {
+    val context = LocalContext.current
+    val photoPath = remember {
+        context.getSharedPreferences("app_prefs", android.content.Context.MODE_PRIVATE)
+            .getString("profile_photo_path", null)
+    }
+    val bitmap = remember(photoPath) {
+        photoPath?.let {
+            BitmapFactory.decodeFile(it, BitmapFactory.Options().apply { inSampleSize = 2 })
+                ?.asImageBitmap()
+        }
+    }
+    Box(
+        modifier = Modifier
+            .size(40.dp)
+            .clip(CircleShape)
+            .background(AccentBlue)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        if (bitmap != null) {
+            Image(
+                bitmap = bitmap,
+                contentDescription = "Profile",
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+        } else {
+            Text("👤", style = MaterialTheme.typography.bodyMedium)
         }
     }
 }
@@ -134,12 +180,12 @@ private fun SummaryGrid(uiState: DashboardUiState) {
 private fun SummaryTile(label: String, value: String, modifier: Modifier = Modifier) {
     ElevatedCard(
         modifier = modifier,
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.elevatedCardColors(containerColor = SecondaryCard),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp)
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
     ) {
         Column(
-            modifier = Modifier.padding(14.dp),
+            modifier = Modifier.padding(12.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             Text(text = label, style = MaterialTheme.typography.bodySmall, color = MutedText)
@@ -162,12 +208,12 @@ private fun SummaryProgressTile(
 ) {
     ElevatedCard(
         modifier = modifier,
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.elevatedCardColors(containerColor = SecondaryCard),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp)
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
     ) {
         Column(
-            modifier = Modifier.padding(14.dp),
+            modifier = Modifier.padding(12.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             Text(text = label, style = MaterialTheme.typography.bodySmall, color = MutedText)
@@ -177,13 +223,27 @@ private fun SummaryProgressTile(
                 fontWeight = FontWeight.SemiBold,
                 color = PrimaryText
             )
-            LinearProgressIndicator(
-                progress = { progress },
-                modifier = Modifier.fillMaxWidth(),
-                color = CyanAccent,
-                trackColor = MainCard
-            )
+            ThinProgressBar(progress = progress, color = CyanAccent)
         }
+    }
+}
+
+@Composable
+private fun ThinProgressBar(progress: Float, color: Color, modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(4.dp)
+            .clip(RoundedCornerShape(999.dp))
+            .background(MutedControl.copy(alpha = 0.45f))
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth(progress.coerceIn(0f, 1f))
+                .height(4.dp)
+                .clip(RoundedCornerShape(999.dp))
+                .background(color)
+        )
     }
 }
 
@@ -191,13 +251,13 @@ private fun SummaryProgressTile(
 private fun RecoveryCard(uiState: DashboardUiState) {
     ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
+        shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.elevatedCardColors(containerColor = MainCard),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 6.dp)
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 3.dp)
     ) {
         Column(
-            modifier = Modifier.padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text(text = "Recovery", style = MaterialTheme.typography.titleSmall, color = MutedText)
             if (uiState.recoveryScore == null) {
@@ -225,11 +285,9 @@ private fun RecoveryCard(uiState: DashboardUiState) {
                         color = CyanAccent
                     )
                 }
-                LinearProgressIndicator(
-                    progress = { (uiState.recoveryScore / 100f).coerceIn(0f, 1f) },
-                    modifier = Modifier.fillMaxWidth(),
-                    color = recoveryColor(uiState.recoveryScore),
-                    trackColor = SecondaryCard
+                ThinProgressBar(
+                    progress = (uiState.recoveryScore / 100f).coerceIn(0f, 1f),
+                    color = recoveryColor(uiState.recoveryScore)
                 )
                 uiState.recoveryReasons.take(3).forEach { reason ->
                     Text(text = "· $reason", style = MaterialTheme.typography.bodySmall, color = MutedText)
@@ -243,13 +301,13 @@ private fun RecoveryCard(uiState: DashboardUiState) {
 private fun RecommendationCard(recommendation: DailyRecommendationUiState?) {
     ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
+        shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.elevatedCardColors(containerColor = MainCard),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 6.dp)
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 3.dp)
     ) {
         Column(
-            modifier = Modifier.padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             Text(text = "Tomorrow", style = MaterialTheme.typography.titleSmall, color = MutedText)
             if (recommendation == null) {
@@ -282,9 +340,9 @@ private fun RecommendationCard(recommendation: DailyRecommendationUiState?) {
 private fun ViewProgressCard(onClick: () -> Unit) {
     ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.elevatedCardColors(containerColor = SecondaryCard),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp)
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
     ) {
         Row(
             modifier = Modifier

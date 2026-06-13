@@ -18,6 +18,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import java.io.File
+import java.io.FileOutputStream
 import java.time.LocalDate
 
 class ProfileViewModel(
@@ -323,6 +325,32 @@ class ProfileViewModel(
     fun cancelRestore() {
         pendingRestoreUri = null
         _uiState.value = _uiState.value.copy(showRestoreDialog = false, restoreStatus = null)
+    }
+
+    // ── Profile Photo ────────────────────────────────────────────────────────
+
+    fun setInitialPhotoPath(path: String?) {
+        _uiState.value = _uiState.value.copy(profilePhotoPath = path)
+    }
+
+    fun saveProfilePhoto(context: Context, sourceUri: Uri) {
+        val dir = File(context.filesDir, "profile").also { it.mkdirs() }
+        val dest = File(dir, "photo.jpg")
+        runCatching {
+            context.contentResolver.openInputStream(sourceUri)?.use { input ->
+                FileOutputStream(dest).use { output -> input.copyTo(output) }
+            }
+        }
+        context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+            .edit().putString("profile_photo_path", dest.absolutePath).apply()
+        _uiState.value = _uiState.value.copy(profilePhotoPath = dest.absolutePath)
+    }
+
+    fun removeProfilePhoto(context: Context) {
+        context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+            .edit().remove("profile_photo_path").apply()
+        File(context.filesDir, "profile/photo.jpg").delete()
+        _uiState.value = _uiState.value.copy(profilePhotoPath = null)
     }
 
     private fun clearPending() {

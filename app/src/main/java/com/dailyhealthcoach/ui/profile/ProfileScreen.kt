@@ -1,8 +1,16 @@
 package com.dailyhealthcoach.ui.profile
 
 import android.content.Intent
+import android.graphics.BitmapFactory
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -89,6 +97,15 @@ fun ProfileRoute(
     val restoreLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.OpenDocument()
     ) { uri -> if (uri != null) viewModel.onRestoreFileSelected(context, uri) }
+    val photoPickerLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.PickVisualMedia()
+    ) { uri -> uri?.let { viewModel.saveProfilePhoto(context, it) } }
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        viewModel.setInitialPhotoPath(
+            context.getSharedPreferences("app_prefs", android.content.Context.MODE_PRIVATE)
+                .getString("profile_photo_path", null)
+        )
+    }
     ProfileScreen(
         uiState = uiState,
         onUpdate = viewModel::updateForm,
@@ -105,6 +122,12 @@ fun ProfileRoute(
         onPickRestoreFile = { restoreLauncher.launch(arrayOf("application/json", "*/*")) },
         onConfirmRestore = { viewModel.confirmRestore(context) },
         onCancelRestore = viewModel::cancelRestore,
+        onPickPhoto = {
+            photoPickerLauncher.launch(
+                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+            )
+        },
+        onRemovePhoto = { viewModel.removeProfilePhoto(context) },
         modifier = modifier
     )
 }
@@ -126,6 +149,8 @@ fun ProfileScreen(
     onPickRestoreFile: () -> Unit = {},
     onConfirmRestore: () -> Unit = {},
     onCancelRestore: () -> Unit = {},
+    onPickPhoto: () -> Unit = {},
+    onRemovePhoto: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Box(
@@ -159,6 +184,65 @@ fun ProfileScreen(
                     textAlign = TextAlign.Center
                 )
                 Box(modifier = Modifier.padding(horizontal = 16.dp))
+            }
+
+            ProfileCard(title = "Profile Photo") {
+                val bitmap = remember(uiState.profilePhotoPath) {
+                    uiState.profilePhotoPath?.let { path ->
+                        BitmapFactory.decodeFile(
+                            path,
+                            BitmapFactory.Options().apply { inSampleSize = 2 }
+                        )?.asImageBitmap()
+                    }
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(72.dp)
+                            .clip(CircleShape)
+                            .background(MainCard),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (bitmap != null) {
+                            Image(
+                                bitmap = bitmap,
+                                contentDescription = "Profile photo",
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop
+                            )
+                        } else {
+                            Text("👤", style = MaterialTheme.typography.headlineMedium)
+                        }
+                    }
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        OutlinedButton(
+                            onClick = onPickPhoto,
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(999.dp)
+                        ) {
+                            Text(
+                                if (uiState.profilePhotoPath != null) "Replace Photo" else "Pick Photo",
+                                color = CyanAccent,
+                                style = MaterialTheme.typography.labelMedium
+                            )
+                        }
+                        if (uiState.profilePhotoPath != null) {
+                            TextButton(
+                                onClick = onRemovePhoto,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text("Remove Photo", color = MutedText, style = MaterialTheme.typography.labelSmall)
+                            }
+                        }
+                    }
+                }
             }
 
             ProfileCard(title = "Personal Info") {
