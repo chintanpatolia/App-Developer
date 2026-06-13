@@ -21,6 +21,13 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+private data class ParsedIngredient(
+    val qty: Double?,
+    val unit: String,
+    val normalizedName: String,
+    val recipeName: String
+)
+
 private data class RecipeSelectionState(
     val selectedRecipeIds: Set<String> = emptySet(),
     val recommendedOverrides: List<String> = emptyList(),
@@ -164,9 +171,9 @@ class RecipesViewModel(
         return buildString {
             GroceryCategory.values().forEach { cat ->
                 val catItems = grouped[cat] ?: return@forEach
-                appendLine(cat.name.replace("_", "/"))
+                appendLine(cat.name.replace("_", "/").lowercase().replaceFirstChar { it.uppercase() })
                 catItems.forEach { item ->
-                    appendLine("• ${item.ingredient} (${item.recipeSource})")
+                    appendLine("[ ] ${item.displayLine}")
                 }
                 appendLine()
             }
@@ -205,31 +212,110 @@ class RecipesViewModel(
         }
     }
 
-    private fun buildGroceryItems(selectedIds: Set<String>): List<GroceryItem> =
-        selectedIds.flatMap { id ->
+    private fun buildGroceryItems(selectedIds: Set<String>): List<GroceryItem> {
+        if (selectedIds.isEmpty()) return emptyList()
+        val allParsed = selectedIds.flatMap { id ->
             val recipe = RecipeCatalog.ALL.find { it.id == id } ?: return@flatMap emptyList()
-            recipe.ingredients.map { ingredient ->
+            recipe.ingredients.map { raw -> parseIngredientLine(raw, recipe.name) }
+        }
+        return allParsed
+            .groupBy { "${it.normalizedName}::${it.unit}" }
+            .map { (key, items) ->
+                val first = items.first()
+                val totalQty = if (items.all { it.qty != null }) items.sumOf { it.qty!! } else null
+                val displayName = first.normalizedName.replaceFirstChar { it.uppercase() }
                 GroceryItem(
-                    key = "$id:$ingredient",
-                    ingredient = ingredient,
-                    recipeSource = recipe.name,
-                    category = categorizeIngredient(ingredient)
+                    key = key,
+                    displayLine = buildDisplayLine(totalQty, first.unit, displayName),
+                    recipeSources = items.map { it.recipeName }.distinct(),
+                    category = categorizeIngredient(first.normalizedName)
                 )
             }
-        }
+            .sortedBy { it.category.ordinal }
+    }
 
-    private fun categorizeIngredient(ingredient: String): GroceryCategory {
-        val lower = ingredient.lowercase()
+    private fun parseIngredientLine(raw: String, recipeName: String): ParsedIngredient {
+        // Normalize mixed-number fractions first ("1½" → "1.5"), then standalone fractions
+        var text = Regex("""(\d)([½¼¾⅓⅔])""").replace(raw.trim()) { m ->
+            (m.groupValues[1].toDouble() + fractionValue(m.groupValues[2])).toString()
+        }
+        text = text.replace("½", "0.5").replace("¼", "0.25").replace("¾", "0.75")
+                   .replace("⅓", "0.333").replace("⅔", "0.667")
+
+        val unitRegex = Regex(
+            """^(\d+(?:\.\d+)?)\s*(cups?|tbsp|tsp|oz|scoops?|slices?|g)\b\s*(.+)""",
+            RegexOption.IGNORE_CASE
+        )
+        val qtyOnlyRegex = Regex("""^(\d+(?:\.\d+)?)\s+(.+)""")
+
+        val m1 = unitRegex.find(text)
+        if (m1 != null) {
+            return ParsedIngredient(
+                qty = m1.groupValues[1].toDoubleOrNull(),
+                unit = normalizeUnit(m1.groupValues[2]),
+                normalizedName = normalizeName(m1.groupValues[3]),
+                recipeName = recipeName
+            )
+        }
+        val m2 = qtyOnlyRegex.find(text)
+        if (m2 != null) {
+            return ParsedIngredient(
+                qty = m2.groupValues[1].toDoubleOrNull(),
+                unit = "",
+                normalizedName = normalizeName(m2.groupValues[2]),
+                recipeName = recipeName
+            )
+        }
+        return ParsedIngredient(qty = null, unit = "", normalizedName = normalizeName(text), recipeName = recipeName)
+    }
+
+    private fun fractionValue(char: String) = when (char) {
+        "½" -> 0.5; "¼" -> 0.25; "¾" -> 0.75; "⅓" -> 1.0 / 3; "⅔" -> 2.0 / 3; else -> 0.0
+    }
+
+    private fun normalizeUnit(unit: String) = when (unit.lowercase()) {
+        "cups" -> "cup"; "scoops" -> "scoop"; "slices" -> "slice"; else -> unit.lowercase()
+    }
+
+    private fun normalizeName(raw: String): String {
+        var name = raw
+            .replace(Regex("""\(.*?\)"""), "")
+            .replace(Regex("""\s+to\s+taste\b.*""", RegexOption.IGNORE_CASE), "")
+            .replace(Regex("""\s+or\s+\S+.*""", RegexOption.IGNORE_CASE), "")
+        val prepWords = listOf("cooked", "frozen", "fresh", "low-fat", "non-fat", "firm",
+            "unsweetened", "minced", "diced", "halved", "sliced", "rinsed", "pressed", "cubed")
+        for (word in prepWords) {
+            name = name.replace(Regex("""\b${Regex.escape(word)}\b""", RegexOption.IGNORE_CASE), "")
+        }
+        return name.replace(Regex("""\s+"""), " ").trim().lowercase()
+    }
+
+    private fun buildDisplayLine(qty: Double?, unit: String, name: String): String {
+        val qtyStr = qty?.let { formatQty(it) } ?: return name
+        return if (unit.isNotBlank()) "$name — $qtyStr $unit" else "$name — $qtyStr"
+    }
+
+    private fun formatQty(d: Double): String = when {
+        d == 0.25 -> "¼"; d == 0.5 -> "½"; d == 0.75 -> "¾"
+        d == 1.5 -> "1½"; d == 2.5 -> "2½"
+        d % 1.0 == 0.0 -> d.toLong().toString()
+        else -> "%.2f".format(d).trimEnd('0').trimEnd('.')
+    }
+
+    private fun categorizeIngredient(name: String): GroceryCategory {
+        val n = name.lowercase()
         return when {
-            lower.containsAny("spinach", "tomato", "cucumber", "berr", "banana",
+            // Check almond/plant milk before generic "milk" to avoid DAIRY mismatch
+            n.containsAny("almond milk", "oat milk", "plant milk", "soy milk") -> GroceryCategory.PANTRY
+            n.containsAny("spinach", "tomato", "cucumber", "berr", "banana",
                 "bell pepper", "mushroom", "onion", "cherry", "broccoli",
-                "snap peas", "carrot", "lemon") -> GroceryCategory.PRODUCE
-            lower.containsAny("yogurt", "milk", "cottage cheese", "paneer") -> GroceryCategory.DAIRY
-            lower.containsAny("egg", "tofu", "protein powder", "premier protein",
-                "protein shake") -> GroceryCategory.PROTEIN
-            lower.containsAny("oat", "rice", "bread", "granola", "chickpea", "lentil",
-                "black bean", "chia", "almond milk", "broth", "olive oil",
-                "sesame oil", "soy sauce", "honey", "almond butter", "vanilla") -> GroceryCategory.PANTRY
+                "snap peas", "carrot", "lemon", "vegetable", "salsa",
+                "garlic") -> GroceryCategory.PRODUCE
+            n.containsAny("yogurt", "milk", "cottage cheese", "paneer") -> GroceryCategory.DAIRY
+            n.containsAny("egg", "tofu", "protein powder", "premier protein") -> GroceryCategory.PROTEIN
+            n.containsAny("oat", "rice", "bread", "granola", "chickpea", "lentil",
+                "black bean", "bean", "chia", "broth", "olive oil", "sesame oil",
+                "soy sauce", "honey", "almond butter", "vanilla") -> GroceryCategory.PANTRY
             else -> GroceryCategory.SPICES_OTHER
         }
     }

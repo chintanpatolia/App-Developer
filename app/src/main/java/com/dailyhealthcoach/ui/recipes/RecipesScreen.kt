@@ -454,42 +454,38 @@ private fun GroceryListDialog(
                         modifier = Modifier
                             .weight(1f)
                             .verticalScroll(rememberScrollState()),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         val grouped = items.groupBy { it.category }
                         GroceryCategory.values().forEach { cat ->
                             val catItems = grouped[cat] ?: return@forEach
-                            Text(
-                                cat.name.replace("_", "/")
-                                    .lowercase()
-                                    .replaceFirstChar { it.uppercase() },
-                                color = PrimaryText,
-                                fontWeight = FontWeight.SemiBold,
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                            catItems.forEach { item ->
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                                ) {
-                                    Checkbox(
-                                        checked = item.key in checkedKeys,
-                                        onCheckedChange = { onToggleItem(item.key) },
-                                        colors = CheckboxDefaults.colors(checkedColor = CyanAccent)
-                                    )
-                                    Column(modifier = Modifier.weight(1f)) {
+                            Column {
+                                Text(
+                                    cat.name.replace("_", "/")
+                                        .lowercase()
+                                        .replaceFirstChar { it.uppercase() },
+                                    color = PrimaryText,
+                                    fontWeight = FontWeight.SemiBold,
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                                catItems.forEach { item ->
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth().padding(vertical = 1.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                    ) {
+                                        Checkbox(
+                                            checked = item.key in checkedKeys,
+                                            onCheckedChange = { onToggleItem(item.key) },
+                                            colors = CheckboxDefaults.colors(checkedColor = CyanAccent)
+                                        )
                                         Text(
-                                            item.ingredient,
+                                            item.displayLine,
+                                            modifier = Modifier.weight(1f),
                                             color = if (item.key in checkedKeys) MutedText else PrimaryText,
                                             style = MaterialTheme.typography.bodySmall,
                                             textDecoration = if (item.key in checkedKeys)
                                                 TextDecoration.LineThrough else null
-                                        )
-                                        Text(
-                                            item.recipeSource,
-                                            color = MutedText,
-                                            style = MaterialTheme.typography.labelSmall
                                         )
                                     }
                                 }
