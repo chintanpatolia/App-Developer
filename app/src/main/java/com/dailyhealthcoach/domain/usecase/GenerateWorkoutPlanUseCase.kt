@@ -14,13 +14,59 @@ class GenerateWorkoutPlanUseCase {
         exercises: List<Exercise>,
         recentWorkouts: List<Workout>,
         recentSets: List<WorkoutExercise>,
-        today: String
-    ): WorkoutPlan = when (recommendationType) {
-        "STRENGTH" -> strengthPlan(exercises, recentWorkouts, recentSets, today, isLight = false)
-        "LOWER_INTENSITY_STRENGTH" -> strengthPlan(exercises, recentWorkouts, recentSets, today, isLight = true)
-        "ACTIVE_RECOVERY" -> activeRecoveryPlan()
-        "WALKING_MOBILITY" -> walkingMobilityPlan()
-        else -> restDayPlan()
+        today: String,
+        workoutGoals: List<String> = listOf("General Fitness")
+    ): WorkoutPlan {
+        val goals = workoutGoals.ifEmpty { listOf("General Fitness") }
+
+        // Safety-first: conservative goals override everything else
+        val isConservative = goals.any { it == "Physical Therapy / Rehab" || it == "Postpartum Recovery" }
+        if (isConservative) {
+            val label = goals.first { it == "Physical Therapy / Rehab" || it == "Postpartum Recovery" }
+            return conservativePlan(label)
+        }
+
+        val hasMobility = goals.contains("Mobility & Flexibility")
+        val hasRecoveryFocus = goals.contains("Recovery Focus")
+        val hasBeginner = goals.contains("Beginner / Low Impact")
+        val hasStrength = goals.any { it == "Strength Training" || it == "Muscle Gain" }
+
+        // Recovery Focus overrides any strength recommendation
+        if (hasRecoveryFocus) {
+            return when (recommendationType) {
+                "STRENGTH", "LOWER_INTENSITY_STRENGTH" -> if (hasMobility) mobilityFocusPlan() else activeRecoveryPlan()
+                "ACTIVE_RECOVERY" -> activeRecoveryPlan()
+                "WALKING_MOBILITY" -> walkingMobilityPlan()
+                else -> restDayPlan()
+            }
+        }
+
+        // Mobility only (no strength goals selected alongside)
+        if (hasMobility && !hasStrength) {
+            return when (recommendationType) {
+                "REST" -> restDayPlan()
+                else -> mobilityFocusPlan()
+            }
+        }
+
+        // Beginner — always light; integrate mobility warm-up when selected together
+        if (hasBeginner) {
+            return when (recommendationType) {
+                "STRENGTH", "LOWER_INTENSITY_STRENGTH" -> strengthPlan(exercises, recentWorkouts, recentSets, today, isLight = true, workoutGoals = goals)
+                "ACTIVE_RECOVERY" -> if (hasMobility) mobilityFocusPlan() else activeRecoveryPlan()
+                "WALKING_MOBILITY" -> walkingMobilityPlan()
+                else -> restDayPlan()
+            }
+        }
+
+        // Standard routing with goal-aware tuning
+        return when (recommendationType) {
+            "STRENGTH" -> strengthPlan(exercises, recentWorkouts, recentSets, today, isLight = false, workoutGoals = goals)
+            "LOWER_INTENSITY_STRENGTH" -> strengthPlan(exercises, recentWorkouts, recentSets, today, isLight = true, workoutGoals = goals)
+            "ACTIVE_RECOVERY" -> if (hasMobility) mobilityFocusPlan() else activeRecoveryPlan()
+            "WALKING_MOBILITY" -> walkingMobilityPlan()
+            else -> restDayPlan()
+        }
     }
 
     private fun strengthPlan(
@@ -28,7 +74,8 @@ class GenerateWorkoutPlanUseCase {
         recentWorkouts: List<Workout>,
         recentSets: List<WorkoutExercise>,
         today: String,
-        isLight: Boolean
+        isLight: Boolean,
+        workoutGoals: List<String> = listOf("General Fitness")
     ): WorkoutPlan {
         val cutoff48h = LocalDate.parse(today).minusDays(2).toString()
         val exerciseById = exercises.associateBy { it.id }
@@ -51,16 +98,18 @@ class GenerateWorkoutPlanUseCase {
             else -> defaultFocus(recentWorkouts, recentSets, exerciseById)
         }
 
-        val maxExercises = if (isLight) 4 else 5
+        val isHighVolume = workoutGoals.any { it == "Strength Training" || it == "Muscle Gain" }
+        val isMuscleGain = workoutGoals.contains("Muscle Gain")
+        val maxExercises = if (isLight) 4 else if (isHighVolume) 6 else 5
         val suggested = selectExercises(focus, exercises, maxExercises)
-        val reasons = buildReasons(focus, musclesLast48h, isLight)
+        val reasons = buildReasons(focus, musclesLast48h, isLight, workoutGoals)
 
         return WorkoutPlan(
             focus = focus,
-            setsPerExercise = if (isLight) 2 else 3,
-            repsRange = if (isLight) "8-12" else "6-12",
-            rpeTarget = if (isLight) "6-7" else "7-8",
-            durationMinutes = if (isLight) "30-45" else "45-60",
+            setsPerExercise = if (isLight) 2 else if (isHighVolume) 4 else 3,
+            repsRange = if (isLight) "8-12" else if (isMuscleGain) "8-15" else "6-12",
+            rpeTarget = if (isLight) "6-7" else if (isHighVolume) "7-9" else "7-8",
+            durationMinutes = if (isLight) "30-45" else if (isHighVolume) "50-70" else "45-60",
             suggestedExercises = suggested,
             isStrengthDay = true,
             reasons = reasons,
@@ -113,7 +162,8 @@ class GenerateWorkoutPlanUseCase {
     private fun buildReasons(
         focus: String,
         musclesLast48h: Set<String>,
-        isLight: Boolean
+        isLight: Boolean,
+        workoutGoals: List<String> = listOf("General Fitness")
     ): List<String> {
         val reasons = mutableListOf<String>()
         reasons += if (isLight) "Recovery score calls for lighter load today" else "Recovery score supports a full strength session"
@@ -123,8 +173,47 @@ class GenerateWorkoutPlanUseCase {
             reasons += "No recent strength training — good time for a fresh session"
         }
         if (focus == "Full Body") reasons += "Most major groups trained recently — keeping it balanced"
+        val hasStrengthAndMuscle = workoutGoals.contains("Strength Training") && workoutGoals.contains("Muscle Gain")
+        val hasMetabolic = workoutGoals.any { it == "Metabolic Reset" || it == "Insulin Resistance / Prediabetes" || it == "Fat Loss" }
+        when {
+            hasStrengthAndMuscle -> reasons += "Goals: strength + hypertrophy — compound lifts with progressive overload"
+            workoutGoals.contains("Strength Training") -> reasons += "Goal: build maximal strength — prioritising heavier compound lifts"
+            workoutGoals.contains("Muscle Gain") -> reasons += "Goal: hypertrophy — higher volume with controlled tempo"
+            hasMetabolic -> reasons += "Goals include metabolic health — compound movements maximise insulin sensitivity"
+            workoutGoals.contains("Beginner / Low Impact") -> reasons += "Goal: build base fitness — lighter load, focus on form"
+        }
         return reasons.take(3)
     }
+
+    private fun conservativePlan(workoutGoal: String) = WorkoutPlan(
+        focus = "Gentle Movement",
+        setsPerExercise = 0, repsRange = "", rpeTarget = "3-5", durationMinutes = "15-30",
+        suggestedExercises = emptyList(), isStrengthDay = false,
+        reasons = listOf(
+            "Use this as general guidance only. Follow clinician guidance where applicable.",
+            "Conservative session tailored for $workoutGoal — prioritising safety and comfort"
+        ),
+        nonStrengthActivities = listOf(
+            "15-30 min gentle walk at comfortable pace",
+            "Light stretching — no pain, no strain",
+            "Breathing exercises or relaxation"
+        )
+    )
+
+    private fun mobilityFocusPlan() = WorkoutPlan(
+        focus = "Mobility & Flexibility",
+        setsPerExercise = 0, repsRange = "", rpeTarget = "3-5", durationMinutes = "20-40",
+        suggestedExercises = emptyList(), isStrengthDay = false,
+        reasons = listOf(
+            "Goal: Mobility & Flexibility — joint health and range of motion",
+            "Low-intensity movement supports recovery while building flexibility"
+        ),
+        nonStrengthActivities = listOf(
+            "10-15 min dynamic warm-up",
+            "20-30 min mobility flow — hips, thoracic, shoulders",
+            "5-10 min static stretching cool-down"
+        )
+    )
 
     private fun activeRecoveryPlan() = WorkoutPlan(
         focus = "Active Recovery",

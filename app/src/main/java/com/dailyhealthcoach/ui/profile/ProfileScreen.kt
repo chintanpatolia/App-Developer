@@ -393,6 +393,67 @@ fun ProfileScreen(
                 Text("Sleep 4–12 hrs. Strength 1–7 days/week.", color = MutedText, style = MaterialTheme.typography.bodySmall)
             }
 
+            ProfileCard(title = "Workout Goal") {
+                Text(
+                    "Choose up to 3 goals. Used to personalise workout recommendations.",
+                    color = MutedText,
+                    style = MaterialTheme.typography.bodySmall
+                )
+                var showLimitWarning by remember { mutableStateOf(false) }
+                val workoutGoalOptions = listOf(
+                    "General Fitness", "Strength Training", "Fat Loss", "Muscle Gain",
+                    "Metabolic Reset", "Insulin Resistance / Prediabetes",
+                    "Mobility & Flexibility", "Recovery Focus", "Beginner / Low Impact",
+                    "Physical Therapy / Rehab", "Postpartum Recovery"
+                )
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    workoutGoalOptions.chunked(3).forEach { rowOptions ->
+                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            rowOptions.forEach { option ->
+                                val isSelected = option in uiState.workoutGoals
+                                FilterChip(
+                                    selected = isSelected,
+                                    onClick = {
+                                        showLimitWarning = false
+                                        if (isSelected) {
+                                            onUpdate { it.copy(workoutGoals = it.workoutGoals - option) }
+                                        } else if (uiState.workoutGoals.size < 3) {
+                                            onUpdate { it.copy(workoutGoals = it.workoutGoals + option) }
+                                        } else {
+                                            showLimitWarning = true
+                                        }
+                                    },
+                                    label = { Text(option, maxLines = 2, style = MaterialTheme.typography.labelSmall) },
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = AccentBlue,
+                                        selectedLabelColor = PrimaryText,
+                                        labelColor = MutedText
+                                    ),
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
+                            repeat(3 - rowOptions.size) {
+                                Spacer(modifier = Modifier.weight(1f))
+                            }
+                        }
+                    }
+                }
+                if (showLimitWarning) {
+                    Text(
+                        "Choose up to 3 workout goals.",
+                        color = WarningAccent,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+                if (uiState.workoutGoals.any { it == "Physical Therapy / Rehab" || it == "Postpartum Recovery" }) {
+                    Text(
+                        "Use this as general guidance only. Follow clinician guidance where applicable.",
+                        color = WarningAccent,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            }
+
             HealthConnectCard(
                 hcImportConflict = uiState.hcImportConflict,
                 hcImportMessage = uiState.hcImportMessage,

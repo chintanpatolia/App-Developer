@@ -24,6 +24,7 @@ data class ProfileUiState(
     val strengthTarget: String = "3",
     val nutritionGoal: String = "Maintain",
     val dietPreference: String = "No Restriction",
+    val workoutGoals: List<String> = listOf("General Fitness"),
     val error: String? = null,
     val savedSuccess: Boolean = false,
     val hcImportConflict: HcImportConflict? = null,

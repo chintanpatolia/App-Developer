@@ -291,6 +291,7 @@ private fun MainShellContent(
                         recoveryActivityRepository = appContainer.recoveryActivityRepository,
                         generateWorkoutPlanUseCase = appContainer.generateWorkoutPlanUseCase,
                         habitAutoUpdateUseCase = appContainer.habitAutoUpdateUseCase,
+                        userProfileRepository = appContainer.userProfileRepository,
                         today = LocalDate.now().toString()
                     )
                 )

@@ -66,7 +66,8 @@ class ProfileViewModel(
                 sleepTarget = profile?.sleepTargetHours?.cleanString() ?: "7",
                 strengthTarget = profile?.strengthTrainingDaysPerWeek?.toString() ?: "3",
                 nutritionGoal = profile?.nutritionGoal ?: "Maintain",
-                dietPreference = profile?.dietPreference ?: "No Restriction"
+                dietPreference = profile?.dietPreference ?: "No Restriction",
+                workoutGoals = profile?.workoutGoals?.takeIf { it.isNotEmpty() } ?: listOf("General Fitness")
             )
         }
     }
@@ -126,7 +127,8 @@ class ProfileViewModel(
                     sleepTargetHours = sleepTarget,
                     strengthTrainingDaysPerWeek = strengthTarget,
                     nutritionGoal = s.nutritionGoal.ifBlank { null },
-                    dietPreference = s.dietPreference.ifBlank { null }
+                    dietPreference = s.dietPreference.ifBlank { null },
+                    workoutGoals = s.workoutGoals
                 )
             )
             macroTargetRepository.saveTarget(

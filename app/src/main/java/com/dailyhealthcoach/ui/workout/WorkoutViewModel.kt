@@ -13,6 +13,7 @@ import com.dailyhealthcoach.domain.model.WorkoutStatus
 import com.dailyhealthcoach.domain.repository.DailyRecommendationRepository
 import com.dailyhealthcoach.domain.repository.ExerciseRepository
 import com.dailyhealthcoach.domain.repository.RecoveryActivityRepository
+import com.dailyhealthcoach.domain.repository.UserProfileRepository
 import com.dailyhealthcoach.domain.repository.WorkoutRepository
 import com.dailyhealthcoach.domain.usecase.GenerateWorkoutPlanUseCase
 import com.dailyhealthcoach.domain.usecase.HabitAutoUpdateUseCase
@@ -32,6 +33,7 @@ class WorkoutViewModel(
     private val recoveryActivityRepository: RecoveryActivityRepository,
     private val generateWorkoutPlanUseCase: GenerateWorkoutPlanUseCase,
     private val habitAutoUpdateUseCase: HabitAutoUpdateUseCase,
+    private val userProfileRepository: UserProfileRepository,
     private val today: String
 ) : ViewModel() {
     private val draftState = MutableStateFlow(WorkoutDraftState())
@@ -42,8 +44,11 @@ class WorkoutViewModel(
         workoutRepository.observeWorkoutSets(),
         draftState,
         dailyRecommendationRepository.observeForDate(today)
-    ) { exercises, workouts, workoutSets, draft, recommendation ->
-        buildUiState(exercises, workouts, workoutSets, draft, recommendation, generateWorkoutPlanUseCase, today)
+            .combine(userProfileRepository.observeUserProfile()) { rec, profile ->
+                rec to (profile?.workoutGoals?.takeIf { it.isNotEmpty() } ?: listOf("General Fitness"))
+            }
+    ) { exercises, workouts, workoutSets, draft, recAndGoal ->
+        buildUiState(exercises, workouts, workoutSets, draft, recAndGoal.first, recAndGoal.second, generateWorkoutPlanUseCase, today)
     }.combine(recoveryActivityRepository.observeAll()) { state, allLogs ->
         mergeRecoveryLogs(state, allLogs)
     }.stateIn(
@@ -305,6 +310,7 @@ private fun buildUiState(
     workoutSets: List<WorkoutExercise>,
     draft: WorkoutDraftState,
     recommendation: DailyRecommendation?,
+    workoutGoals: List<String>,
     generateWorkoutPlanUseCase: GenerateWorkoutPlanUseCase,
     today: String
 ): WorkoutUiState {
@@ -366,7 +372,8 @@ private fun buildUiState(
             exercises = exercises,
             recentWorkouts = workouts,
             recentSets = workoutSets,
-            today = today
+            today = today,
+            workoutGoals = workoutGoals
         )
         WorkoutPlanUiState(
             focus = plan.focus,
@@ -487,6 +494,7 @@ class WorkoutViewModelFactory(
     private val recoveryActivityRepository: RecoveryActivityRepository,
     private val generateWorkoutPlanUseCase: GenerateWorkoutPlanUseCase,
     private val habitAutoUpdateUseCase: HabitAutoUpdateUseCase,
+    private val userProfileRepository: UserProfileRepository,
     private val today: String
 ) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
@@ -499,6 +507,7 @@ class WorkoutViewModelFactory(
                 recoveryActivityRepository = recoveryActivityRepository,
                 generateWorkoutPlanUseCase = generateWorkoutPlanUseCase,
                 habitAutoUpdateUseCase = habitAutoUpdateUseCase,
+                userProfileRepository = userProfileRepository,
                 today = today
             ) as T
         }
