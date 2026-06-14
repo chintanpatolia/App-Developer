@@ -161,6 +161,7 @@ fun PremiumWorkoutRoute(viewModel: WorkoutViewModel) {
             }
         },
         onStartWorkoutWithPlan = { exerciseIds ->
+            uiState.workoutPlan?.let { viewModel.updateWorkoutName(it.focus) }
             viewModel.startWorkoutWithPlan(exerciseIds)
             showActiveWorkout = true
         },
@@ -480,7 +481,7 @@ private fun ActiveWorkoutScreen(
                 )
             }
             WorkoutStatusChips(selectedStatus = uiState.selectedStatus, onStatusSelected = onStatusSelected)
-            ExercisePicker(
+            ActiveExerciseSection(
                 exercises = uiState.exercises,
                 selectedExercises = uiState.selectedExercises,
                 onExerciseSelected = onExerciseSelected,
@@ -696,6 +697,73 @@ private fun WorkoutStatusChips(
                 label = { Text(status.label, maxLines = 1) },
                 modifier = Modifier.weight(1f)
             )
+        }
+    }
+}
+
+@Composable
+private fun ActiveExerciseSection(
+    exercises: List<ExerciseOptionUiState>,
+    selectedExercises: List<SelectedExerciseUiState>,
+    onExerciseSelected: (Long) -> Unit,
+    onExerciseExpandedToggle: (Long) -> Unit,
+    onSetRepsChange: (Long, String) -> Unit,
+    onSetWeightChange: (Long, String) -> Unit,
+    onSetRpeChange: (Long, String) -> Unit,
+    onSetNotesChange: (Long, String) -> Unit,
+    onExerciseNotesChange: (Long, String) -> Unit,
+    onAddSet: (Long) -> Unit,
+    onRemoveSet: (Long, Int) -> Unit
+) {
+    var showLibrary by remember { mutableStateOf(false) }
+    val selectedIds = selectedExercises.map { it.exerciseId }.toSet()
+    val unselectedExercises = exercises.filter { it.id !in selectedIds }
+
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        if (selectedExercises.isEmpty()) {
+            Text("No exercises loaded. Use Add Exercise below.", color = MutedText, style = MaterialTheme.typography.bodySmall)
+        }
+        selectedExercises.forEach { exercise ->
+            ExerciseCard(
+                exercise = exercise,
+                onExerciseSelected = onExerciseSelected,
+                onExerciseExpandedToggle = onExerciseExpandedToggle,
+                onSetRepsChange = onSetRepsChange,
+                onSetWeightChange = onSetWeightChange,
+                onSetRpeChange = onSetRpeChange,
+                onSetNotesChange = onSetNotesChange,
+                onExerciseNotesChange = onExerciseNotesChange,
+                onAddSet = onAddSet,
+                onRemoveSet = onRemoveSet
+            )
+        }
+        OutlinedButton(
+            onClick = { showLibrary = !showLibrary },
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(18.dp),
+            colors = ButtonDefaults.outlinedButtonColors(contentColor = CyanAccent)
+        ) {
+            Text(if (showLibrary) "Hide Library" else "+ Add Exercise")
+        }
+        if (showLibrary) {
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text(
+                    text = "Exercise Library",
+                    color = MutedText,
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                unselectedExercises.forEach { exercise ->
+                    CollapsedExerciseRow(
+                        exercise = exercise,
+                        setCount = 0,
+                        onClick = {
+                            onExerciseSelected(exercise.id)
+                            showLibrary = false
+                        }
+                    )
+                }
+            }
         }
     }
 }
