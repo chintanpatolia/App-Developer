@@ -18,6 +18,7 @@ import com.dailyhealthcoach.domain.repository.ExerciseRepository
 import com.dailyhealthcoach.domain.repository.HabitRepository
 import com.dailyhealthcoach.domain.repository.MacroTargetRepository
 import com.dailyhealthcoach.domain.repository.NutritionRepository
+import com.dailyhealthcoach.domain.repository.RecoveryActivityRepository
 import com.dailyhealthcoach.domain.repository.RecoveryRepository
 import com.dailyhealthcoach.domain.repository.UserProfileRepository
 import com.dailyhealthcoach.domain.repository.WorkoutRepository
@@ -37,7 +38,8 @@ class GetDashboardSummaryUseCase(
     private val dailyRecommendationRepository: DailyRecommendationRepository,
     private val recoveryScoreCalculator: RecoveryScoreCalculator,
     private val recommendationService: NextDayRecommendationService,
-    private val userProfileRepository: UserProfileRepository
+    private val userProfileRepository: UserProfileRepository,
+    private val recoveryActivityRepository: RecoveryActivityRepository
 ) {
     operator fun invoke(date: String): Flow<DashboardSummary> {
         val today = LocalDate.parse(date)
@@ -62,12 +64,14 @@ class GetDashboardSummaryUseCase(
             combine(
                 workoutRepository.observeWorkouts(),
                 workoutRepository.observeWorkoutSets(),
-                exerciseRepository.observeExercises()
-            ) { workouts, workoutSets, exercises ->
+                exerciseRepository.observeExercises(),
+                recoveryActivityRepository.observeAll()
+            ) { workouts, workoutSets, exercises, recoveryActivities ->
                 WorkoutInputs(
                     workouts = workouts,
                     workoutSets = workoutSets,
-                    exercises = exercises
+                    exercises = exercises,
+                    recoveryActivities = recoveryActivities
                 )
             },
             userProfileRepository.observeUserProfile()
@@ -90,7 +94,9 @@ class GetDashboardSummaryUseCase(
                     habitLogs = inputs.logs,
                     todayWorkouts = todayWorkouts,
                     recentWorkouts = recentWorkouts,
-                    workoutSets = workoutInputs.workoutSets
+                    workoutSets = workoutInputs.workoutSets,
+                    recoveryActivities = workoutInputs.recoveryActivities,
+                    weeklyWorkouts = weeklyWorkouts
                 )
             )
             val recommendation = recommendationService.calculate(
@@ -121,6 +127,7 @@ class GetDashboardSummaryUseCase(
                 recoveryScore = recovery?.score,
                 recoveryLabel = recovery?.label ?: "Recovery not calculated",
                 recoveryReasons = recovery?.reasons.orEmpty(),
+                recoveryContributors = recovery?.contributors.orEmpty(),
                 nextDayRecommendation = recommendation,
                 workoutCompletedToday = workoutCompletedToday
             )
@@ -150,5 +157,6 @@ private data class DashboardInputs(
 private data class WorkoutInputs(
     val workouts: List<com.dailyhealthcoach.domain.model.Workout>,
     val workoutSets: List<com.dailyhealthcoach.domain.model.WorkoutExercise>,
-    val exercises: List<Exercise>
+    val exercises: List<Exercise>,
+    val recoveryActivities: List<com.dailyhealthcoach.domain.model.RecoveryActivity> = emptyList()
 )

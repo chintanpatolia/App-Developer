@@ -41,9 +41,12 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -288,6 +291,7 @@ private fun ThinProgressBar(progress: Float, color: Color, modifier: Modifier = 
 
 @Composable
 private fun RecoveryHeroCard(uiState: DashboardUiState) {
+    var showBreakdown by remember { mutableStateOf(false) }
     ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
@@ -339,6 +343,78 @@ private fun RecoveryHeroCard(uiState: DashboardUiState) {
                         )
                         uiState.recoveryReasons.take(3).forEach { reason ->
                             Text(text = "· $reason", style = MaterialTheme.typography.bodySmall, color = MutedText)
+                        }
+                    }
+                }
+                if (uiState.recoveryContributors.isNotEmpty()) {
+                    TextButton(
+                        onClick = { showBreakdown = !showBreakdown },
+                        modifier = Modifier.padding(top = 4.dp)
+                    ) {
+                        Text(
+                            text = if (showBreakdown) "▲ Hide breakdown" else "▼ Recovery breakdown",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = CyanAccent
+                        )
+                    }
+                    if (showBreakdown) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(SecondaryCard, RoundedCornerShape(12.dp))
+                                .padding(12.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(
+                                text = "Recovery Contributors",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MutedText
+                            )
+                            uiState.recoveryContributors.forEach { c ->
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = c.label,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = PrimaryText
+                                        )
+                                        Text(
+                                            text = c.detail,
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MutedText
+                                        )
+                                    }
+                                    Text(
+                                        text = c.deltaText,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = if (c.isPositive) PositiveAccent else WarningAccent
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    text = "Total",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MutedText
+                                )
+                                Text(
+                                    text = "${uiState.recoveryScore}",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = ringColor
+                                )
+                            }
                         }
                     }
                 }

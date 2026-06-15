@@ -38,6 +38,14 @@ private fun DashboardSummary.toUiState(): DashboardUiState {
         recoveryScore = recoveryScore,
         recoveryLabel = recoveryLabel,
         recoveryReasons = recoveryReasons,
+        recoveryContributors = recoveryContributors.map { c ->
+            RecoveryContributorUiState(
+                label = c.label,
+                deltaText = if (c.delta >= 0) "+${c.delta}" else "${c.delta}",
+                detail = c.detail,
+                isPositive = c.delta >= 0
+            )
+        },
         nextDayRecommendation = nextDayRecommendation?.let {
             DailyRecommendationUiState(
                 title = it.title,

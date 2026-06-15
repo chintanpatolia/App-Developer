@@ -76,6 +76,10 @@ class AppContainer(context: Context) {
         dailyRecommendationDao = database.dailyRecommendationDao()
     )
 
+    val recoveryActivityRepository: RecoveryActivityRepository = RecoveryActivityRepositoryImpl(
+        dao = database.recoveryActivityDao()
+    )
+
     val getDashboardSummaryUseCase = GetDashboardSummaryUseCase(
         habitRepository = habitRepository,
         macroTargetRepository = macroTargetRepository,
@@ -87,7 +91,8 @@ class AppContainer(context: Context) {
         dailyRecommendationRepository = dailyRecommendationRepository,
         recoveryScoreCalculator = RecoveryScoreCalculator(),
         recommendationService = NextDayRecommendationService(),
-        userProfileRepository = userProfileRepository
+        userProfileRepository = userProfileRepository,
+        recoveryActivityRepository = recoveryActivityRepository
     )
 
     val getTodayHabitsUseCase = GetTodayHabitsUseCase(
@@ -96,10 +101,6 @@ class AppContainer(context: Context) {
 
     val setHabitStatusForTodayUseCase = SetHabitStatusForTodayUseCase(
         habitRepository = habitRepository
-    )
-
-    val recoveryActivityRepository: RecoveryActivityRepository = RecoveryActivityRepositoryImpl(
-        dao = database.recoveryActivityDao()
     )
 
     val generateWorkoutPlanUseCase = GenerateWorkoutPlanUseCase()
