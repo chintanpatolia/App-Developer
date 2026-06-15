@@ -16,6 +16,14 @@ data class TrendData(
     val points: List<Float> = emptyList()
 )
 
+data class WeeklyTrainingLoadUiState(
+    val weekLabel: String,
+    val workoutCount: Int,
+    val totalSets: Int,
+    val totalVolumeText: String,
+    val avgRpe: String
+)
+
 data class ProgressUiState(
     val weight: TrendData?,
     val bodyFat: TrendData?,
@@ -24,5 +32,7 @@ data class ProgressUiState(
     val steps: TrendData?,
     val recovery: TrendData?,
     val workoutFrequency: TrendData?,
-    val habitCompletion: TrendData?
+    val habitCompletion: TrendData?,
+    val strengthTrends: List<TrendData> = emptyList(),
+    val weeklyLoad: WeeklyTrainingLoadUiState? = null
 )

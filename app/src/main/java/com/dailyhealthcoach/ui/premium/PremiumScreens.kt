@@ -61,8 +61,10 @@ import com.dailyhealthcoach.ui.workout.ActivityDraft
 import com.dailyhealthcoach.ui.workout.DraftWorkoutSetUiState
 import com.dailyhealthcoach.ui.workout.ExerciseDetailUiState
 import com.dailyhealthcoach.ui.workout.ExerciseOptionUiState
+import com.dailyhealthcoach.ui.workout.PersonalRecordUiState
 import com.dailyhealthcoach.ui.workout.RecoveryActivityDetailUiState
 import com.dailyhealthcoach.ui.workout.SelectedExerciseUiState
+import com.dailyhealthcoach.ui.workout.WeeklyLoadUiState
 import com.dailyhealthcoach.ui.workout.WorkoutDetailUiState
 import com.dailyhealthcoach.ui.workout.WorkoutHistoryUiState
 import com.dailyhealthcoach.ui.workout.SuggestedExerciseUiState
@@ -197,7 +199,8 @@ fun PremiumWorkoutRoute(viewModel: WorkoutViewModel) {
         onSaveRecoverySession = { drafts, notes ->
             viewModel.saveRecoverySession(drafts, notes)
             showNonStrengthSession = false
-        }
+        },
+        onDismissPr = viewModel::dismissPrCelebration
     )
 }
 
@@ -229,7 +232,8 @@ private fun PremiumWorkoutScreen(
     onSetInlineWeightChange: (Long, Int, String) -> Unit,
     onSetInlineRpeChange: (Long, Int, String) -> Unit,
     onSaveWorkout: (List<ActivityDraft>, List<ActivityDraft>) -> Unit,
-    onSaveRecoverySession: (List<ActivityDraft>, String) -> Unit
+    onSaveRecoverySession: (List<ActivityDraft>, String) -> Unit,
+    onDismissPr: () -> Unit
 ) {
     Column(modifier = Modifier.padding(bottom = 40.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
         when {
@@ -265,6 +269,12 @@ private fun PremiumWorkoutScreen(
                 onBack = onClearWorkout
             )
             else -> {
+                if (uiState.newPrAchievements.isNotEmpty()) {
+                    PrCelebrationBanner(
+                        achievements = uiState.newPrAchievements,
+                        onDismiss = onDismissPr
+                    )
+                }
                 PremiumWorkoutPlanCard(
                     workoutPlan = uiState.workoutPlan,
                     hasWorkoutTodayCompleted = uiState.hasWorkoutTodayCompleted,
@@ -272,6 +282,12 @@ private fun PremiumWorkoutScreen(
                     onStartWorkoutWithPlan = onStartWorkoutWithPlan
                 )
                 WorkoutHistoryCard(workouts = uiState.recentWorkouts, onWorkoutSelected = onWorkoutSelected)
+                if (uiState.personalRecords.isNotEmpty()) {
+                    PersonalRecordsCard(records = uiState.personalRecords)
+                }
+                if (uiState.weeklyLoads.isNotEmpty()) {
+                    WeeklyLoadSection(loads = uiState.weeklyLoads)
+                }
             }
         }
     }
@@ -1256,6 +1272,7 @@ private fun WorkoutHistoryCard(
                                 if (workout.durationText.isNotEmpty()) append(" · ${workout.durationText}")
                                 append(" · ${workout.exerciseCount} exercises · ${workout.setCount} sets")
                                 if (workout.avgRpe.isNotEmpty()) append(" · ${workout.avgRpe}")
+                                if (workout.totalVolumeText.isNotEmpty()) append(" · ${workout.totalVolumeText}")
                             },
                             color = MutedText,
                             style = MaterialTheme.typography.bodySmall
@@ -1305,6 +1322,22 @@ private fun WorkoutDetailView(
                     color = MutedText,
                     style = MaterialTheme.typography.bodySmall
                 )
+                val summaryParts = listOfNotNull(
+                    detail.totalVolumeText.takeIf { it.isNotEmpty() },
+                    detail.totalSetsText.takeIf { it.isNotEmpty() },
+                    detail.avgRpeText.takeIf { it.isNotEmpty() }
+                )
+                if (summaryParts.isNotEmpty()) {
+                    Surface(shape = RoundedCornerShape(12.dp), color = SecondaryCard.copy(alpha = 0.5f)) {
+                        Text(
+                            text = summaryParts.joinToString(" · "),
+                            color = CyanAccent,
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                        )
+                    }
+                }
                 if (!detail.notes.isNullOrBlank()) {
                     Surface(shape = RoundedCornerShape(14.dp), color = SecondaryCard.copy(alpha = 0.6f)) {
                         Text(
@@ -1404,6 +1437,123 @@ private fun RecoveryActivityDetailSection(activity: RecoveryActivityDetailUiStat
         if (!activity.notes.isNullOrBlank()) {
             Text(text = activity.notes, color = MutedText, style = MaterialTheme.typography.bodySmall)
         }
+    }
+}
+
+@Composable
+private fun PrCelebrationBanner(achievements: List<String>, onDismiss: () -> Unit) {
+    Surface(
+        shape = RoundedCornerShape(18.dp),
+        color = PositiveAccent.copy(alpha = 0.12f),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "🏆 New Personal Record!",
+                    color = PositiveAccent,
+                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.titleSmall
+                )
+                TextButton(onClick = onDismiss) {
+                    Text(text = "Dismiss", color = MutedText, style = MaterialTheme.typography.bodySmall)
+                }
+            }
+            achievements.forEach { achievement ->
+                Text(
+                    text = "· $achievement",
+                    color = PrimaryText,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun PersonalRecordsCard(records: List<PersonalRecordUiState>) {
+    Box(modifier = Modifier.fillMaxWidth()) {
+        MainFeatureCard(modifier = Modifier.padding(top = 22.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(
+                    text = "Personal Records",
+                    color = PrimaryText,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+                records.forEach { record ->
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(SecondaryCard.copy(alpha = 0.72f))
+                            .padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Text(text = record.exerciseName, color = PrimaryText, fontWeight = FontWeight.SemiBold)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            PrStatItem(label = "Best", value = record.bestWeightText, modifier = Modifier.weight(1f))
+                            PrStatItem(label = "Best Set", value = record.bestVolumeSetText, modifier = Modifier.weight(1f))
+                            PrStatItem(label = "Est. 1RM", value = record.estimated1RmText, modifier = Modifier.weight(1f))
+                        }
+                    }
+                }
+            }
+        }
+        FloatingTitlePill(text = "PRs", modifier = Modifier.align(Alignment.TopCenter))
+    }
+}
+
+@Composable
+private fun PrStatItem(label: String, value: String, modifier: Modifier = Modifier) {
+    Column(modifier = modifier) {
+        Text(text = value, color = CyanAccent, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodySmall)
+        Text(text = label, color = MutedText, style = MaterialTheme.typography.labelSmall)
+    }
+}
+
+@Composable
+private fun WeeklyLoadSection(loads: List<WeeklyLoadUiState>) {
+    Box(modifier = Modifier.fillMaxWidth()) {
+        MainFeatureCard(modifier = Modifier.padding(top = 22.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(
+                    text = "Weekly Training Load",
+                    color = PrimaryText,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+                loads.forEach { load ->
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(SecondaryCard.copy(alpha = 0.72f))
+                            .padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text(text = load.weekLabel, color = CyanAccent, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodySmall)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(text = "${load.workoutCount} workouts", color = PrimaryText, style = MaterialTheme.typography.bodySmall)
+                            Text(text = "${load.totalSets} sets", color = MutedText, style = MaterialTheme.typography.bodySmall)
+                            Text(text = load.totalVolumeText, color = MutedText, style = MaterialTheme.typography.bodySmall)
+                            Text(text = "RPE ${load.avgRpe}", color = MutedText, style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
+                }
+            }
+        }
+        FloatingTitlePill(text = "Load", modifier = Modifier.align(Alignment.TopCenter))
     }
 }
 

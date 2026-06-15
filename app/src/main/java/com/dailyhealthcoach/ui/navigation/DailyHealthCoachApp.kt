@@ -177,6 +177,7 @@ fun DailyHealthCoachApp(appContainer: AppContainer) {
                             habitRepository = appContainer.habitRepository,
                             workoutRepository = appContainer.workoutRepository,
                             recoveryRepository = appContainer.recoveryRepository,
+                            exerciseRepository = appContainer.exerciseRepository,
                             today = LocalDate.now().toString()
                         )
                     )

@@ -17,7 +17,10 @@ import com.dailyhealthcoach.domain.repository.UserProfileRepository
 import com.dailyhealthcoach.domain.repository.WorkoutRepository
 import com.dailyhealthcoach.domain.usecase.GenerateWorkoutPlanUseCase
 import com.dailyhealthcoach.domain.usecase.HabitAutoUpdateUseCase
+import java.time.DayOfWeek
 import java.time.LocalDate
+import java.time.format.TextStyle
+import java.util.Locale
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -37,6 +40,13 @@ class WorkoutViewModel(
     private val today: String
 ) : ViewModel() {
     private val draftState = MutableStateFlow(WorkoutDraftState())
+    private val _pendingPrAchievements = MutableStateFlow<List<String>>(emptyList())
+
+    private val rawWorkoutSets = workoutRepository.observeWorkoutSets()
+        .stateIn(scope = viewModelScope, started = SharingStarted.Eagerly, initialValue = emptyList())
+
+    private val rawExercises = exerciseRepository.observeExercises()
+        .stateIn(scope = viewModelScope, started = SharingStarted.Eagerly, initialValue = emptyList())
 
     val uiState: StateFlow<WorkoutUiState> = combine(
         exerciseRepository.observeExercises(),
@@ -51,6 +61,8 @@ class WorkoutViewModel(
         buildUiState(exercises, workouts, workoutSets, draft, recAndGoal.first, recAndGoal.second, generateWorkoutPlanUseCase, today)
     }.combine(recoveryActivityRepository.observeAll()) { state, allLogs ->
         mergeRecoveryLogs(state, allLogs)
+    }.combine(_pendingPrAchievements) { state, prs ->
+        if (prs.isEmpty()) state else state.copy(newPrAchievements = prs)
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
@@ -185,6 +197,10 @@ class WorkoutViewModel(
         draftState.update { it.copy(selectedWorkoutId = null) }
     }
 
+    fun dismissPrCelebration() {
+        _pendingPrAchievements.value = emptyList()
+    }
+
     fun startWorkoutWithPlan(suggestedExercises: List<SuggestedExerciseUiState>) {
         draftState.update { draft ->
             draft.copy(
@@ -269,6 +285,20 @@ class WorkoutViewModel(
         coolDownActivities: List<ActivityDraft> = emptyList()
     ) {
         val draft = draftState.value
+        val existingSets = rawWorkoutSets.value
+        val exerciseMap = rawExercises.value.associateBy { it.id }
+        val draftSetsForPr = draft.selectedExercises.flatMap { ex ->
+            ex.sets.mapNotNull { set ->
+                val w = set.weightText.toDoubleOrNull() ?: return@mapNotNull null
+                val r = set.repsText.toIntOrNull() ?: return@mapNotNull null
+                if (w <= 0 || r <= 0) return@mapNotNull null
+                WorkoutExercise(
+                    id = 0, workoutId = 0, exerciseId = ex.exerciseId,
+                    setNumber = set.setNumber, reps = r, weight = w,
+                    rpe = set.rpeText.toIntOrNull(), restSeconds = null, notes = null
+                )
+            }
+        }
         viewModelScope.launch {
             val workoutId = workoutRepository.saveWorkout(
                 date = LocalDate.now().toString(),
@@ -306,6 +336,8 @@ class WorkoutViewModel(
                     }
                 )
             }
+            val achievements = detectNewPrs(existingSets, draftSetsForPr, exerciseMap)
+            if (achievements.isNotEmpty()) _pendingPrAchievements.value = achievements
             habitAutoUpdateUseCase(today)
             draftState.value = WorkoutDraftState()
         }
@@ -419,6 +451,7 @@ private fun buildUiState(
         val exerciseCount = sets.map { it.exerciseId }.distinct().size
         val rpeValues = sets.mapNotNull { it.rpe }
         val avgRpe = if (rpeValues.isNotEmpty()) "RPE ${rpeValues.average().let { "%.1f".format(it) }}" else ""
+        val totalVolume = sets.sumOf { (it.weight ?: 0.0) * (it.reps ?: 0) }
         WorkoutHistoryUiState(
             id = workout.id,
             date = workout.date,
@@ -428,13 +461,16 @@ private fun buildUiState(
             exerciseCount = exerciseCount,
             setCount = sets.size,
             avgRpe = avgRpe,
-            muscleGroups = muscleGroups.joinToString()
+            muscleGroups = muscleGroups.joinToString(),
+            totalVolumeText = formatVolume(totalVolume)
         )
     }
 
     val selectedDetail = draft.selectedWorkoutId?.let { id ->
         val workout = sortedWorkouts.firstOrNull { it.id == id } ?: return@let null
         val sets = setsByWorkoutId[id].orEmpty()
+        val detailRpe = sets.mapNotNull { it.rpe }
+        val detailVolume = sets.sumOf { (it.weight ?: 0.0) * (it.reps ?: 0) }
         WorkoutDetailUiState(
             id = workout.id,
             date = workout.date,
@@ -457,7 +493,10 @@ private fun buildUiState(
                         )
                     }
                 )
-            }
+            },
+            totalVolumeText = formatVolume(detailVolume),
+            totalSetsText = if (sets.isNotEmpty()) "${sets.size} sets" else "",
+            avgRpeText = if (detailRpe.isNotEmpty()) "Avg RPE ${"%.1f".format(detailRpe.average())}" else ""
         )
     }
 
@@ -500,6 +539,8 @@ private fun buildUiState(
 
     val todayWorkouts = workouts.filter { it.date == today }
     val hasWorkoutTodayCompleted = todayWorkouts.any { WorkoutStatus.fromStorageValue(it.status) != WorkoutStatus.SKIPPED }
+    val personalRecords = computePersonalRecords(workoutSets, exerciseById)
+    val weeklyLoads = computeWeeklyLoads(workouts, workoutSets, today)
 
     return WorkoutUiState(
         isWorkoutStarted = draft.isWorkoutStarted,
@@ -552,7 +593,9 @@ private fun buildUiState(
         recentWorkouts = historyList,
         selectedWorkoutDetail = selectedDetail,
         workoutPlan = workoutPlan,
-        hasWorkoutTodayCompleted = hasWorkoutTodayCompleted
+        hasWorkoutTodayCompleted = hasWorkoutTodayCompleted,
+        personalRecords = personalRecords,
+        weeklyLoads = weeklyLoads
     )
 }
 
@@ -580,6 +623,118 @@ private fun String.filterWeightInput(): String {
         }
     }
     return builder.toString()
+}
+
+private fun epley1Rm(weight: Double, reps: Int): Double =
+    if (reps <= 1) weight else weight * (1 + reps / 30.0)
+
+private fun formatWeight(w: Double): String =
+    if (w % 1.0 == 0.0) "${w.toInt()} lb" else "${"%.1f".format(w)} lb"
+
+private fun formatWeightNum(w: Double): String =
+    if (w % 1.0 == 0.0) "${w.toInt()}" else "%.1f".format(w)
+
+private fun formatVolume(lbs: Double): String =
+    if (lbs <= 0.0) "" else "%,d lb".format(lbs.toLong())
+
+private fun computePersonalRecords(
+    sets: List<WorkoutExercise>,
+    exerciseById: Map<Long, Exercise>
+): List<PersonalRecordUiState> {
+    return sets
+        .filter { (it.weight ?: 0.0) > 0 && (it.reps ?: 0) > 0 }
+        .groupBy { it.exerciseId }
+        .mapNotNull { (exerciseId, exSets) ->
+            val exercise = exerciseById[exerciseId] ?: return@mapNotNull null
+            val bestWeightSet = exSets.maxByOrNull { it.weight!! } ?: return@mapNotNull null
+            val bestVolSet = exSets.maxByOrNull { it.weight!! * it.reps!! } ?: return@mapNotNull null
+            val best1RmSet = exSets.maxByOrNull { epley1Rm(it.weight!!, it.reps!!) } ?: return@mapNotNull null
+            PersonalRecordUiState(
+                exerciseName = exercise.name,
+                bestWeightText = formatWeight(bestWeightSet.weight!!),
+                bestVolumeSetText = "${formatWeightNum(bestVolSet.weight!!)} × ${bestVolSet.reps}",
+                estimated1RmText = "~${epley1Rm(best1RmSet.weight!!, best1RmSet.reps!!).toInt()} lb"
+            )
+        }
+        .sortedBy { it.exerciseName }
+}
+
+private fun computeWeeklyLoads(
+    workouts: List<Workout>,
+    sets: List<WorkoutExercise>,
+    today: String
+): List<WeeklyLoadUiState> {
+    val setsByWorkoutId = sets.groupBy { it.workoutId }
+    val completed = workouts.filter { WorkoutStatus.fromStorageValue(it.status) != WorkoutStatus.SKIPPED }
+    if (completed.isEmpty()) return emptyList()
+    val byWeek = completed.groupBy { getIsoWeekKey(it.date) }
+    return byWeek.entries.sortedByDescending { it.key }.take(8).map { (weekKey, weekWorkouts) ->
+        val weekSets = weekWorkouts.flatMap { setsByWorkoutId[it.id].orEmpty() }
+        val totalVolume = weekSets.sumOf { (it.weight ?: 0.0) * (it.reps ?: 0) }
+        val rpeValues = weekSets.mapNotNull { it.rpe }
+        WeeklyLoadUiState(
+            weekLabel = formatWeekLabel(weekKey),
+            workoutCount = weekWorkouts.size,
+            totalSets = weekSets.size,
+            totalVolumeText = formatVolume(totalVolume).ifEmpty { "–" },
+            avgRpe = if (rpeValues.isNotEmpty()) "%.1f".format(rpeValues.average()) else "–"
+        )
+    }
+}
+
+private fun getIsoWeekKey(dateStr: String): String {
+    return try {
+        val date = LocalDate.parse(dateStr)
+        date.with(DayOfWeek.MONDAY).toString()
+    } catch (e: Exception) { dateStr }
+}
+
+private fun formatWeekLabel(weekStartStr: String): String {
+    return try {
+        val date = LocalDate.parse(weekStartStr)
+        val month = date.month.getDisplayName(TextStyle.SHORT, Locale.getDefault())
+        "Week of $month ${date.dayOfMonth}"
+    } catch (e: Exception) { weekStartStr }
+}
+
+private fun detectNewPrs(
+    existing: List<WorkoutExercise>,
+    incoming: List<WorkoutExercise>,
+    exerciseById: Map<Long, Exercise>
+): List<String> {
+    val achievements = mutableListOf<String>()
+    for (id in incoming.map { it.exerciseId }.distinct()) {
+        val exName = exerciseById[id]?.name ?: continue
+        val existingForEx = existing.filter { it.exerciseId == id && (it.weight ?: 0.0) > 0 && (it.reps ?: 0) > 0 }
+        val incomingForEx = incoming.filter { it.exerciseId == id }
+        if (incomingForEx.isEmpty()) continue
+
+        val oldBestWeight = existingForEx.maxOfOrNull { it.weight!! } ?: 0.0
+        val newBestWeight = incomingForEx.maxOfOrNull { it.weight ?: 0.0 } ?: 0.0
+        if (newBestWeight > oldBestWeight) {
+            achievements.add("$exName — Heaviest: ${formatWeight(newBestWeight)}")
+            continue
+        }
+
+        val old1Rm = existingForEx.maxOfOrNull { epley1Rm(it.weight!!, it.reps!!) } ?: 0.0
+        val new1Rm = incomingForEx.mapNotNull { s ->
+            val w = s.weight ?: return@mapNotNull null
+            val r = s.reps ?: return@mapNotNull null
+            epley1Rm(w, r)
+        }.maxOrNull() ?: 0.0
+        if (new1Rm > old1Rm) {
+            achievements.add("$exName — New est. 1RM: ~${new1Rm.toInt()} lb")
+            continue
+        }
+
+        val oldBestVol = existingForEx.maxOfOrNull { it.weight!! * it.reps!! } ?: 0.0
+        val newBestVolSet = incomingForEx.maxByOrNull { (it.weight ?: 0.0) * (it.reps ?: 0) }
+        val newBestVol = (newBestVolSet?.weight ?: 0.0) * (newBestVolSet?.reps ?: 0)
+        if (newBestVol > oldBestVol && newBestVolSet != null) {
+            achievements.add("$exName — Best set: ${formatWeightNum(newBestVolSet.weight ?: 0.0)} × ${newBestVolSet.reps}")
+        }
+    }
+    return achievements.take(3)
 }
 
 private fun mergeRecoveryLogs(

@@ -4,15 +4,20 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dailyhealthcoach.domain.model.BodyMetricLog
 import com.dailyhealthcoach.domain.model.DailyHabitLog
+import com.dailyhealthcoach.domain.model.Exercise
 import com.dailyhealthcoach.domain.model.FoodEntry
 import com.dailyhealthcoach.domain.model.RecoveryScore
 import com.dailyhealthcoach.domain.model.Workout
+import com.dailyhealthcoach.domain.model.WorkoutExercise
 import com.dailyhealthcoach.domain.model.WorkoutStatus
 import com.dailyhealthcoach.domain.repository.BodyMetricRepository
+import com.dailyhealthcoach.domain.repository.ExerciseRepository
 import com.dailyhealthcoach.domain.repository.HabitRepository
 import com.dailyhealthcoach.domain.repository.NutritionRepository
 import com.dailyhealthcoach.domain.repository.RecoveryRepository
 import com.dailyhealthcoach.domain.repository.WorkoutRepository
+import java.time.format.TextStyle
+import java.util.Locale
 import java.time.LocalDate
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -27,12 +32,26 @@ class ProgressViewModel(
     private val habitRepository: HabitRepository,
     private val workoutRepository: WorkoutRepository,
     private val recoveryRepository: RecoveryRepository,
+    private val exerciseRepository: ExerciseRepository,
     private val today: String
 ) : ViewModel() {
 
     // Workout trend is isolated so a failure in body/nutrition/habits/recovery cannot zero it out.
     private val workoutTrend = workoutRepository.observeWorkouts()
         .map { workouts -> buildWorkoutFrequencyTrend(workouts) }
+        .catch { emit(null) }
+
+    private val strengthFlow = combine(
+        workoutRepository.observeWorkoutSets(),
+        workoutRepository.observeWorkouts(),
+        exerciseRepository.observeExercises()
+    ) { sets, workouts, exercises -> buildStrengthTrends(sets, workouts, exercises) }
+        .catch { emit(emptyList()) }
+
+    private val weeklyLoadFlow = combine(
+        workoutRepository.observeWorkouts(),
+        workoutRepository.observeWorkoutSets()
+    ) { workouts, sets -> buildLatestWeeklyLoad(workouts, sets) }
         .catch { emit(null) }
 
     val uiState: StateFlow<ProgressUiState> = combine(
@@ -60,9 +79,11 @@ class ProgressViewModel(
             )
         }
         .catch { emit(ProgressUiState(null, null, null, null, null, null, null, null)) },
-        workoutTrend
-    ) { mainState, workout ->
-        mainState.copy(workoutFrequency = workout)
+        workoutTrend,
+        strengthFlow,
+        weeklyLoadFlow
+    ) { mainState, workout, strength, weekLoad ->
+        mainState.copy(workoutFrequency = workout, strengthTrends = strength, weeklyLoad = weekLoad)
     }
     .stateIn(
         scope = viewModelScope,
@@ -212,4 +233,76 @@ private fun changePositive(label: String, current: Double, prev: Double?): Boole
     val higherIsBetter = label !in listOf("Body Fat")
     val increased = current > prev
     return if (higherIsBetter) increased else !increased
+}
+
+private fun progressEpley1Rm(weight: Double, reps: Int): Double =
+    if (reps <= 1) weight else weight * (1 + reps / 30.0)
+
+private val KEY_EXERCISES = listOf("Bench Press", "Squat", "Deadlift", "Overhead Press", "Barbell Row")
+
+private fun buildStrengthTrends(
+    sets: List<WorkoutExercise>,
+    workouts: List<Workout>,
+    exercises: List<Exercise>
+): List<TrendData> {
+    val exerciseByName = exercises.associateBy { it.name }
+    val workoutById = workouts.associateBy { it.id }
+    return KEY_EXERCISES.mapNotNull { name ->
+        val exercise = exerciseByName[name] ?: return@mapNotNull null
+        val setsForEx = sets.filter {
+            it.exerciseId == exercise.id && (it.weight ?: 0.0) > 0 && (it.reps ?: 0) > 0
+        }
+        if (setsForEx.isEmpty()) return@mapNotNull null
+        val byWorkout = setsForEx.groupBy { it.workoutId }
+        val sessionData = byWorkout.mapNotNull { (workoutId, wSets) ->
+            val date = workoutById[workoutId]?.date ?: return@mapNotNull null
+            val maxEst1Rm = wSets.maxOf { progressEpley1Rm(it.weight!!, it.reps!!) }
+            Pair(date, maxEst1Rm)
+        }.sortedBy { it.first }.takeLast(10)
+        if (sessionData.isEmpty()) return@mapNotNull null
+        val current = sessionData.last().second
+        val prev = sessionData.getOrNull(sessionData.size - 2)?.second
+        val avg = sessionData.map { it.second }.average()
+        TrendData(
+            label = "$name · Est. 1RM",
+            unit = "lb",
+            currentValue = "~${current.toInt()} lb",
+            sevenDayAvg = "avg ~${avg.toInt()} lb",
+            changeLabel = changeLabel(current, prev),
+            changePositive = if (prev == null) null else current > prev,
+            last7 = sessionData.map { TrendEntry(it.first, "~${it.second.toInt()} lb") },
+            points = sessionData.map { it.second.toFloat() }
+        )
+    }
+}
+
+private fun buildLatestWeeklyLoad(
+    workouts: List<Workout>,
+    sets: List<WorkoutExercise>
+): WeeklyTrainingLoadUiState? {
+    val setsByWorkoutId = sets.groupBy { it.workoutId }
+    val completed = workouts.filter {
+        it.status == WorkoutStatus.COMPLETED.storageValue ||
+        it.status == WorkoutStatus.PARTIAL.storageValue
+    }
+    if (completed.isEmpty()) return null
+    val today = LocalDate.now()
+    val weekStart = today.with(java.time.DayOfWeek.MONDAY)
+    val weekEnd = weekStart.plusDays(6)
+    val weekWorkouts = completed.filter {
+        try { val d = LocalDate.parse(it.date); d >= weekStart && d <= weekEnd }
+        catch (e: Exception) { false }
+    }
+    if (weekWorkouts.isEmpty()) return null
+    val weekSets = weekWorkouts.flatMap { setsByWorkoutId[it.id].orEmpty() }
+    val totalVolume = weekSets.sumOf { (it.weight ?: 0.0) * (it.reps ?: 0) }
+    val rpeValues = weekSets.mapNotNull { it.rpe }
+    val month = weekStart.month.getDisplayName(TextStyle.SHORT, Locale.getDefault())
+    return WeeklyTrainingLoadUiState(
+        weekLabel = "Week of $month ${weekStart.dayOfMonth}",
+        workoutCount = weekWorkouts.size,
+        totalSets = weekSets.size,
+        totalVolumeText = if (totalVolume > 0) "%,d lb".format(totalVolume.toLong()) else "–",
+        avgRpe = if (rpeValues.isNotEmpty()) "%.1f".format(rpeValues.average()) else "–"
+    )
 }

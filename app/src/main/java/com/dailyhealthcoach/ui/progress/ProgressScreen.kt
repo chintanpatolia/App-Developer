@@ -96,6 +96,9 @@ fun ProgressScreen(
                 style = MaterialTheme.typography.bodySmall,
                 color = MutedText
             )
+            uiState.weeklyLoad?.let { load ->
+                WeeklyLoadCard(load = load)
+            }
             val trends = listOfNotNull(
                 uiState.weight,
                 uiState.bodyFat,
@@ -106,9 +109,15 @@ fun ProgressScreen(
                 uiState.workoutFrequency,
                 uiState.habitCompletion
             )
-            if (trends.isEmpty()) {
+            if (trends.isEmpty() && uiState.strengthTrends.isEmpty()) {
                 EmptyTrendsCard()
             } else {
+                if (uiState.strengthTrends.isNotEmpty()) {
+                    StrengthTrendsSection(
+                        trends = uiState.strengthTrends,
+                        onTrendSelected = onTrendSelected
+                    )
+                }
                 trends.forEach { trend ->
                     TrendCard(trend = trend, onClick = { onTrendSelected(trend) })
                 }
@@ -383,6 +392,97 @@ private fun ChangeBadge(label: String, positive: Boolean?) {
             .padding(horizontal = 10.dp, vertical = 4.dp)
     ) {
         Text(text = label, style = MaterialTheme.typography.bodySmall, color = color)
+    }
+}
+
+@Composable
+private fun WeeklyLoadCard(load: WeeklyTrainingLoadUiState) {
+    ElevatedCard(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.elevatedCardColors(containerColor = MainCard),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Weekly Training Load",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MutedText
+                )
+                Text(
+                    text = load.weekLabel,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = CyanAccent
+                )
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                WeeklyStatItem(label = "Workouts", value = "${load.workoutCount}")
+                WeeklyStatItem(label = "Sets", value = "${load.totalSets}")
+                WeeklyStatItem(label = "Volume", value = load.totalVolumeText)
+                WeeklyStatItem(label = "Avg RPE", value = load.avgRpe)
+            }
+        }
+    }
+}
+
+@Composable
+private fun WeeklyStatItem(label: String, value: String) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            text = value,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = PrimaryText
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MutedText
+        )
+    }
+}
+
+@Composable
+private fun StrengthTrendsSection(
+    trends: List<TrendData>,
+    onTrendSelected: (TrendData) -> Unit
+) {
+    ElevatedCard(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.elevatedCardColors(containerColor = MainCard),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text(
+                text = "Strength Progression",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = PrimaryText
+            )
+            Text(
+                text = "Estimated 1RM over time",
+                style = MaterialTheme.typography.bodySmall,
+                color = MutedText
+            )
+            trends.forEach { trend ->
+                TrendCard(trend = trend, onClick = { onTrendSelected(trend) })
+            }
+        }
     }
 }
 

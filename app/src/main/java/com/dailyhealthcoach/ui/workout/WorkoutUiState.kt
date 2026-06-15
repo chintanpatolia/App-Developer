@@ -15,7 +15,25 @@ data class WorkoutUiState(
     val recentWorkouts: List<WorkoutHistoryUiState> = emptyList(),
     val selectedWorkoutDetail: WorkoutDetailUiState? = null,
     val workoutPlan: WorkoutPlanUiState? = null,
-    val hasWorkoutTodayCompleted: Boolean = false
+    val hasWorkoutTodayCompleted: Boolean = false,
+    val personalRecords: List<PersonalRecordUiState> = emptyList(),
+    val newPrAchievements: List<String> = emptyList(),
+    val weeklyLoads: List<WeeklyLoadUiState> = emptyList()
+)
+
+data class PersonalRecordUiState(
+    val exerciseName: String,
+    val bestWeightText: String,
+    val bestVolumeSetText: String,
+    val estimated1RmText: String
+)
+
+data class WeeklyLoadUiState(
+    val weekLabel: String,
+    val workoutCount: Int,
+    val totalSets: Int,
+    val totalVolumeText: String,
+    val avgRpe: String
 )
 
 data class SuggestedExerciseUiState(
@@ -91,7 +109,8 @@ data class WorkoutHistoryUiState(
     val exerciseCount: Int,
     val setCount: Int,
     val avgRpe: String,
-    val muscleGroups: String
+    val muscleGroups: String,
+    val totalVolumeText: String = ""
 )
 
 data class SetDetailUiState(
@@ -132,5 +151,8 @@ data class WorkoutDetailUiState(
     val durationText: String,
     val notes: String?,
     val exercises: List<ExerciseDetailUiState>,
-    val recoveryActivities: List<RecoveryActivityDetailUiState> = emptyList()
+    val recoveryActivities: List<RecoveryActivityDetailUiState> = emptyList(),
+    val totalVolumeText: String = "",
+    val totalSetsText: String = "",
+    val avgRpeText: String = ""
 )
