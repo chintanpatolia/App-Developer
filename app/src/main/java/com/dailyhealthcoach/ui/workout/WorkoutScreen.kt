@@ -489,7 +489,7 @@ private fun ExerciseSetsList(
             sets.forEach { set ->
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     Text(
-                        text = "Set ${set.setNumber}: ${set.reps ?: "-"} reps | ${set.weight ?: "-"} lb | RPE ${set.rpe ?: "-"}",
+                        text = "Set ${set.setNumber}: ${set.repsText.ifBlank { "-" }} reps | ${set.weightText.ifBlank { "-" }} | RPE ${set.rpeText.ifBlank { "-" }}",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.weight(1f)

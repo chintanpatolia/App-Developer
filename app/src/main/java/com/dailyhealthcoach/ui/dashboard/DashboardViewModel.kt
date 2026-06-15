@@ -45,7 +45,8 @@ private fun DashboardSummary.toUiState(): DashboardUiState {
                 suggestedFocus = it.suggestedFocus,
                 reasons = it.reasonBullets
             )
-        }
+        },
+        workoutCompletedToday = workoutCompletedToday
     )
 }
 

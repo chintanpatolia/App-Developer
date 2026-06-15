@@ -106,7 +106,7 @@ fun DashboardScreen(
             DashboardHeader(onNavigateToSettings = onNavigateToSettings)
             RecoveryHeroCard(uiState = uiState)
             SummaryGrid(uiState = uiState)
-            RecommendationCard(recommendation = uiState.nextDayRecommendation)
+            RecommendationCard(recommendation = uiState.nextDayRecommendation, workoutCompletedToday = uiState.workoutCompletedToday)
             ViewProgressCard(onClick = onNavigateToProgress)
             Text(
                 text = "General wellness guidance only. Not medical advice.",
@@ -348,7 +348,7 @@ private fun RecoveryHeroCard(uiState: DashboardUiState) {
 }
 
 @Composable
-private fun RecommendationCard(recommendation: DailyRecommendationUiState?) {
+private fun RecommendationCard(recommendation: DailyRecommendationUiState?, workoutCompletedToday: Boolean = false) {
     ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
@@ -359,6 +359,20 @@ private fun RecommendationCard(recommendation: DailyRecommendationUiState?) {
             modifier = Modifier.padding(18.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
+            if (workoutCompletedToday) {
+                Surface(
+                    shape = RoundedCornerShape(999.dp),
+                    color = PositiveAccent.copy(alpha = 0.15f)
+                ) {
+                    Text(
+                        text = "WORKOUT DONE TODAY",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = PositiveAccent,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                    )
+                }
+            }
             Text(
                 text = "TOMORROW",
                 style = MaterialTheme.typography.labelSmall,

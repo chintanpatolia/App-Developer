@@ -13,7 +13,8 @@ data class DashboardUiState(
     val recoveryScore: Int? = null,
     val recoveryLabel: String = "Recovery not calculated",
     val recoveryReasons: List<String> = emptyList(),
-    val nextDayRecommendation: DailyRecommendationUiState? = null
+    val nextDayRecommendation: DailyRecommendationUiState? = null,
+    val workoutCompletedToday: Boolean = false
 )
 
 data class DailyRecommendationUiState(

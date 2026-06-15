@@ -12,5 +12,6 @@ data class DashboardSummary(
     val recoveryScore: Int?,
     val recoveryLabel: String,
     val recoveryReasons: List<String>,
-    val nextDayRecommendation: DailyRecommendation?
+    val nextDayRecommendation: DailyRecommendation?,
+    val workoutCompletedToday: Boolean = false
 )

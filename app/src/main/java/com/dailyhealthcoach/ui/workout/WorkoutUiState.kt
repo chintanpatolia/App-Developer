@@ -14,13 +14,18 @@ data class WorkoutUiState(
     val selectedExercises: List<SelectedExerciseUiState> = emptyList(),
     val recentWorkouts: List<WorkoutHistoryUiState> = emptyList(),
     val selectedWorkoutDetail: WorkoutDetailUiState? = null,
-    val workoutPlan: WorkoutPlanUiState? = null
+    val workoutPlan: WorkoutPlanUiState? = null,
+    val hasWorkoutTodayCompleted: Boolean = false
 )
 
 data class SuggestedExerciseUiState(
     val exerciseId: Long,
     val name: String,
-    val muscleGroup: String
+    val muscleGroup: String,
+    val prescribedSets: Int = 0,
+    val prescribedRepsRange: String = "",
+    val prescribedRpe: String = "",
+    val suggestedWeightText: String = ""
 )
 
 data class WorkoutPlanUiState(
@@ -32,7 +37,10 @@ data class WorkoutPlanUiState(
     val suggestedExercises: List<SuggestedExerciseUiState>,
     val isStrengthDay: Boolean,
     val reasons: List<String>,
-    val nonStrengthActivities: List<String>
+    val nonStrengthActivities: List<String>,
+    val warmUp: List<String> = emptyList(),
+    val coolDown: List<String> = emptyList(),
+    val postWorkoutRecommendations: List<String> = emptyList()
 )
 
 data class ExerciseOptionUiState(
@@ -46,9 +54,9 @@ data class ExerciseOptionUiState(
 data class DraftWorkoutSetUiState(
     val exerciseId: Long,
     val setNumber: Int,
-    val reps: Int?,
-    val weight: Double?,
-    val rpe: Int?,
+    val repsText: String = "",
+    val weightText: String = "",
+    val rpeText: String = "",
     val notes: String?
 )
 
@@ -64,7 +72,11 @@ data class SelectedExerciseUiState(
     val rpeInput: String,
     val setNotesInput: String,
     val exerciseNotes: String,
-    val isExpanded: Boolean
+    val isExpanded: Boolean,
+    val prescribedSets: Int = 0,
+    val prescribedRepsRange: String = "",
+    val prescribedRpe: String = "",
+    val suggestedWeightText: String = ""
 )
 
 data class WorkoutHistoryUiState(

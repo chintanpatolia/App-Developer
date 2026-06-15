@@ -1,6 +1,7 @@
 package com.dailyhealthcoach.domain.usecase
 
 import com.dailyhealthcoach.domain.model.DashboardSummary
+import com.dailyhealthcoach.domain.model.WorkoutStatus
 import com.dailyhealthcoach.domain.model.BodyMetricLog
 import com.dailyhealthcoach.domain.model.DailyHabitLog
 import com.dailyhealthcoach.domain.model.Exercise
@@ -78,6 +79,7 @@ class GetDashboardSummaryUseCase(
                 .toSet()
             val proteinConsumed = inputs.foodEntries.sumOf { it.proteinGrams ?: 0.0 }.toInt()
             val todayWorkouts = workoutInputs.workouts.filter { it.date == date }
+            val workoutCompletedToday = todayWorkouts.any { WorkoutStatus.fromStorageValue(it.status) != WorkoutStatus.SKIPPED }
             val recentWorkouts = workoutInputs.workouts.filter { it.date in twoDaysAgo..date }
             val weeklyWorkouts = workoutInputs.workouts.filter { it.date in sixDaysAgo..date }
             val recovery = recoveryScoreCalculator.calculate(
@@ -119,7 +121,8 @@ class GetDashboardSummaryUseCase(
                 recoveryScore = recovery?.score,
                 recoveryLabel = recovery?.label ?: "Recovery not calculated",
                 recoveryReasons = recovery?.reasons.orEmpty(),
-                nextDayRecommendation = recommendation
+                nextDayRecommendation = recommendation,
+                workoutCompletedToday = workoutCompletedToday
             )
         }.onEach { summary ->
             val score = summary.recoveryScore ?: return@onEach

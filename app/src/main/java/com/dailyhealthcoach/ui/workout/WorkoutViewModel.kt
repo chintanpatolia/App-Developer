@@ -154,9 +154,9 @@ class WorkoutViewModel(
                 sets = exercise.sets + DraftSetState(
                     exerciseId = exercise.exerciseId,
                     setNumber = setNumber,
-                    reps = exercise.setReps.toIntOrNull(),
-                    weight = exercise.setWeight.toDoubleOrNull(),
-                    rpe = exercise.setRpe.toIntOrNull(),
+                    repsText = exercise.setReps,
+                    weightText = exercise.setWeight,
+                    rpeText = exercise.setRpe,
                     notes = exercise.setNotes.ifBlank { null }
                 ),
                 setReps = "",
@@ -185,19 +185,90 @@ class WorkoutViewModel(
         draftState.update { it.copy(selectedWorkoutId = null) }
     }
 
-    fun startWorkoutWithPlan(exerciseIds: List<Long>) {
+    fun startWorkoutWithPlan(suggestedExercises: List<SuggestedExerciseUiState>) {
         draftState.update { draft ->
             draft.copy(
                 isWorkoutStarted = true,
-                selectedExercises = exerciseIds.map { DraftExerciseState(exerciseId = it, isExpanded = false) }
+                selectedExercises = suggestedExercises.map { suggestion ->
+                    val defaultRepsText = parseRepsFromRange(suggestion.prescribedRepsRange)?.toString() ?: ""
+                    val defaultWeightText = parseWeightFromText(suggestion.suggestedWeightText)?.let { w ->
+                        if (w % 1.0 == 0.0) w.toInt().toString() else "%.1f".format(w)
+                    } ?: ""
+                    val defaultRpeText = parseRpeFromRange(suggestion.prescribedRpe)?.toString() ?: ""
+                    val preSets = if (suggestion.prescribedSets > 0) {
+                        (1..suggestion.prescribedSets).map { setNum ->
+                            DraftSetState(
+                                exerciseId = suggestion.exerciseId,
+                                setNumber = setNum,
+                                repsText = defaultRepsText,
+                                weightText = defaultWeightText,
+                                rpeText = defaultRpeText,
+                                notes = null
+                            )
+                        }
+                    } else emptyList()
+                    DraftExerciseState(
+                        exerciseId = suggestion.exerciseId,
+                        isExpanded = false,
+                        sets = preSets,
+                        setReps = defaultRepsText,
+                        setWeight = defaultWeightText,
+                        setRpe = defaultRpeText,
+                        prescribedSets = suggestion.prescribedSets,
+                        prescribedRepsRange = suggestion.prescribedRepsRange,
+                        prescribedRpe = suggestion.prescribedRpe,
+                        suggestedWeightText = suggestion.suggestedWeightText
+                    )
+                }
             )
         }
     }
 
-    fun saveWorkout() {
+    private fun parseRepsFromRange(range: String): Int? =
+        range.split("-").firstOrNull()?.trim()?.toIntOrNull()
+
+    private fun parseRpeFromRange(range: String): Int? =
+        range.split("-").firstOrNull()?.trim()?.toIntOrNull()
+
+    private fun parseWeightFromText(text: String): Double? {
+        if (text.isBlank() || text == "Bodyweight" || text.startsWith("Choose")) return null
+        return text.split(" ").firstOrNull()?.toDoubleOrNull()
+    }
+
+    fun updateSetFieldReps(exerciseId: Long, setNumber: Int, value: String) {
+        updateSet(exerciseId, setNumber) { it.copy(repsText = value.filter { c -> c.isDigit() }) }
+    }
+
+    fun updateSetFieldWeight(exerciseId: Long, setNumber: Int, value: String) {
+        updateSet(exerciseId, setNumber) { it.copy(weightText = value.filterWeightInput()) }
+    }
+
+    fun updateSetFieldRpe(exerciseId: Long, setNumber: Int, value: String) {
+        updateSet(exerciseId, setNumber) { it.copy(rpeText = value.filter { c -> c.isDigit() }.take(2)) }
+    }
+
+    private fun updateSet(exerciseId: Long, setNumber: Int, transform: (DraftSetState) -> DraftSetState) {
+        draftState.update { draft ->
+            draft.copy(
+                selectedExercises = draft.selectedExercises.map { exercise ->
+                    if (exercise.exerciseId != exerciseId) exercise
+                    else exercise.copy(
+                        sets = exercise.sets.map { set ->
+                            if (set.setNumber == setNumber) transform(set) else set
+                        }
+                    )
+                }
+            )
+        }
+    }
+
+    fun saveWorkout(
+        warmUpActivities: List<ActivityDraft> = emptyList(),
+        coolDownActivities: List<ActivityDraft> = emptyList()
+    ) {
         val draft = draftState.value
         viewModelScope.launch {
-            workoutRepository.saveWorkout(
+            val workoutId = workoutRepository.saveWorkout(
                 date = LocalDate.now().toString(),
                 name = draft.workoutName.ifBlank { "Strength Session" },
                 status = draft.selectedStatus,
@@ -209,14 +280,30 @@ class WorkoutViewModel(
                         WorkoutSetInput(
                             exerciseId = it.exerciseId,
                             setNumber = it.setNumber,
-                            reps = it.reps,
-                            weight = it.weight,
-                            rpe = it.rpe,
+                            reps = it.repsText.toIntOrNull(),
+                            weight = it.weightText.toDoubleOrNull(),
+                            rpe = it.rpeText.toIntOrNull(),
                             notes = it.notes
                         )
                     }
                 }
             )
+            val allActivities = warmUpActivities + coolDownActivities
+            if (allActivities.isNotEmpty()) {
+                recoveryActivityRepository.saveAll(
+                    workoutId = workoutId,
+                    activities = allActivities.map { d ->
+                        RecoveryActivity(
+                            workoutId = workoutId,
+                            name = d.name,
+                            status = d.status.storageValue,
+                            durationMinutes = d.durationInput.toIntOrNull(),
+                            rpe = d.rpeInput.toIntOrNull(),
+                            notes = d.notesInput.ifBlank { null }
+                        )
+                    }
+                )
+            }
             habitAutoUpdateUseCase(today)
             draftState.value = WorkoutDraftState()
         }
@@ -292,16 +379,20 @@ private data class DraftExerciseState(
     val setRpe: String = "",
     val setNotes: String = "",
     val exerciseNotes: String = "",
-    val isExpanded: Boolean = true
+    val isExpanded: Boolean = true,
+    val prescribedSets: Int = 0,
+    val prescribedRepsRange: String = "",
+    val prescribedRpe: String = "",
+    val suggestedWeightText: String = ""
 )
 
 private data class DraftSetState(
     val exerciseId: Long,
     val setNumber: Int,
-    val reps: Int?,
-    val weight: Double?,
-    val rpe: Int?,
-    val notes: String?
+    val repsText: String = "",
+    val weightText: String = "",
+    val rpeText: String = "",
+    val notes: String? = null
 )
 
 private fun buildUiState(
@@ -382,13 +473,27 @@ private fun buildUiState(
             rpeTarget = plan.rpeTarget,
             durationMinutes = plan.durationMinutes,
             suggestedExercises = plan.suggestedExercises.map {
-                SuggestedExerciseUiState(it.exerciseId, it.name, it.muscleGroup)
+                SuggestedExerciseUiState(
+                    exerciseId = it.exerciseId,
+                    name = it.name,
+                    muscleGroup = it.muscleGroup,
+                    prescribedSets = it.prescribedSets,
+                    prescribedRepsRange = it.prescribedRepsRange,
+                    prescribedRpe = it.prescribedRpe,
+                    suggestedWeightText = it.suggestedWeightText
+                )
             },
             isStrengthDay = plan.isStrengthDay,
             reasons = plan.reasons,
-            nonStrengthActivities = plan.nonStrengthActivities
+            nonStrengthActivities = plan.nonStrengthActivities,
+            warmUp = plan.warmUp,
+            coolDown = plan.coolDown,
+            postWorkoutRecommendations = plan.postWorkoutRecommendations
         )
     } else null
+
+    val todayWorkouts = workouts.filter { it.date == today }
+    val hasWorkoutTodayCompleted = todayWorkouts.any { WorkoutStatus.fromStorageValue(it.status) != WorkoutStatus.SKIPPED }
 
     return WorkoutUiState(
         isWorkoutStarted = draft.isWorkoutStarted,
@@ -419,9 +524,9 @@ private fun buildUiState(
                     DraftWorkoutSetUiState(
                         exerciseId = it.exerciseId,
                         setNumber = it.setNumber,
-                        reps = it.reps,
-                        weight = it.weight,
-                        rpe = it.rpe,
+                        repsText = it.repsText,
+                        weightText = it.weightText,
+                        rpeText = it.rpeText,
                         notes = it.notes
                     )
                 },
@@ -430,12 +535,17 @@ private fun buildUiState(
                 rpeInput = draftExercise.setRpe,
                 setNotesInput = draftExercise.setNotes,
                 exerciseNotes = draftExercise.exerciseNotes,
-                isExpanded = draftExercise.isExpanded
+                isExpanded = draftExercise.isExpanded,
+                prescribedSets = draftExercise.prescribedSets,
+                prescribedRepsRange = draftExercise.prescribedRepsRange,
+                prescribedRpe = draftExercise.prescribedRpe,
+                suggestedWeightText = draftExercise.suggestedWeightText
             )
         },
         recentWorkouts = historyList,
         selectedWorkoutDetail = selectedDetail,
-        workoutPlan = workoutPlan
+        workoutPlan = workoutPlan,
+        hasWorkoutTodayCompleted = hasWorkoutTodayCompleted
     )
 }
 

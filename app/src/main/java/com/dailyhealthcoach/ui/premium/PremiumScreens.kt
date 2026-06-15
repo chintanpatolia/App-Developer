@@ -65,6 +65,7 @@ import com.dailyhealthcoach.ui.workout.RecoveryActivityDetailUiState
 import com.dailyhealthcoach.ui.workout.SelectedExerciseUiState
 import com.dailyhealthcoach.ui.workout.WorkoutDetailUiState
 import com.dailyhealthcoach.ui.workout.WorkoutHistoryUiState
+import com.dailyhealthcoach.ui.workout.SuggestedExerciseUiState
 import com.dailyhealthcoach.ui.workout.WorkoutPlanUiState
 import com.dailyhealthcoach.ui.workout.WorkoutUiState
 import com.dailyhealthcoach.ui.workout.WorkoutViewModel
@@ -160,9 +161,9 @@ fun PremiumWorkoutRoute(viewModel: WorkoutViewModel) {
                 showActiveWorkout = true
             }
         },
-        onStartWorkoutWithPlan = { exerciseIds ->
+        onStartWorkoutWithPlan = { _ ->
             uiState.workoutPlan?.let { viewModel.updateWorkoutName(it.focus) }
-            viewModel.startWorkoutWithPlan(exerciseIds)
+            viewModel.startWorkoutWithPlan(uiState.workoutPlan?.suggestedExercises ?: emptyList())
             showActiveWorkout = true
         },
         onBackToPlan = {
@@ -186,8 +187,11 @@ fun PremiumWorkoutRoute(viewModel: WorkoutViewModel) {
         onExerciseNotesChange = viewModel::updateExerciseNotes,
         onAddSet = viewModel::addSet,
         onRemoveSet = viewModel::removeSet,
-        onSaveWorkout = {
-            viewModel.saveWorkout()
+        onSetInlineRepsChange = viewModel::updateSetFieldReps,
+        onSetInlineWeightChange = viewModel::updateSetFieldWeight,
+        onSetInlineRpeChange = viewModel::updateSetFieldRpe,
+        onSaveWorkout = { warmUp, coolDown ->
+            viewModel.saveWorkout(warmUp, coolDown)
             showActiveWorkout = false
         },
         onSaveRecoverySession = { drafts, notes ->
@@ -221,7 +225,10 @@ private fun PremiumWorkoutScreen(
     onExerciseNotesChange: (Long, String) -> Unit,
     onAddSet: (Long) -> Unit,
     onRemoveSet: (Long, Int) -> Unit,
-    onSaveWorkout: () -> Unit,
+    onSetInlineRepsChange: (Long, Int, String) -> Unit,
+    onSetInlineWeightChange: (Long, Int, String) -> Unit,
+    onSetInlineRpeChange: (Long, Int, String) -> Unit,
+    onSaveWorkout: (List<ActivityDraft>, List<ActivityDraft>) -> Unit,
     onSaveRecoverySession: (List<ActivityDraft>, String) -> Unit
 ) {
     Column(modifier = Modifier.padding(bottom = 40.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
@@ -243,6 +250,9 @@ private fun PremiumWorkoutScreen(
                 onExerciseNotesChange = onExerciseNotesChange,
                 onAddSet = onAddSet,
                 onRemoveSet = onRemoveSet,
+                onSetInlineRepsChange = onSetInlineRepsChange,
+                onSetInlineWeightChange = onSetInlineWeightChange,
+                onSetInlineRpeChange = onSetInlineRpeChange,
                 onSaveWorkout = onSaveWorkout
             )
             showNonStrengthSession -> PlanSessionScreen(
@@ -257,6 +267,7 @@ private fun PremiumWorkoutScreen(
             else -> {
                 PremiumWorkoutPlanCard(
                     workoutPlan = uiState.workoutPlan,
+                    hasWorkoutTodayCompleted = uiState.hasWorkoutTodayCompleted,
                     onStartWorkout = onStartWorkout,
                     onStartWorkoutWithPlan = onStartWorkoutWithPlan
                 )
@@ -269,6 +280,7 @@ private fun PremiumWorkoutScreen(
 @Composable
 private fun PremiumWorkoutPlanCard(
     workoutPlan: WorkoutPlanUiState?,
+    hasWorkoutTodayCompleted: Boolean,
     onStartWorkout: () -> Unit,
     onStartWorkoutWithPlan: (List<Long>) -> Unit
 ) {
@@ -343,6 +355,21 @@ private fun PremiumWorkoutPlanCard(
                                 modifier = Modifier.padding(horizontal = 18.dp, vertical = 10.dp)
                             )
                         }
+                        if (workoutPlan.warmUp.isNotEmpty()) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(14.dp))
+                                    .background(SecondaryCard.copy(alpha = 0.55f))
+                                    .padding(horizontal = 14.dp, vertical = 10.dp),
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Text("Warm-up", color = CyanAccent, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+                                workoutPlan.warmUp.forEach { item ->
+                                    Text("· $item", color = MutedText, style = MaterialTheme.typography.bodySmall)
+                                }
+                            }
+                        }
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -382,11 +409,64 @@ private fun PremiumWorkoutPlanCard(
                                 }
                             }
                         }
-                        PrimaryBlueButton(
-                            text = "Start Workout",
-                            onClick = { onStartWorkoutWithPlan(workoutPlan.suggestedExercises.map { it.exerciseId }) },
-                            modifier = Modifier.fillMaxWidth()
-                        )
+                        if (workoutPlan.coolDown.isNotEmpty()) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(14.dp))
+                                    .background(SecondaryCard.copy(alpha = 0.55f))
+                                    .padding(horizontal = 14.dp, vertical = 10.dp),
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Text("Cool-down", color = PositiveAccent, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+                                workoutPlan.coolDown.forEach { item ->
+                                    Text("· $item", color = MutedText, style = MaterialTheme.typography.bodySmall)
+                                }
+                            }
+                        }
+                        if (hasWorkoutTodayCompleted) {
+                            Surface(
+                                shape = RoundedCornerShape(999.dp),
+                                color = PositiveAccent.copy(alpha = 0.15f),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(
+                                    text = "Today's workout complete",
+                                    color = PositiveAccent,
+                                    fontWeight = FontWeight.Bold,
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier.padding(horizontal = 18.dp, vertical = 12.dp)
+                                )
+                            }
+                            if (workoutPlan.postWorkoutRecommendations.isNotEmpty()) {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(14.dp))
+                                        .background(SecondaryCard.copy(alpha = 0.55f))
+                                        .padding(horizontal = 14.dp, vertical = 10.dp),
+                                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    Text("Post-workout", color = WarningAccent, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+                                    workoutPlan.postWorkoutRecommendations.forEach { item ->
+                                        Text("· $item", color = MutedText, style = MaterialTheme.typography.bodySmall)
+                                    }
+                                }
+                            }
+                            OutlinedButton(
+                                onClick = { onStartWorkoutWithPlan(workoutPlan.suggestedExercises.map { it.exerciseId }) },
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(999.dp)
+                            ) {
+                                Text("Start Another Workout", color = MutedText)
+                            }
+                        } else {
+                            PrimaryBlueButton(
+                                text = "Start Workout",
+                                onClick = { onStartWorkoutWithPlan(workoutPlan.suggestedExercises.map { it.exerciseId }) },
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
                     } else {
                         StatTile(label = "Duration", value = "${workoutPlan.durationMinutes} min", modifier = Modifier.fillMaxWidth())
                         Column(
@@ -434,8 +514,21 @@ private fun ActiveWorkoutScreen(
     onExerciseNotesChange: (Long, String) -> Unit,
     onAddSet: (Long) -> Unit,
     onRemoveSet: (Long, Int) -> Unit,
-    onSaveWorkout: () -> Unit
+    onSetInlineRepsChange: (Long, Int, String) -> Unit,
+    onSetInlineWeightChange: (Long, Int, String) -> Unit,
+    onSetInlineRpeChange: (Long, Int, String) -> Unit,
+    onSaveWorkout: (List<ActivityDraft>, List<ActivityDraft>) -> Unit
 ) {
+    var warmUpDrafts by remember(uiState.workoutPlan) {
+        mutableStateOf(
+            uiState.workoutPlan?.warmUp?.map { ActivityDraft(name = it, status = WorkoutStatus.SKIPPED) } ?: emptyList<ActivityDraft>()
+        )
+    }
+    var coolDownDrafts by remember(uiState.workoutPlan) {
+        mutableStateOf(
+            uiState.workoutPlan?.coolDown?.map { ActivityDraft(name = it, status = WorkoutStatus.SKIPPED) } ?: emptyList<ActivityDraft>()
+        )
+    }
     Box(modifier = Modifier.fillMaxWidth()) {
         MainFeatureCard(modifier = Modifier.padding(top = 22.dp)) {
             Column(
@@ -481,6 +574,26 @@ private fun ActiveWorkoutScreen(
                 )
             }
             WorkoutStatusChips(selectedStatus = uiState.selectedStatus, onStatusSelected = onStatusSelected)
+            if (warmUpDrafts.isNotEmpty()) {
+                Text("Warm-up", color = CyanAccent, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+                warmUpDrafts.forEachIndexed { index, draft ->
+                    ActivityDraftCard(
+                        draft = draft,
+                        onStatusSelected = { status ->
+                            warmUpDrafts = warmUpDrafts.toMutableList().also { it[index] = draft.copy(status = status) }
+                        },
+                        onDurationChange = { value ->
+                            warmUpDrafts = warmUpDrafts.toMutableList().also { it[index] = draft.copy(durationInput = value.filter { c -> c.isDigit() }) }
+                        },
+                        onRpeChange = { value ->
+                            warmUpDrafts = warmUpDrafts.toMutableList().also { it[index] = draft.copy(rpeInput = value.filter { c -> c.isDigit() }.take(2)) }
+                        },
+                        onNotesChange = { value ->
+                            warmUpDrafts = warmUpDrafts.toMutableList().also { it[index] = draft.copy(notesInput = value) }
+                        }
+                    )
+                }
+            }
             ActiveExerciseSection(
                 exercises = uiState.exercises,
                 selectedExercises = uiState.selectedExercises,
@@ -492,8 +605,31 @@ private fun ActiveWorkoutScreen(
                 onSetNotesChange = onSetNotesChange,
                 onExerciseNotesChange = onExerciseNotesChange,
                 onAddSet = onAddSet,
-                onRemoveSet = onRemoveSet
+                onRemoveSet = onRemoveSet,
+                onSetInlineRepsChange = onSetInlineRepsChange,
+                onSetInlineWeightChange = onSetInlineWeightChange,
+                onSetInlineRpeChange = onSetInlineRpeChange
             )
+            if (coolDownDrafts.isNotEmpty()) {
+                Text("Cool-down", color = PositiveAccent, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+                coolDownDrafts.forEachIndexed { index, draft ->
+                    ActivityDraftCard(
+                        draft = draft,
+                        onStatusSelected = { status ->
+                            coolDownDrafts = coolDownDrafts.toMutableList().also { it[index] = draft.copy(status = status) }
+                        },
+                        onDurationChange = { value ->
+                            coolDownDrafts = coolDownDrafts.toMutableList().also { it[index] = draft.copy(durationInput = value.filter { c -> c.isDigit() }) }
+                        },
+                        onRpeChange = { value ->
+                            coolDownDrafts = coolDownDrafts.toMutableList().also { it[index] = draft.copy(rpeInput = value.filter { c -> c.isDigit() }.take(2)) }
+                        },
+                        onNotesChange = { value ->
+                            coolDownDrafts = coolDownDrafts.toMutableList().also { it[index] = draft.copy(notesInput = value) }
+                        }
+                    )
+                }
+            }
             OutlinedTextField(
                 value = uiState.workoutNotes,
                 onValueChange = onWorkoutNotesChange,
@@ -501,7 +637,7 @@ private fun ActiveWorkoutScreen(
                 minLines = 2,
                 modifier = Modifier.fillMaxWidth()
             )
-            PrimaryBlueButton(text = "Save Workout", onClick = onSaveWorkout, modifier = Modifier.fillMaxWidth())
+            PrimaryBlueButton(text = "Save Workout", onClick = { onSaveWorkout(warmUpDrafts, coolDownDrafts) }, modifier = Modifier.fillMaxWidth())
         }
     }
         FloatingTitlePill(text = "Active Workout", modifier = Modifier.align(Alignment.TopCenter))
@@ -713,7 +849,10 @@ private fun ActiveExerciseSection(
     onSetNotesChange: (Long, String) -> Unit,
     onExerciseNotesChange: (Long, String) -> Unit,
     onAddSet: (Long) -> Unit,
-    onRemoveSet: (Long, Int) -> Unit
+    onRemoveSet: (Long, Int) -> Unit,
+    onSetInlineRepsChange: (Long, Int, String) -> Unit,
+    onSetInlineWeightChange: (Long, Int, String) -> Unit,
+    onSetInlineRpeChange: (Long, Int, String) -> Unit
 ) {
     var showLibrary by remember { mutableStateOf(false) }
     val selectedIds = selectedExercises.map { it.exerciseId }.toSet()
@@ -734,7 +873,10 @@ private fun ActiveExerciseSection(
                 onSetNotesChange = onSetNotesChange,
                 onExerciseNotesChange = onExerciseNotesChange,
                 onAddSet = onAddSet,
-                onRemoveSet = onRemoveSet
+                onRemoveSet = onRemoveSet,
+                onSetInlineRepsChange = onSetInlineRepsChange,
+                onSetInlineWeightChange = onSetInlineWeightChange,
+                onSetInlineRpeChange = onSetInlineRpeChange
             )
         }
         OutlinedButton(
@@ -803,7 +945,10 @@ private fun ExercisePicker(
                     onSetNotesChange = onSetNotesChange,
                     onExerciseNotesChange = onExerciseNotesChange,
                     onAddSet = onAddSet,
-                    onRemoveSet = onRemoveSet
+                    onRemoveSet = onRemoveSet,
+                    onSetInlineRepsChange = { _, _, _ -> },
+                    onSetInlineWeightChange = { _, _, _ -> },
+                    onSetInlineRpeChange = { _, _, _ -> }
                 )
             }
         }
@@ -858,7 +1003,10 @@ private fun ExerciseCard(
     onSetNotesChange: (Long, String) -> Unit,
     onExerciseNotesChange: (Long, String) -> Unit,
     onAddSet: (Long) -> Unit,
-    onRemoveSet: (Long, Int) -> Unit
+    onRemoveSet: (Long, Int) -> Unit,
+    onSetInlineRepsChange: (Long, Int, String) -> Unit,
+    onSetInlineWeightChange: (Long, Int, String) -> Unit,
+    onSetInlineRpeChange: (Long, Int, String) -> Unit
 ) {
     ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
@@ -889,6 +1037,21 @@ private fun ExerciseCard(
                         color = MutedText,
                         style = MaterialTheme.typography.bodySmall
                     )
+                    if (exercise.sets.isEmpty() && exercise.prescribedSets > 0) {
+                        val prescriptionText = buildString {
+                            append("${exercise.prescribedSets} sets")
+                            if (exercise.prescribedRepsRange.isNotBlank()) append(" · ${exercise.prescribedRepsRange} reps")
+                            if (exercise.prescribedRpe.isNotBlank()) append(" · RPE ${exercise.prescribedRpe}")
+                        }.trim()
+                        if (prescriptionText.isNotBlank()) {
+                            Text(
+                                text = prescriptionText,
+                                color = CyanAccent,
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                    }
                 }
                 Text(
                     text = setCountLabel(exercise.sets.size),
@@ -898,11 +1061,31 @@ private fun ExerciseCard(
                 )
             }
             if (exercise.isExpanded) {
+                if (exercise.prescribedSets > 0) {
+                    Text(
+                        text = "Suggested weight is guidance only. Adjust based on form, comfort, and safety.",
+                        color = MutedText,
+                        style = MaterialTheme.typography.labelSmall
+                    )
+                }
                 if (exercise.sets.isEmpty()) {
                     Text(text = "No sets added yet.", color = MutedText)
                 } else {
+                    if (exercise.prescribedSets > 0) {
+                        Text(
+                            text = "Edit suggested sets based on form and comfort.",
+                            color = MutedText,
+                            style = MaterialTheme.typography.labelSmall
+                        )
+                    }
                     exercise.sets.forEach { set ->
-                        SetRow(set = set, onRemove = { onRemoveSet(exercise.exerciseId, set.setNumber) })
+                        SetRow(
+                            set = set,
+                            onRepsChange = { v -> onSetInlineRepsChange(exercise.exerciseId, set.setNumber, v) },
+                            onWeightChange = { v -> onSetInlineWeightChange(exercise.exerciseId, set.setNumber, v) },
+                            onRpeChange = { v -> onSetInlineRpeChange(exercise.exerciseId, set.setNumber, v) },
+                            onRemove = { onRemoveSet(exercise.exerciseId, set.setNumber) }
+                        )
                     }
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -949,25 +1132,56 @@ private fun ExerciseCard(
 @Composable
 private fun SetRow(
     set: DraftWorkoutSetUiState,
+    onRepsChange: (String) -> Unit,
+    onWeightChange: (String) -> Unit,
+    onRpeChange: (String) -> Unit,
     onRemove: () -> Unit
 ) {
-    Row(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(18.dp))
+            .clip(RoundedCornerShape(14.dp))
             .background(MainCard.copy(alpha = 0.75f))
-            .padding(horizontal = 14.dp, vertical = 10.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+            .padding(horizontal = 12.dp, vertical = 10.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Text(
-            text = "Set ${set.setNumber}: ${set.reps ?: "-"} reps | ${set.weight ?: "-"} lb | RPE ${set.rpe ?: "-"}",
-            color = PrimaryText,
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.weight(1f)
-        )
-        TextButton(onClick = onRemove) {
-            Text(text = "Remove", color = MutedText)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Set ${set.setNumber}",
+                color = PrimaryText,
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+            TextButton(onClick = onRemove, contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)) {
+                Text(text = "Remove", color = MutedText, style = MaterialTheme.typography.labelSmall)
+            }
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedTextField(
+                value = set.repsText,
+                onValueChange = onRepsChange,
+                label = { Text("Reps") },
+                singleLine = true,
+                modifier = Modifier.weight(1f)
+            )
+            OutlinedTextField(
+                value = set.weightText,
+                onValueChange = onWeightChange,
+                label = { Text("Weight") },
+                singleLine = true,
+                modifier = Modifier.weight(1.5f)
+            )
+            OutlinedTextField(
+                value = set.rpeText,
+                onValueChange = onRpeChange,
+                label = { Text("RPE") },
+                singleLine = true,
+                modifier = Modifier.weight(1f)
+            )
         }
     }
 }
@@ -1081,18 +1295,26 @@ private fun WorkoutDetailView(
                         )
                     }
                 }
-                when {
-                    detail.recoveryActivities.isNotEmpty() -> {
-                        detail.recoveryActivities.forEach { activity ->
-                            RecoveryActivityDetailSection(activity = activity)
-                        }
+                if (detail.exercises.isNotEmpty()) {
+                    detail.exercises.forEach { exercise ->
+                        ExerciseDetailSection(exercise = exercise)
                     }
-                    detail.exercises.isNotEmpty() -> {
-                        detail.exercises.forEach { exercise ->
-                            ExerciseDetailSection(exercise = exercise)
-                        }
+                }
+                if (detail.recoveryActivities.isNotEmpty()) {
+                    if (detail.exercises.isNotEmpty()) {
+                        Text(
+                            text = "Warm-up & Cool-down",
+                            color = CyanAccent,
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold
+                        )
                     }
-                    else -> Text(text = "No activities logged for this session.", color = MutedText)
+                    detail.recoveryActivities.forEach { activity ->
+                        RecoveryActivityDetailSection(activity = activity)
+                    }
+                }
+                if (detail.exercises.isEmpty() && detail.recoveryActivities.isEmpty()) {
+                    Text(text = "No activities logged for this session.", color = MutedText)
                 }
             }
         }
