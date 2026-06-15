@@ -217,7 +217,9 @@ class WorkoutViewModel(
                         prescribedSets = suggestion.prescribedSets,
                         prescribedRepsRange = suggestion.prescribedRepsRange,
                         prescribedRpe = suggestion.prescribedRpe,
-                        suggestedWeightText = suggestion.suggestedWeightText
+                        suggestedWeightText = suggestion.suggestedWeightText,
+                        progressionNote = suggestion.progressionNote,
+                        alternatives = suggestion.alternatives
                     )
                 }
             )
@@ -383,7 +385,9 @@ private data class DraftExerciseState(
     val prescribedSets: Int = 0,
     val prescribedRepsRange: String = "",
     val prescribedRpe: String = "",
-    val suggestedWeightText: String = ""
+    val suggestedWeightText: String = "",
+    val progressionNote: String = "",
+    val alternatives: List<String> = emptyList()
 )
 
 private data class DraftSetState(
@@ -480,7 +484,9 @@ private fun buildUiState(
                     prescribedSets = it.prescribedSets,
                     prescribedRepsRange = it.prescribedRepsRange,
                     prescribedRpe = it.prescribedRpe,
-                    suggestedWeightText = it.suggestedWeightText
+                    suggestedWeightText = it.suggestedWeightText,
+                    progressionNote = it.progressionNote,
+                    alternatives = it.alternatives
                 )
             },
             isStrengthDay = plan.isStrengthDay,
@@ -539,7 +545,8 @@ private fun buildUiState(
                 prescribedSets = draftExercise.prescribedSets,
                 prescribedRepsRange = draftExercise.prescribedRepsRange,
                 prescribedRpe = draftExercise.prescribedRpe,
-                suggestedWeightText = draftExercise.suggestedWeightText
+                suggestedWeightText = draftExercise.suggestedWeightText,
+                progressionNote = draftExercise.progressionNote
             )
         },
         recentWorkouts = historyList,

@@ -376,34 +376,46 @@ private fun PremiumWorkoutPlanCard(
                                 .clip(RoundedCornerShape(18.dp))
                                 .background(SecondaryCard.copy(alpha = 0.45f))
                                 .padding(horizontal = 16.dp, vertical = 12.dp),
-                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             workoutPlan.suggestedExercises.forEach { ex ->
-                                Row(
+                                Column(
                                     modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
+                                    verticalArrangement = Arrangement.spacedBy(2.dp)
                                 ) {
                                     Row(
-                                        modifier = Modifier.weight(1f),
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        Box(
-                                            modifier = Modifier.size(6.dp).clip(CircleShape).background(muscleGroupColor(ex.muscleGroup))
-                                        )
-                                        Text(text = ex.name, color = PrimaryText, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+                                        Row(
+                                            modifier = Modifier.weight(1f),
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Box(
+                                                modifier = Modifier.size(6.dp).clip(CircleShape).background(muscleGroupColor(ex.muscleGroup))
+                                            )
+                                            Text(text = ex.name, color = PrimaryText, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+                                        }
+                                        Surface(
+                                            shape = RoundedCornerShape(999.dp),
+                                            color = muscleGroupColor(ex.muscleGroup).copy(alpha = 0.15f)
+                                        ) {
+                                            Text(
+                                                text = ex.muscleGroup,
+                                                color = muscleGroupColor(ex.muscleGroup),
+                                                style = MaterialTheme.typography.labelSmall,
+                                                fontWeight = FontWeight.Medium,
+                                                modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp)
+                                            )
+                                        }
                                     }
-                                    Surface(
-                                        shape = RoundedCornerShape(999.dp),
-                                        color = muscleGroupColor(ex.muscleGroup).copy(alpha = 0.15f)
-                                    ) {
+                                    if (ex.progressionNote.isNotBlank()) {
                                         Text(
-                                            text = ex.muscleGroup,
-                                            color = muscleGroupColor(ex.muscleGroup),
-                                            style = MaterialTheme.typography.labelSmall,
-                                            fontWeight = FontWeight.Medium,
-                                            modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp)
+                                            text = ex.progressionNote,
+                                            color = CyanAccent,
+                                            style = MaterialTheme.typography.labelSmall
                                         )
                                     }
                                 }
@@ -1062,8 +1074,16 @@ private fun ExerciseCard(
             }
             if (exercise.isExpanded) {
                 if (exercise.prescribedSets > 0) {
+                    if (exercise.progressionNote.isNotBlank()) {
+                        Text(
+                            text = exercise.progressionNote,
+                            color = CyanAccent,
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
                     Text(
-                        text = "Suggested weight is guidance only. Adjust based on form, comfort, and safety.",
+                        text = "Adjust based on form, comfort, and safety.",
                         color = MutedText,
                         style = MaterialTheme.typography.labelSmall
                     )

@@ -25,7 +25,9 @@ data class SuggestedExerciseUiState(
     val prescribedSets: Int = 0,
     val prescribedRepsRange: String = "",
     val prescribedRpe: String = "",
-    val suggestedWeightText: String = ""
+    val suggestedWeightText: String = "",
+    val progressionNote: String = "",
+    val alternatives: List<String> = emptyList()
 )
 
 data class WorkoutPlanUiState(
@@ -76,7 +78,8 @@ data class SelectedExerciseUiState(
     val prescribedSets: Int = 0,
     val prescribedRepsRange: String = "",
     val prescribedRpe: String = "",
-    val suggestedWeightText: String = ""
+    val suggestedWeightText: String = "",
+    val progressionNote: String = ""
 )
 
 data class WorkoutHistoryUiState(

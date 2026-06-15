@@ -105,27 +105,39 @@ class GenerateWorkoutPlanUseCase {
         val prescribedSets = if (isLight) 2 else if (isHighVolume) 4 else 3
         val prescribedReps = if (isLight) "8-12" else if (isMuscleGain) "8-15" else "6-12"
         val prescribedRpe = if (isLight) "6-7" else if (isHighVolume) "7-9" else "7-8"
+        val isDeload = detectDeload(recentWorkouts, recentSets, today)
+        val effectiveSets = if (isDeload) (prescribedSets - 1).coerceAtLeast(1) else prescribedSets
+        val effectiveRpe = if (isDeload) deloadRpe(prescribedRpe) else prescribedRpe
+
         val suggested = selectExercises(focus, exercises, maxExercises).map { suggestion ->
             val ex = exerciseById[suggestion.exerciseId]
+            val (weightText, progressionNote) = if (ex != null)
+                computeWeightSuggestion(ex, recentSets, isLight, isDeload, workoutGoals, prescribedReps)
+            else
+                "Choose a comfortable starting weight" to ""
             suggestion.copy(
-                prescribedSets = prescribedSets,
+                prescribedSets = effectiveSets,
                 prescribedRepsRange = prescribedReps,
-                prescribedRpe = prescribedRpe,
-                suggestedWeightText = ex?.let { suggestedWeight(it, recentSets, isLight, workoutGoals) }
-                    ?: "Choose a comfortable starting weight"
+                prescribedRpe = effectiveRpe,
+                suggestedWeightText = weightText,
+                progressionNote = progressionNote,
+                alternatives = alternativesFor(suggestion.name)
             )
         }
         val reasons = buildReasons(focus, musclesLast48h, isLight, workoutGoals)
+        val allReasons = if (isDeload)
+            (listOf("Deload recommended — high recent volume or RPE; reducing sets and intensity") + reasons).take(3)
+        else reasons
 
         return WorkoutPlan(
             focus = focus,
-            setsPerExercise = prescribedSets,
+            setsPerExercise = effectiveSets,
             repsRange = prescribedReps,
-            rpeTarget = prescribedRpe,
+            rpeTarget = effectiveRpe,
             durationMinutes = if (isLight) "30-45" else if (isHighVolume) "50-70" else "45-60",
             suggestedExercises = suggested,
             isStrengthDay = true,
-            reasons = reasons,
+            reasons = allReasons,
             nonStrengthActivities = emptyList(),
             warmUp = warmUpFor(focus),
             coolDown = coolDownFor(focus),
@@ -201,41 +213,103 @@ class GenerateWorkoutPlanUseCase {
         return reasons.take(3)
     }
 
-    private fun suggestedWeight(
+    private fun detectDeload(
+        recentWorkouts: List<Workout>,
+        recentSets: List<WorkoutExercise>,
+        today: String
+    ): Boolean {
+        val cutoff = LocalDate.parse(today).minusDays(7).toString()
+        val lastWeekIds = recentWorkouts.filter { it.date >= cutoff }.map { it.id }.toSet()
+        val highRpeCount = recentSets.count { it.workoutId in lastWeekIds && (it.rpe ?: 0) >= 9 }
+        return highRpeCount >= 8 || lastWeekIds.size >= 5
+    }
+
+    private fun deloadRpe(rpeTarget: String): String {
+        val parts = rpeTarget.replace("–", "-").split("-")
+        if (parts.size == 2) {
+            val lo = parts[0].trim().toIntOrNull() ?: return rpeTarget
+            val hi = parts[1].trim().toIntOrNull() ?: return rpeTarget
+            return "${(lo - 1).coerceAtLeast(4)}-${(hi - 2).coerceAtLeast(5)}"
+        }
+        return rpeTarget
+    }
+
+    private fun computeWeightSuggestion(
         exercise: Exercise,
         recentSets: List<WorkoutExercise>,
         isLight: Boolean,
-        workoutGoals: List<String>
-    ): String {
+        isDeload: Boolean,
+        workoutGoals: List<String>,
+        prescribedRepsRange: String
+    ): Pair<String, String> {
         val eq = exercise.equipmentType.lowercase()
         val pattern = exercise.movementPattern.lowercase()
-        if (eq.contains("bodyweight")) return "Bodyweight"
-        if (eq.contains("cardio") || pattern.contains("cardio")) return ""
+        if (eq.contains("bodyweight")) return "Bodyweight" to ""
+        if (eq.contains("cardio") || pattern.contains("cardio")) return "" to ""
 
         val isConservative = workoutGoals.any { it == "Physical Therapy / Rehab" || it == "Postpartum Recovery" }
-        val isHighVolume = workoutGoals.any { it == "Strength Training" || it == "Muscle Gain" }
+        val isMuscleGain = workoutGoals.contains("Muscle Gain")
+        val isStrengthFocus = workoutGoals.contains("Strength Training")
         val isDumbbell = eq.contains("dumbbell") || eq.contains("kettlebell")
+        val step = if (isDumbbell) 2.5 else 5.0
+        val unit = if (isDumbbell) "lb/side" else "lb"
 
-        val recentWeights = recentSets
+        val exerciseSets = recentSets
             .filter { it.exerciseId == exercise.id && (it.weight ?: 0.0) > 0 }
             .sortedByDescending { it.id }
             .take(5)
 
-        if (recentWeights.isEmpty()) return "Choose a comfortable starting weight"
+        if (exerciseSets.isEmpty()) return "Choose a comfortable starting weight" to ""
 
-        val recentAvg = recentWeights.mapNotNull { it.weight }.average()
-        val multiplier = when {
-            isConservative -> 0.60
-            isLight -> 0.80
-            isHighVolume -> 0.95
-            else -> 0.85
+        val avgWeight = exerciseSets.mapNotNull { it.weight }.average()
+        val avgRpe = exerciseSets.mapNotNull { it.rpe }.let { r -> if (r.isEmpty()) null else r.average() }
+        val avgReps = exerciseSets.mapNotNull { it.reps }.let { r -> if (r.isEmpty()) null else r.average() }
+        val repTop = parseRepsRangeTop(prescribedRepsRange)
+
+        val (multiplier, note) = when {
+            isConservative ->
+                0.60 to "Conservative load — follow clinician guidance"
+            isDeload ->
+                0.80 to "Deload — reduced load to support recovery"
+            isLight && avgRpe != null && avgRpe >= 9.0 ->
+                0.75 to "Reduced load — high RPE and low recovery"
+            isLight ->
+                0.80 to "Lower load — recovery score"
+            avgRpe != null && avgRpe >= 9.0 ->
+                1.00 to "Maintain weight — high RPE last session"
+            avgRpe != null && avgRpe <= 6.5 && repTop != null && avgReps != null && avgReps >= repTop ->
+                when {
+                    isMuscleGain -> 1.00 to "Add reps first, then increase weight (hypertrophy focus)"
+                    isStrengthFocus -> 1.05 to "Suggested progression — last session was strong"
+                    else -> 1.025 to "Suggested progression from last session"
+                }
+            isMuscleGain -> 0.95 to "Based on recent performance"
+            isStrengthFocus -> 0.95 to "Based on recent performance"
+            else -> 0.85 to "Based on recent performance"
         }
-        val step = if (isDumbbell) 2.5 else 5.0
-        val adjusted = recentAvg * multiplier
-        val rounded = ((adjusted / step).roundToInt() * step).coerceAtLeast(0.0)
+
+        val adjusted = avgWeight * multiplier
+        val rounded = ((adjusted / step).roundToInt() * step).coerceAtLeast(step)
         val display = if (rounded % 1.0 == 0.0) rounded.toInt().toString() else "%.1f".format(rounded)
-        val unit = if (isDumbbell) "lb/side" else "lb"
-        return "$display $unit"
+        return "$display $unit" to note
+    }
+
+    private fun parseRepsRangeTop(range: String): Int? =
+        range.replace("–", "-").split("-").lastOrNull()?.trim()?.toIntOrNull()
+
+    private val exerciseSubstitutions = mapOf(
+        "Bench Press" to listOf("Dumbbell Press", "Push-Up"),
+        "Barbell Row" to listOf("Dumbbell Row", "Band Row"),
+        "Squat" to listOf("Goblet Squat", "Bodyweight Squat"),
+        "Deadlift" to listOf("Romanian Deadlift", "Hip Hinge"),
+        "Overhead Press" to listOf("Dumbbell Shoulder Press", "Pike Push-Up"),
+        "Pull-Up" to listOf("Lat Pulldown", "Band-Assisted Pull-Up"),
+        "Dip" to listOf("Tricep Pushdown", "Bench Dip")
+    )
+
+    private fun alternativesFor(exerciseName: String): List<String> {
+        val key = exerciseSubstitutions.keys.firstOrNull { exerciseName.contains(it, ignoreCase = true) }
+        return exerciseSubstitutions[key] ?: emptyList()
     }
 
     private fun conservativePlan(workoutGoal: String) = WorkoutPlan(
