@@ -112,6 +112,8 @@ fun ProfileRoute(
         onSave = viewModel::save,
         onBack = onBack,
         onNavigateToReminders = onNavigateToReminders,
+        onCalculateMacros = viewModel::calculateMacros,
+        onResetToCalculated = viewModel::resetToCalculated,
         onImportSteps = viewModel::requestStepsImport,
         onImportSleep = viewModel::requestSleepImport,
         onImportWeight = viewModel::requestWeightImport,
@@ -139,6 +141,8 @@ fun ProfileScreen(
     onSave: () -> Unit,
     onBack: () -> Unit,
     onNavigateToReminders: () -> Unit = {},
+    onCalculateMacros: () -> Unit = {},
+    onResetToCalculated: () -> Unit = {},
     onImportSteps: (Long) -> Unit = {},
     onImportSleep: (Double) -> Unit = {},
     onImportWeight: (Double) -> Unit = {},
@@ -334,23 +338,132 @@ fun ProfileScreen(
             }
 
             ProfileCard(title = "Nutrition Targets") {
+                val nutritionGoalOptions = listOf(
+                    "Fat Loss", "Maintain", "Muscle Gain", "Metabolic Reset",
+                    "Anti-Inflammatory", "General Health", "Insulin Resistance / Prediabetes"
+                )
+                val activityLevelOptions = listOf(
+                    "Sedentary", "Lightly Active", "Moderately Active", "Very Active", "Extra Active"
+                )
+
+                Text("Nutrition Goal", color = MutedText, style = MaterialTheme.typography.bodySmall)
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    nutritionGoalOptions.chunked(2).forEach { rowOptions ->
+                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            rowOptions.forEach { option ->
+                                FilterChip(
+                                    selected = uiState.nutritionGoal == option,
+                                    onClick = { onUpdate { it.copy(nutritionGoal = option) } },
+                                    label = { Text(option, maxLines = 2, style = MaterialTheme.typography.labelSmall) },
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = AccentBlue,
+                                        selectedLabelColor = PrimaryText,
+                                        labelColor = MutedText
+                                    ),
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
+                            repeat(2 - rowOptions.size) { Spacer(modifier = Modifier.weight(1f)) }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(4.dp))
+                Text("Activity Level", color = MutedText, style = MaterialTheme.typography.bodySmall)
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    activityLevelOptions.chunked(2).forEach { rowOptions ->
+                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            rowOptions.forEach { option ->
+                                FilterChip(
+                                    selected = uiState.activityLevel == option,
+                                    onClick = { onUpdate { it.copy(activityLevel = option) } },
+                                    label = { Text(option, maxLines = 1, style = MaterialTheme.typography.labelSmall) },
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = AccentBlue,
+                                        selectedLabelColor = PrimaryText,
+                                        labelColor = MutedText
+                                    ),
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
+                            repeat(2 - rowOptions.size) { Spacer(modifier = Modifier.weight(1f)) }
+                        }
+                    }
+                }
+
+                OutlinedButton(
+                    onClick = onCalculateMacros,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(999.dp)
+                ) {
+                    Text("Calculate Macros", color = CyanAccent)
+                }
+                uiState.macroCalculationMessage?.let { msg ->
+                    Text(msg, color = WarningAccent, style = MaterialTheme.typography.bodySmall)
+                }
+
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     OutlinedTextField(
                         value = uiState.proteinMin,
                         onValueChange = { v -> onUpdate { it.copy(proteinMin = v.filter { c -> c.isDigit() }) } },
-                        label = { Text("Protein min (g/day)") },
+                        label = { Text("Protein min (g)") },
                         modifier = Modifier.weight(1f),
                         singleLine = true
                     )
                     OutlinedTextField(
                         value = uiState.proteinMax,
                         onValueChange = { v -> onUpdate { it.copy(proteinMax = v.filter { c -> c.isDigit() }) } },
-                        label = { Text("Protein max (g/day)") },
+                        label = { Text("Protein max (g)") },
                         modifier = Modifier.weight(1f),
                         singleLine = true
                     )
                 }
-                Text("Daily protein target range in grams.", color = MutedText, style = MaterialTheme.typography.bodySmall)
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    OutlinedTextField(
+                        value = uiState.calorieTarget,
+                        onValueChange = { v -> onUpdate { it.copy(calorieTarget = v.filter { c -> c.isDigit() }) } },
+                        label = { Text("Calories/day") },
+                        modifier = Modifier.weight(1f),
+                        singleLine = true
+                    )
+                    OutlinedTextField(
+                        value = uiState.carbTarget,
+                        onValueChange = { v -> onUpdate { it.copy(carbTarget = v.filter { c -> c.isDigit() }) } },
+                        label = { Text("Carbs (g/day)") },
+                        modifier = Modifier.weight(1f),
+                        singleLine = true
+                    )
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    OutlinedTextField(
+                        value = uiState.fatTarget,
+                        onValueChange = { v -> onUpdate { it.copy(fatTarget = v.filter { c -> c.isDigit() }) } },
+                        label = { Text("Fat (g/day)") },
+                        modifier = Modifier.weight(1f),
+                        singleLine = true
+                    )
+                    OutlinedTextField(
+                        value = uiState.fiberTarget,
+                        onValueChange = { v -> onUpdate { it.copy(fiberTarget = v.filter { c -> c.isDigit() }) } },
+                        label = { Text("Fiber (g/day)") },
+                        modifier = Modifier.weight(1f),
+                        singleLine = true
+                    )
+                }
+                if (uiState.calculatedCalories != null) {
+                    OutlinedButton(
+                        onClick = onResetToCalculated,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(999.dp)
+                    ) {
+                        Text("Reset to Calculated", color = MutedText, style = MaterialTheme.typography.labelMedium)
+                    }
+                }
+                Text(
+                    "These are estimates. Adjust based on how you feel and consult a registered dietitian for personalised guidance.",
+                    color = MutedText,
+                    style = MaterialTheme.typography.bodySmall
+                )
             }
 
             ProfileCard(title = "Activity Targets") {

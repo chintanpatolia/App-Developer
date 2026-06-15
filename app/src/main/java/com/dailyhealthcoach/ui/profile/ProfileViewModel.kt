@@ -11,6 +11,7 @@ import com.dailyhealthcoach.domain.model.BodyMetricLog
 import com.dailyhealthcoach.domain.model.BodyMetricLogInput
 import com.dailyhealthcoach.domain.model.UserProfile
 import com.dailyhealthcoach.domain.repository.BodyMetricRepository
+import com.dailyhealthcoach.domain.nutrition.MacroCalculatorEngine
 import com.dailyhealthcoach.domain.repository.MacroTargetRepository
 import com.dailyhealthcoach.domain.repository.UserProfileRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -67,7 +68,12 @@ class ProfileViewModel(
                 strengthTarget = profile?.strengthTrainingDaysPerWeek?.toString() ?: "3",
                 nutritionGoal = profile?.nutritionGoal ?: "Maintain",
                 dietPreference = profile?.dietPreference ?: "No Restriction",
-                workoutGoals = profile?.workoutGoals?.takeIf { it.isNotEmpty() } ?: listOf("General Fitness")
+                workoutGoals = profile?.workoutGoals?.takeIf { it.isNotEmpty() } ?: listOf("General Fitness"),
+                activityLevel = profile?.activityLevel ?: "Moderately Active",
+                calorieTarget = macroTarget?.calorieTarget?.toString() ?: "",
+                carbTarget = macroTarget?.carbTargetGrams?.toString() ?: "",
+                fatTarget = macroTarget?.fatTargetGrams?.toString() ?: "",
+                fiberTarget = macroTarget?.fiberTargetGrams?.toString() ?: ""
             )
         }
     }
@@ -128,15 +134,80 @@ class ProfileViewModel(
                     strengthTrainingDaysPerWeek = strengthTarget,
                     nutritionGoal = s.nutritionGoal.ifBlank { null },
                     dietPreference = s.dietPreference.ifBlank { null },
-                    workoutGoals = s.workoutGoals
+                    workoutGoals = s.workoutGoals,
+                    activityLevel = s.activityLevel.ifBlank { null }
                 )
             )
-            macroTargetRepository.saveTarget(
+            macroTargetRepository.saveFullTarget(
+                calories = s.calorieTarget.toIntOrNull(),
                 proteinMin = proteinMin ?: 170,
-                proteinMax = proteinMax ?: 200
+                proteinMax = proteinMax ?: 200,
+                carbs = s.carbTarget.toIntOrNull(),
+                fat = s.fatTarget.toIntOrNull(),
+                fiber = s.fiberTarget.toIntOrNull()
             )
             _uiState.value = _uiState.value.copy(savedSuccess = true, error = null)
         }
+    }
+
+    // ── Macro Calculator ─────────────────────────────────────────────────────
+
+    fun calculateMacros() {
+        val s = _uiState.value
+        viewModelScope.launch {
+            val today = LocalDate.now().toString()
+            val bodyLog = bodyMetricRepository.observeForDate(today).first()
+            val weightLbs = bodyLog?.bodyWeight ?: s.weightGoal.toDoubleOrNull()
+            val bodyFat = bodyLog?.bodyFatPercentage ?: bodyLog?.calculatedBodyFatPercent
+            val ageYears = s.age.toIntOrNull()
+            val hFeet = s.heightFeet.toIntOrNull()
+            val hIn = s.heightInches.toIntOrNull() ?: 0
+            val totalHeight = if (hFeet != null) (hFeet * 12 + hIn).toDouble() else null
+
+            val bmr = MacroCalculatorEngine.calculateBmr(
+                sex = s.sex,
+                ageYears = ageYears,
+                heightInches = totalHeight,
+                weightLbs = weightLbs,
+                bodyFatPercent = bodyFat
+            )
+            if (bmr == null) {
+                _uiState.value = s.copy(
+                    macroCalculationMessage = "Log a body weight (or enter a weight goal), age, and height to calculate."
+                )
+                return@launch
+            }
+            val tdee = MacroCalculatorEngine.calculateTdee(bmr, s.activityLevel)
+            val result = MacroCalculatorEngine.calculateMacros(tdee, s.nutritionGoal, weightLbs)
+            _uiState.value = _uiState.value.copy(
+                calculatedCalories = result.calories,
+                calculatedProteinMin = result.proteinMinGrams,
+                calculatedProteinMax = result.proteinMaxGrams,
+                calculatedCarbs = result.carbGrams,
+                calculatedFat = result.fatGrams,
+                calculatedFiber = result.fiberGrams,
+                calorieTarget = result.calories.toString(),
+                proteinMin = result.proteinMinGrams.toString(),
+                proteinMax = result.proteinMaxGrams.toString(),
+                carbTarget = result.carbGrams.toString(),
+                fatTarget = result.fatGrams.toString(),
+                fiberTarget = result.fiberGrams.toString(),
+                macroCalculationMessage = null
+            )
+        }
+    }
+
+    fun resetToCalculated() {
+        val s = _uiState.value
+        if (s.calculatedCalories == null) return
+        _uiState.value = s.copy(
+            calorieTarget = s.calculatedCalories.toString(),
+            proteinMin = s.calculatedProteinMin?.toString() ?: s.proteinMin,
+            proteinMax = s.calculatedProteinMax?.toString() ?: s.proteinMax,
+            carbTarget = s.calculatedCarbs?.toString() ?: s.carbTarget,
+            fatTarget = s.calculatedFat?.toString() ?: s.fatTarget,
+            fiberTarget = s.calculatedFiber?.toString() ?: s.fiberTarget
+        )
     }
 
     // ── Health Connect Import ────────────────────────────────────────────────

@@ -33,6 +33,32 @@ class MacroTargetRepositoryImpl(
             )
         )
     }
+
+    override suspend fun saveFullTarget(
+        calories: Int?,
+        proteinMin: Int,
+        proteinMax: Int,
+        carbs: Int?,
+        fat: Int?,
+        fiber: Int?
+    ) {
+        val now = java.time.Instant.now().toString()
+        val existing = macroTargetDao.getActiveTarget()
+        macroTargetDao.upsert(
+            MacroTargetEntity(
+                id = existing?.id ?: 0,
+                proteinMinGrams = proteinMin,
+                proteinMaxGrams = proteinMax,
+                calorieTarget = calories,
+                carbTargetGrams = carbs,
+                fatTargetGrams = fat,
+                fiberTargetGrams = fiber,
+                isActive = true,
+                createdAt = existing?.createdAt ?: now,
+                updatedAt = now
+            )
+        )
+    }
 }
 
 private fun MacroTargetEntity.toDomain(): MacroTarget {

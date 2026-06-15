@@ -6,4 +6,12 @@ import kotlinx.coroutines.flow.Flow
 interface MacroTargetRepository {
     fun observeActiveTarget(): Flow<MacroTarget?>
     suspend fun saveTarget(proteinMin: Int, proteinMax: Int)
+    suspend fun saveFullTarget(
+        calories: Int?,
+        proteinMin: Int,
+        proteinMax: Int,
+        carbs: Int?,
+        fat: Int?,
+        fiber: Int?
+    )
 }

@@ -21,6 +21,7 @@ data class UserProfileEntity(
     val nutritionGoal: String? = null,
     val dietPreference: String? = null,
     val workoutGoal: String? = null,
+    val activityLevel: String? = null,
     val createdAt: String,
     val updatedAt: String
 )
