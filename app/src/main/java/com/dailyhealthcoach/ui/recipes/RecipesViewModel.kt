@@ -69,10 +69,27 @@ class RecipesViewModel(
         val selectedSlot: PlannedMealSlot? = null,
         val weekGroceryListOpen: Boolean = false,
         val weekGroceryCheckedKeys: Set<String> = emptySet(),
-        val mealPlanMode: String = "Variety"
+        val mealPlanMode: String = "Variety",
+        val replacementCandidates: List<Recipe> = emptyList()
+    )
+
+    private data class DraftPlanInternal(
+        val weekOffset: Int,
+        val days: List<DayMealPlanUiState>,
+        val mealPlanMode: String
     )
 
     private val calendarInternal = MutableStateFlow(MealCalendarInternal())
+    private val draftPlanInternal = MutableStateFlow<DraftPlanInternal?>(null)
+
+    val draftPlanUiState: StateFlow<DraftPlanUiState?> = draftPlanInternal.map { draft ->
+        if (draft == null) return@map null
+        val weekLabel = when (draft.weekOffset) {
+            0 -> "This Week"; 1 -> "Next Week"; -1 -> "Last Week"
+            else -> if (draft.weekOffset > 0) "+${draft.weekOffset} Weeks" else "${-draft.weekOffset} Weeks Ago"
+        }
+        DraftPlanUiState(weekLabel = weekLabel, days = draft.days, mealPlanMode = draft.mealPlanMode)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     val mealCalendarUiState: StateFlow<MealCalendarUiState> = calendarInternal.map { cal ->
         val currentPlan = cal.plans[cal.weekOffset] ?: emptyList()
@@ -94,7 +111,8 @@ class RecipesViewModel(
                 else buildGroceryItems(weekGroceryIds)
             } else emptyList(),
             weekGroceryCheckedKeys = cal.weekGroceryCheckedKeys,
-            mealPlanMode = cal.mealPlanMode
+            mealPlanMode = cal.mealPlanMode,
+            replacementCandidates = cal.replacementCandidates
         )
     }.stateIn(
         scope = viewModelScope,
@@ -134,10 +152,39 @@ class RecipesViewModel(
                 proteinTargetGrams = proteinTarget
             )
         }
-        calendarInternal.update { state -> state.copy(plans = state.plans + (offset to days)) }
+        draftPlanInternal.value = DraftPlanInternal(weekOffset = offset, days = days, mealPlanMode = mode)
     }
 
     fun regenerateWeekPlan() = generateWeekPlan()
+
+    fun acceptDraftPlan() {
+        val draft = draftPlanInternal.value ?: return
+        calendarInternal.update { state ->
+            state.copy(plans = state.plans + (draft.weekOffset to draft.days))
+        }
+        draftPlanInternal.value = null
+    }
+
+    fun cancelDraftPlan() {
+        draftPlanInternal.value = null
+    }
+
+    fun replaceDraftMeal(date: String, mealType: String) {
+        val draft = draftPlanInternal.value ?: return
+        val profile = userProfileState.value
+        val usedIds = draft.days.flatMap { it.meals.values }.mapNotNull { it?.id }.toSet()
+        val replacement = MealPlanEngine.pickReplacement(
+            allRecipes = RecipeCatalog.ALL,
+            mealType = mealType,
+            usedIds = usedIds,
+            nutritionGoal = profile?.nutritionGoal,
+            dietPreference = profile?.dietPreference
+        ) ?: return
+        val updatedDays = draft.days.map { day ->
+            if (day.date == date) day.copy(meals = day.meals + (mealType to replacement)) else day
+        }
+        draftPlanInternal.value = draft.copy(days = updatedDays)
+    }
 
     fun selectCalendarMeal(date: String, mealType: String) {
         val offset = calendarInternal.value.weekOffset
@@ -146,7 +193,48 @@ class RecipesViewModel(
     }
 
     fun dismissCalendarMeal() {
-        calendarInternal.update { it.copy(selectedSlot = null) }
+        calendarInternal.update { it.copy(selectedSlot = null, replacementCandidates = emptyList()) }
+    }
+
+    fun loadCalendarMealAlternatives(date: String, mealType: String) {
+        val offset = calendarInternal.value.weekOffset
+        val currentPlan = calendarInternal.value.plans[offset] ?: return
+        val profile = userProfileState.value
+        val usedInPlan = currentPlan.flatMap { it.meals.values }.mapNotNull { it?.id }.toSet()
+        val usedInCandidates = mutableSetOf<String>()
+        val candidates = mutableListOf<Recipe>()
+        repeat(3) {
+            MealPlanEngine.pickReplacement(
+                allRecipes = RecipeCatalog.ALL,
+                mealType = mealType,
+                usedIds = usedInPlan + usedInCandidates,
+                nutritionGoal = profile?.nutritionGoal,
+                dietPreference = profile?.dietPreference
+            )?.let {
+                candidates.add(it)
+                usedInCandidates.add(it.id)
+            }
+        }
+        calendarInternal.update { it.copy(replacementCandidates = candidates) }
+    }
+
+    fun clearCalendarAlternatives() {
+        calendarInternal.update { it.copy(replacementCandidates = emptyList()) }
+    }
+
+    fun replaceCalendarMealWith(date: String, mealType: String, recipe: Recipe) {
+        val offset = calendarInternal.value.weekOffset
+        val currentPlan = calendarInternal.value.plans[offset] ?: return
+        val updated = currentPlan.map { day ->
+            if (day.date == date) day.copy(meals = day.meals + (mealType to recipe)) else day
+        }
+        calendarInternal.update { state ->
+            state.copy(
+                plans = state.plans + (offset to updated),
+                selectedSlot = PlannedMealSlot(date, mealType, recipe),
+                replacementCandidates = emptyList()
+            )
+        }
     }
 
     fun replaceCalendarMeal(date: String, mealType: String) {

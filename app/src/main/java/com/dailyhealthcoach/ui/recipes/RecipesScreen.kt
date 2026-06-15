@@ -73,6 +73,7 @@ import com.dailyhealthcoach.ui.theme.WarningAccent
 fun RecipesRoute(viewModel: RecipesViewModel) {
     val uiState by viewModel.uiState.collectAsState()
     val calState by viewModel.mealCalendarUiState.collectAsState()
+    val draftState by viewModel.draftPlanUiState.collectAsState()
     val context = LocalContext.current
     val clipboard = LocalClipboardManager.current
 
@@ -129,11 +130,27 @@ fun RecipesRoute(viewModel: RecipesViewModel) {
             CalendarMealDetailDialog(
                 slot = slot,
                 recipe = recipe,
+                replacementCandidates = calState.replacementCandidates,
                 onDismiss = viewModel::dismissCalendarMeal,
                 onLog = { mealName -> viewModel.logCalendarMeal(recipe, mealName) },
-                onReplace = { viewModel.replaceCalendarMeal(slot.date, slot.mealType) }
+                onLoadAlternatives = { viewModel.loadCalendarMealAlternatives(slot.date, slot.mealType) },
+                onReplaceWith = { chosen -> viewModel.replaceCalendarMealWith(slot.date, slot.mealType, chosen) },
+                onClearAlternatives = viewModel::clearCalendarAlternatives
             )
         }
+    }
+
+    // ── Draft plan review ─────────────────────────────────────────────────
+    draftState?.let { draft ->
+        PlanReviewDialog(
+            draft = draft,
+            calorieTarget = uiState.calorieTarget,
+            proteinTarget = uiState.proteinTarget,
+            onAccept = viewModel::acceptDraftPlan,
+            onRegenerate = viewModel::regenerateWeekPlan,
+            onCancel = viewModel::cancelDraftPlan,
+            onReplaceMeal = { date, mealType -> viewModel.replaceDraftMeal(date, mealType) }
+        )
     }
 
     MainFeatureCard(modifier = Modifier.padding(top = 22.dp)) {
@@ -223,60 +240,62 @@ fun RecipesRoute(viewModel: RecipesViewModel) {
                 }
             }
 
-            if (uiState.recommendedRecipes.isNotEmpty()) {
-                RecipeSection(
-                    title = "Recommended for Today",
-                    recipes = uiState.recommendedRecipes,
-                    selectedIds = uiState.selectedRecipeIds,
-                    onViewRecipe = viewModel::selectRecipe,
-                    onToggleSelect = viewModel::toggleSelection,
-                    onTryAnother = viewModel::tryAnother,
-                    highlightFirst = true
-                )
-            }
+            if (!calState.isGenerated) {
+                if (uiState.recommendedRecipes.isNotEmpty()) {
+                    RecipeSection(
+                        title = "Recommended for Today",
+                        recipes = uiState.recommendedRecipes,
+                        selectedIds = uiState.selectedRecipeIds,
+                        onViewRecipe = viewModel::selectRecipe,
+                        onToggleSelect = viewModel::toggleSelection,
+                        onTryAnother = viewModel::tryAnother,
+                        highlightFirst = true
+                    )
+                }
 
-            if (uiState.breakfastRecipes.isNotEmpty()) {
-                RecipeSection(
-                    title = "Breakfast",
-                    recipes = uiState.breakfastRecipes,
-                    selectedIds = uiState.selectedRecipeIds,
-                    onViewRecipe = viewModel::selectRecipe,
-                    onToggleSelect = viewModel::toggleSelection,
-                    onTryAnother = null
-                )
-            }
+                if (uiState.breakfastRecipes.isNotEmpty()) {
+                    RecipeSection(
+                        title = "Breakfast",
+                        recipes = uiState.breakfastRecipes,
+                        selectedIds = uiState.selectedRecipeIds,
+                        onViewRecipe = viewModel::selectRecipe,
+                        onToggleSelect = viewModel::toggleSelection,
+                        onTryAnother = null
+                    )
+                }
 
-            if (uiState.lunchRecipes.isNotEmpty()) {
-                RecipeSection(
-                    title = "Lunch",
-                    recipes = uiState.lunchRecipes,
-                    selectedIds = uiState.selectedRecipeIds,
-                    onViewRecipe = viewModel::selectRecipe,
-                    onToggleSelect = viewModel::toggleSelection,
-                    onTryAnother = null
-                )
-            }
+                if (uiState.lunchRecipes.isNotEmpty()) {
+                    RecipeSection(
+                        title = "Lunch",
+                        recipes = uiState.lunchRecipes,
+                        selectedIds = uiState.selectedRecipeIds,
+                        onViewRecipe = viewModel::selectRecipe,
+                        onToggleSelect = viewModel::toggleSelection,
+                        onTryAnother = null
+                    )
+                }
 
-            if (uiState.dinnerRecipes.isNotEmpty()) {
-                RecipeSection(
-                    title = "Dinner",
-                    recipes = uiState.dinnerRecipes,
-                    selectedIds = uiState.selectedRecipeIds,
-                    onViewRecipe = viewModel::selectRecipe,
-                    onToggleSelect = viewModel::toggleSelection,
-                    onTryAnother = null
-                )
-            }
+                if (uiState.dinnerRecipes.isNotEmpty()) {
+                    RecipeSection(
+                        title = "Dinner",
+                        recipes = uiState.dinnerRecipes,
+                        selectedIds = uiState.selectedRecipeIds,
+                        onViewRecipe = viewModel::selectRecipe,
+                        onToggleSelect = viewModel::toggleSelection,
+                        onTryAnother = null
+                    )
+                }
 
-            if (uiState.snackRecipes.isNotEmpty()) {
-                RecipeSection(
-                    title = "Snacks",
-                    recipes = uiState.snackRecipes,
-                    selectedIds = uiState.selectedRecipeIds,
-                    onViewRecipe = viewModel::selectRecipe,
-                    onToggleSelect = viewModel::toggleSelection,
-                    onTryAnother = null
-                )
+                if (uiState.snackRecipes.isNotEmpty()) {
+                    RecipeSection(
+                        title = "Snacks",
+                        recipes = uiState.snackRecipes,
+                        selectedIds = uiState.selectedRecipeIds,
+                        onViewRecipe = viewModel::selectRecipe,
+                        onToggleSelect = viewModel::toggleSelection,
+                        onTryAnother = null
+                    )
+                }
             }
         }
     }
@@ -785,6 +804,196 @@ private fun Double.clean(): String =
     if (this == kotlin.math.floor(this) && this < 1_000_000) this.toLong().toString()
     else "%.1f".format(this).trimEnd('0').trimEnd('.')
 
+// ── Plan Review Dialog ──────────────────────────────────────────────────────
+
+@Composable
+private fun PlanReviewDialog(
+    draft: DraftPlanUiState,
+    calorieTarget: Int,
+    proteinTarget: Double,
+    onAccept: () -> Unit,
+    onRegenerate: () -> Unit,
+    onCancel: () -> Unit,
+    onReplaceMeal: (date: String, mealType: String) -> Unit
+) {
+    Dialog(
+        onDismissRequest = onCancel,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight(0.95f)
+                .padding(horizontal = 12.dp),
+            shape = RoundedCornerShape(20.dp),
+            color = MainCard
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+            ) {
+                // Header
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            "Review Weekly Meal Plan",
+                            color = PrimaryText, fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                        Text(
+                            draft.weekLabel,
+                            color = MutedText, style = MaterialTheme.typography.labelSmall
+                        )
+                    }
+                    TextButton(onClick = onCancel, contentPadding = PaddingValues(4.dp)) {
+                        Text("✕", color = MutedText, style = MaterialTheme.typography.titleMedium)
+                    }
+                }
+                Text(
+                    "Tap any meal to swap it before accepting.",
+                    color = MutedText,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                // Scrollable day list
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    draft.days.forEach { day ->
+                        DraftDayCard(
+                            day = day,
+                            calorieTarget = calorieTarget,
+                            proteinTarget = proteinTarget,
+                            onMealTap = { mealType -> onReplaceMeal(day.date, mealType) }
+                        )
+                    }
+                    Spacer(Modifier.height(4.dp))
+                }
+                Spacer(Modifier.height(10.dp))
+                // Action buttons
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = onRegenerate,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(999.dp),
+                        contentPadding = PaddingValues(vertical = 10.dp)
+                    ) {
+                        Text(
+                            "Regenerate",
+                            color = CyanAccent,
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                    Button(
+                        onClick = onAccept,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(999.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = CyanAccent),
+                        contentPadding = PaddingValues(vertical = 10.dp)
+                    ) {
+                        Text(
+                            "Accept Plan",
+                            color = Color.Black,
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DraftDayCard(
+    day: DayMealPlanUiState,
+    calorieTarget: Int,
+    proteinTarget: Double,
+    onMealTap: (mealType: String) -> Unit
+) {
+    val dayCalories = day.meals.values.filterNotNull().sumOf { it.calories }
+    val dayProtein = day.meals.values.filterNotNull().sumOf { it.proteinGrams }
+    val dayCarbs = day.meals.values.filterNotNull().sumOf { it.carbGrams }
+    val dayFat = day.meals.values.filterNotNull().sumOf { it.fatGrams }
+    val dayFiber = day.meals.values.filterNotNull().sumOf { it.fiberGrams ?: 0.0 }
+    val proteinColor = when {
+        proteinTarget <= 0 -> MutedText
+        dayProtein >= proteinTarget * 0.9 -> PositiveAccent
+        dayProtein >= proteinTarget * 0.6 -> WarningAccent
+        else -> Color(0xFFE57373)
+    }
+    androidx.compose.material3.Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(14.dp),
+        color = SecondaryCard
+    ) {
+        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    "${day.dayLabel}  ${day.dateNumber}",
+                    color = CyanAccent, fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.labelMedium
+                )
+                Text(
+                    "$dayCalories kcal${if (calorieTarget > 0) " / $calorieTarget" else ""}",
+                    color = if (calorieTarget > 0 && dayCalories >= (calorieTarget * 0.85).toInt()) PositiveAccent else MutedText,
+                    style = MaterialTheme.typography.labelSmall
+                )
+            }
+            Text(
+                "P ${dayProtein.clean()}g · C ${dayCarbs.clean()}g · F ${dayFat.clean()}g · Fiber ${dayFiber.clean()}g",
+                color = proteinColor,
+                style = MaterialTheme.typography.labelSmall
+            )
+            listOf("Breakfast", "Lunch", "Dinner", "Snack").forEach { mealType ->
+                val recipe = day.meals[mealType]
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(MainCard)
+                        .pointerInput(Unit) { detectTapGestures { onMealTap(mealType) } }
+                        .padding(horizontal = 10.dp, vertical = 6.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(mealType, color = MutedText, style = MaterialTheme.typography.labelSmall)
+                        Text(
+                            recipe?.name ?: "—",
+                            color = if (recipe != null) PrimaryText else MutedText,
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = if (recipe != null) FontWeight.SemiBold else FontWeight.Normal
+                        )
+                    }
+                    if (recipe != null) {
+                        Text(
+                            "P${recipe.proteinGrams.clean()}g",
+                            color = CyanAccent, style = MaterialTheme.typography.labelSmall
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
 // ── Weekly Meal Calendar ────────────────────────────────────────────────────
 
 @Composable
@@ -972,9 +1181,12 @@ private fun CalendarDayCard(
 private fun CalendarMealDetailDialog(
     slot: PlannedMealSlot,
     recipe: Recipe,
+    replacementCandidates: List<Recipe>,
     onDismiss: () -> Unit,
     onLog: (mealName: String) -> Unit,
-    onReplace: () -> Unit
+    onLoadAlternatives: () -> Unit,
+    onReplaceWith: (Recipe) -> Unit,
+    onClearAlternatives: () -> Unit
 ) {
     var selectedMeal by remember(recipe.id) { mutableStateOf(slot.mealType) }
 
@@ -1102,13 +1314,63 @@ private fun CalendarMealDetailDialog(
                     Text("Add to Nutrition Log", color = Color.Black, fontWeight = FontWeight.Bold)
                 }
 
-                OutlinedButton(
-                    onClick = onReplace,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(999.dp)
-                ) {
-                    Text("Replace This Meal", color = CyanAccent, fontWeight = FontWeight.SemiBold,
-                        style = MaterialTheme.typography.labelMedium)
+                if (replacementCandidates.isNotEmpty()) {
+                    Text(
+                        "Choose a replacement",
+                        color = PrimaryText, fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.titleSmall
+                    )
+                    replacementCandidates.forEach { alt ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(SecondaryCard)
+                                .padding(horizontal = 12.dp, vertical = 8.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    alt.name,
+                                    color = PrimaryText,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                Text(
+                                    "P${alt.proteinGrams.clean()}g · ${alt.calories} kcal",
+                                    color = MutedText,
+                                    style = MaterialTheme.typography.labelSmall
+                                )
+                            }
+                            TextButton(
+                                onClick = { onReplaceWith(alt) },
+                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                            ) {
+                                Text(
+                                    "Select",
+                                    color = CyanAccent,
+                                    fontWeight = FontWeight.Bold,
+                                    style = MaterialTheme.typography.labelSmall
+                                )
+                            }
+                        }
+                    }
+                    TextButton(onClick = onClearAlternatives, modifier = Modifier.fillMaxWidth()) {
+                        Text("Cancel", color = MutedText, style = MaterialTheme.typography.labelSmall)
+                    }
+                } else {
+                    OutlinedButton(
+                        onClick = onLoadAlternatives,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(999.dp)
+                    ) {
+                        Text(
+                            "Replace This Meal",
+                            color = CyanAccent, fontWeight = FontWeight.SemiBold,
+                            style = MaterialTheme.typography.labelMedium
+                        )
+                    }
                 }
 
                 TextButton(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) {

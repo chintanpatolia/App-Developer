@@ -24,6 +24,12 @@ data class DayMealPlanUiState(
     )
 )
 
+data class DraftPlanUiState(
+    val weekLabel: String = "",
+    val days: List<DayMealPlanUiState> = emptyList(),
+    val mealPlanMode: String = "Variety"
+)
+
 data class MealCalendarUiState(
     val weekOffset: Int = 0,
     val weekLabel: String = "This Week",
@@ -33,7 +39,8 @@ data class MealCalendarUiState(
     val weekGroceryListOpen: Boolean = false,
     val weekGroceryItems: List<GroceryItem> = emptyList(),
     val weekGroceryCheckedKeys: Set<String> = emptySet(),
-    val mealPlanMode: String = "Variety"
+    val mealPlanMode: String = "Variety",
+    val replacementCandidates: List<Recipe> = emptyList()
 )
 
 data class RecipesUiState(
