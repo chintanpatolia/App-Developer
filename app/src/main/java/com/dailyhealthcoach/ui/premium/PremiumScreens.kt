@@ -75,13 +75,6 @@ import com.dailyhealthcoach.ui.workout.WorkoutUiState
 import com.dailyhealthcoach.ui.workout.WorkoutViewModel
 import com.dailyhealthcoach.barcode.BarcodeScannerScreen
 import com.dailyhealthcoach.barcode.NutritionLabelScannerScreen
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.FitnessCenter
-import androidx.compose.material.icons.filled.LocalFireDepartment
-import androidx.compose.material.icons.filled.Restaurant
-import androidx.compose.material.icons.filled.Grain
-import androidx.compose.material.icons.filled.WaterDrop
-import androidx.compose.material3.Icon
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
@@ -2320,37 +2313,47 @@ private fun MacroSummaryCard(uiState: NutritionUiState) {
                 Text(text = "protein", color = MutedText)
             }
         }
-        // Calorie + macro strip
+        // Macro tiles with inline progress rings
+        val calProgress = if (uiState.calorieTarget > 0) (uiState.calories.toFloat() / uiState.calorieTarget).coerceIn(0f, 1f) else 0f
+        val carbProgress = if (uiState.carbGoal > 0) (uiState.carbGrams / uiState.carbGoal).toFloat().coerceIn(0f, 1f) else 0f
+        val fatProgress = if (uiState.fatGoal > 0) (uiState.fatGrams / uiState.fatGoal).toFloat().coerceIn(0f, 1f) else 0f
+        val fiberProgress = if (uiState.fiberGoal > 0) (uiState.fiberGrams / uiState.fiberGoal).toFloat().coerceIn(0f, 1f) else 0f
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            MacroMiniTile("kcal", "${uiState.calories}", Color(0xFFFF8C42), Modifier.weight(1f))
-            MacroMiniTile("carbs", "${uiState.carbGrams.clean()}g", WarningAccent, Modifier.weight(1f))
-            MacroMiniTile("fat", "${uiState.fatGrams.clean()}g", AccentBlue, Modifier.weight(1f))
-            MacroMiniTile("fiber", "${uiState.fiberGrams.clean()}g", PositiveAccent, Modifier.weight(1f))
+            MacroMiniTile("kcal", "${uiState.calories}", if (uiState.calorieTarget > 0) "${uiState.calorieTarget}" else "–", calProgress, Color(0xFFFF8C42), Modifier.weight(1f))
+            MacroMiniTile("carbs", "${uiState.carbGrams.clean()}g", if (uiState.carbGoal > 0) "${uiState.carbGoal}g" else "–", carbProgress, WarningAccent, Modifier.weight(1f))
+            MacroMiniTile("fat", "${uiState.fatGrams.clean()}g", if (uiState.fatGoal > 0) "${uiState.fatGoal}g" else "–", fatProgress, AccentBlue, Modifier.weight(1f))
+            MacroMiniTile("fiber", "${uiState.fiberGrams.clean()}g", if (uiState.fiberGoal > 0) "${uiState.fiberGoal}g" else "–", fiberProgress, PositiveAccent, Modifier.weight(1f))
         }
-        // Protein progress bar
-        MacroProgressRow(
-            icon = Icons.Default.Restaurant,
-            iconColor = CyanAccent,
-            label = "Protein",
-            current = "${uiState.proteinGrams.clean()}g",
-            goal = "${uiState.proteinGoalMin}–${uiState.proteinGoalMax}g",
-            progress = uiState.proteinProgress()
-        )
     }
 }
 
 @Composable
-private fun MacroMiniTile(label: String, value: String, color: Color, modifier: Modifier = Modifier) {
+private fun MacroMiniTile(
+    label: String,
+    consumed: String,
+    target: String,
+    progress: Float,
+    color: Color,
+    modifier: Modifier = Modifier
+) {
     Column(
         modifier = modifier
             .clip(RoundedCornerShape(12.dp))
             .background(color.copy(alpha = 0.10f))
             .padding(horizontal = 6.dp, vertical = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(2.dp)
+        verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        Text(value, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = color, maxLines = 1)
         Text(label, style = MaterialTheme.typography.labelSmall, color = MutedText)
+        ProgressRing(
+            progress = progress,
+            modifier = Modifier.size(48.dp),
+            strokeWidth = 4.dp,
+            color = color
+        ) {
+            Text(consumed, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = color, maxLines = 1)
+        }
+        Text("/ $target", style = MaterialTheme.typography.labelSmall, color = MutedText, maxLines = 1)
     }
 }
 

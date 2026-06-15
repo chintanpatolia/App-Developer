@@ -567,6 +567,10 @@ private fun List<FoodEntry>.toUiState(
         fiberGrams = uiEntries.sumOf { it.fiberGrams },
         proteinGoalMin = proteinGoalMin,
         proteinGoalMax = proteinGoalMax,
+        calorieTarget = macroTarget?.calorieTarget ?: 2000,
+        carbGoal = macroTarget?.carbTargetGrams ?: 0,
+        fatGoal = macroTarget?.fatTargetGrams ?: 0,
+        fiberGoal = macroTarget?.fiberTargetGrams ?: 0,
         latestMealTime = uiEntries.mapNotNull { it.mealTime }.maxOrNull() ?: "Not logged",
         mealSections = meals.map { meal ->
             MealSectionUiState(

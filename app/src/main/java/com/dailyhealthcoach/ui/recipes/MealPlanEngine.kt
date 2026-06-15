@@ -12,25 +12,34 @@ object MealPlanEngine {
         allRecipes: List<Recipe>,
         weekStart: LocalDate,
         nutritionGoal: String?,
-        dietPreference: String?
+        dietPreference: String?,
+        proteinTargetGrams: Int = 0
     ): List<DayMealPlanUiState> {
         val filtered = filterByDiet(allRecipes, dietPreference)
-        val pools: Map<String, ArrayDeque<Recipe>> = MEAL_TYPES.associateWith { mealType ->
+        val nonSnackTypes = listOf("Breakfast", "Lunch", "Dinner")
+        val pools: Map<String, ArrayDeque<Recipe>> = nonSnackTypes.associateWith { mealType ->
             buildPool(filtered.filter { it.mealType == mealType }, nutritionGoal)
         }
+        val snackPool = buildPool(filtered.filter { it.mealType == "Snack" }, nutritionGoal)
+        val rankedSnacks = rankRecipes(filtered.filter { it.mealType == "Snack" }, nutritionGoal)
 
         return (0..6).map { offset ->
             val day = weekStart.plusDays(offset.toLong())
-            val dateStr = day.toString()
-            val dayLabel = day.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.getDefault())
-            val meals: Map<String, Recipe?> = MEAL_TYPES.associateWith { mealType ->
-                pools[mealType]?.removeFirstOrNull()
+            val breakfast = pools["Breakfast"]?.removeFirstOrNull()
+            val lunch = pools["Lunch"]?.removeFirstOrNull()
+            val dinner = pools["Dinner"]?.removeFirstOrNull()
+            val snack = if (proteinTargetGrams > 0 && rankedSnacks.isNotEmpty()) {
+                val proteinSoFar = (breakfast?.proteinGrams ?: 0.0) + (lunch?.proteinGrams ?: 0.0) + (dinner?.proteinGrams ?: 0.0)
+                val proteinGap = (proteinTargetGrams - proteinSoFar).coerceAtLeast(0.0)
+                pickSnackForProteinGap(rankedSnacks, proteinGap)
+            } else {
+                snackPool.removeFirstOrNull()
             }
             DayMealPlanUiState(
-                date = dateStr,
-                dayLabel = dayLabel,
+                date = day.toString(),
+                dayLabel = day.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.getDefault()),
                 dateNumber = day.dayOfMonth,
-                meals = meals
+                meals = mapOf("Breakfast" to breakfast, "Lunch" to lunch, "Dinner" to dinner, "Snack" to snack)
             )
         }
     }
@@ -40,12 +49,23 @@ object MealPlanEngine {
         allRecipes: List<Recipe>,
         weekStart: LocalDate,
         nutritionGoal: String?,
-        dietPreference: String?
+        dietPreference: String?,
+        proteinTargetGrams: Int = 0
     ): List<DayMealPlanUiState> {
         val filtered = filterByDiet(allRecipes, dietPreference)
-        val chosenMeals: Map<String, Recipe?> = MEAL_TYPES.associateWith { mealType ->
+        val nonSnackTypes = listOf("Breakfast", "Lunch", "Dinner")
+        val chosenNonSnacks: Map<String, Recipe?> = nonSnackTypes.associateWith { mealType ->
             rankRecipes(filtered.filter { it.mealType == mealType }, nutritionGoal).firstOrNull()
         }
+        val rankedSnacks = rankRecipes(filtered.filter { it.mealType == "Snack" }, nutritionGoal)
+        val chosenSnack: Recipe? = if (proteinTargetGrams > 0 && rankedSnacks.isNotEmpty()) {
+            val proteinSoFar = nonSnackTypes.sumOf { chosenNonSnacks[it]?.proteinGrams ?: 0.0 }
+            val proteinGap = (proteinTargetGrams - proteinSoFar).coerceAtLeast(0.0)
+            pickSnackForProteinGap(rankedSnacks, proteinGap)
+        } else {
+            rankedSnacks.firstOrNull()
+        }
+        val chosenMeals = chosenNonSnacks + ("Snack" to chosenSnack)
         return (0..6).map { offset ->
             val day = weekStart.plusDays(offset.toLong())
             DayMealPlanUiState(
@@ -55,6 +75,11 @@ object MealPlanEngine {
                 meals = chosenMeals
             )
         }
+    }
+
+    private fun pickSnackForProteinGap(rankedSnacks: List<Recipe>, proteinGap: Double): Recipe? {
+        if (proteinGap <= 0.0) return rankedSnacks.firstOrNull()
+        return rankedSnacks.minByOrNull { kotlin.math.abs(it.proteinGrams - proteinGap) }
     }
 
     // Regenerate a single meal slot, avoiding already-used recipes in the week

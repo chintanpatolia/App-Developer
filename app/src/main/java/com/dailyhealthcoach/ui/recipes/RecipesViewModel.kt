@@ -44,7 +44,7 @@ private fun String.containsAny(vararg keywords: String) =
 
 class RecipesViewModel(
     private val nutritionRepository: NutritionRepository,
-    macroTargetRepository: MacroTargetRepository,
+    private val macroTargetRepository: MacroTargetRepository,
     userProfileRepository: UserProfileRepository,
     private val habitAutoUpdateUseCase: HabitAutoUpdateUseCase
 ) : ViewModel() {
@@ -56,6 +56,9 @@ class RecipesViewModel(
     private val selectionState = MutableStateFlow(RecipeSelectionState())
 
     private val userProfileState = userProfileRepository.observeUserProfile()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    private val macroTargetState = macroTargetRepository.observeActiveTarget()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     // ── Meal Calendar ──────────────────────────────────────────────────────
@@ -113,19 +116,22 @@ class RecipesViewModel(
         val mode = calendarInternal.value.mealPlanMode
         val weekStart = todayDate.plusWeeks(offset.toLong())
             .with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+        val proteinTarget = macroTargetState.value?.proteinMaxGrams ?: 0
         val days = if (mode == "Repeat Weekly") {
             MealPlanEngine.generateWeekRepeat(
                 allRecipes = RecipeCatalog.ALL,
                 weekStart = weekStart,
                 nutritionGoal = profile?.nutritionGoal,
-                dietPreference = profile?.dietPreference
+                dietPreference = profile?.dietPreference,
+                proteinTargetGrams = proteinTarget
             )
         } else {
             MealPlanEngine.generateWeek(
                 allRecipes = RecipeCatalog.ALL,
                 weekStart = weekStart,
                 nutritionGoal = profile?.nutritionGoal,
-                dietPreference = profile?.dietPreference
+                dietPreference = profile?.dietPreference,
+                proteinTargetGrams = proteinTarget
             )
         }
         calendarInternal.update { state -> state.copy(plans = state.plans + (offset to days)) }

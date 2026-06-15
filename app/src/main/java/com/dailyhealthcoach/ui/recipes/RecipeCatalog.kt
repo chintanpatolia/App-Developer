@@ -1433,6 +1433,95 @@ object RecipeCatalog {
                 "Serve immediately or refrigerate up to 2 hours."
             ),
             metabolicResetScore = 8, antiInflammatoryScore = 8, isGlucoseConscious = true
+        ),
+
+        Recipe(
+            id = "protein_shake",
+            name = "Protein Shake",
+            description = "A quick 30-second protein hit — one scoop of protein powder blended with almond milk and ice. Simple, fast, and reliably 28g of protein with under 160 calories.",
+            mealType = "Snack",
+            tags = listOf("Vegetarian", "High Protein"),
+            collection = emptyList(),
+            ingredients = listOf(
+                "1 scoop vanilla or chocolate protein powder",
+                "1 cup unsweetened almond milk",
+                "3–4 ice cubes"
+            ),
+            calories = 160, proteinGrams = 28.0, carbGrams = 6.0, fatGrams = 3.0, fiberGrams = 1.0,
+            prepMinutes = 2, cookMinutes = 0,
+            instructions = listOf(
+                "Add protein powder, almond milk, and ice to a shaker bottle or blender.",
+                "Shake vigorously for 30 seconds or blend for 20 seconds.",
+                "Serve immediately."
+            )
+        ),
+
+        Recipe(
+            id = "greek_yogurt_berry_bowl",
+            name = "Greek Yogurt Berry Bowl",
+            description = "A simple bowl of thick non-fat Greek yogurt topped with fresh mixed berries. 22g of slow-digesting protein, naturally sweet, and under 220 calories.",
+            mealType = "Snack",
+            tags = listOf("Vegetarian", "High Protein"),
+            collection = listOf("Metabolic Reset"),
+            ingredients = listOf(
+                "1 cup non-fat Greek yogurt (170g)",
+                "½ cup mixed berries (blueberries, strawberries, raspberries)",
+                "1 tsp honey (optional)"
+            ),
+            calories = 210, proteinGrams = 22.0, carbGrams = 24.0, fatGrams = 1.0, fiberGrams = 3.0,
+            prepMinutes = 2, cookMinutes = 0,
+            instructions = listOf(
+                "Spoon Greek yogurt into a bowl.",
+                "Top with mixed berries.",
+                "Drizzle honey if desired. Serve immediately."
+            ),
+            metabolicResetScore = 8, isGlucoseConscious = true
+        ),
+
+        Recipe(
+            id = "cottage_cheese_bowl",
+            name = "Cottage Cheese Protein Bowl",
+            description = "Low-fat cottage cheese topped with pineapple chunks and cinnamon. 25g of slow-digesting casein protein keeps you full between meals without excess calories.",
+            mealType = "Snack",
+            tags = listOf("Vegetarian", "High Protein"),
+            collection = listOf("Metabolic Reset"),
+            ingredients = listOf(
+                "¾ cup low-fat cottage cheese (170g)",
+                "½ cup pineapple chunks (fresh or tinned in juice)",
+                "¼ tsp cinnamon",
+                "Pinch of black pepper (optional)"
+            ),
+            calories = 190, proteinGrams = 25.0, carbGrams = 18.0, fatGrams = 2.0, fiberGrams = 1.0,
+            prepMinutes = 3, cookMinutes = 0,
+            instructions = listOf(
+                "Spoon cottage cheese into a bowl.",
+                "Top with pineapple chunks.",
+                "Sprinkle cinnamon and a pinch of pepper if using."
+            ),
+            metabolicResetScore = 7, isGlucoseConscious = true
+        ),
+
+        Recipe(
+            id = "protein_oats_mini",
+            name = "Protein Oats Mini Bowl",
+            description = "A half-portion of protein oatmeal — the perfect bridge snack between meals. 20g of protein from a half-scoop of powder stirred into warm oats, under 200 calories.",
+            mealType = "Snack",
+            tags = listOf("Vegetarian", "High Protein"),
+            collection = emptyList(),
+            ingredients = listOf(
+                "¼ cup rolled oats",
+                "½ scoop vanilla protein powder",
+                "½ cup unsweetened almond milk",
+                "1 tsp honey",
+                "¼ tsp cinnamon"
+            ),
+            calories = 200, proteinGrams = 20.0, carbGrams = 26.0, fatGrams = 3.0, fiberGrams = 3.0,
+            prepMinutes = 1, cookMinutes = 5,
+            instructions = listOf(
+                "Cook oats with almond milk on stovetop or microwave 3–4 minutes.",
+                "Stir in protein powder until smooth.",
+                "Top with honey and cinnamon. Serve warm."
+            )
         )
     )
 }
