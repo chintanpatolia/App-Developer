@@ -190,7 +190,8 @@ fun RecipesRoute(viewModel: RecipesViewModel) {
                 onGenerate = viewModel::generateWeekPlan,
                 onRegenerate = viewModel::regenerateWeekPlan,
                 onMealTap = { date, mealType -> viewModel.selectCalendarMeal(date, mealType) },
-                onWeekGrocery = viewModel::openWeekGroceryList
+                onWeekGrocery = viewModel::openWeekGroceryList,
+                onModeChange = viewModel::setMealPlanMode
             )
 
             uiState.noAlternateMessage?.let { msg ->
@@ -794,7 +795,8 @@ private fun WeeklyMealCalendarSection(
     onGenerate: () -> Unit,
     onRegenerate: () -> Unit,
     onMealTap: (date: String, mealType: String) -> Unit,
-    onWeekGrocery: () -> Unit
+    onWeekGrocery: () -> Unit,
+    onModeChange: (String) -> Unit = {}
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         // Header row: label + week nav
@@ -822,6 +824,33 @@ private fun WeeklyMealCalendarSection(
                     Text("›", color = CyanAccent, style = MaterialTheme.typography.titleMedium)
                 }
             }
+        }
+
+        // Meal Plan Mode toggle
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            listOf("Variety", "Repeat Weekly").forEach { mode ->
+                FilterChip(
+                    selected = calState.mealPlanMode == mode,
+                    onClick = { onModeChange(mode) },
+                    label = { Text(mode, style = MaterialTheme.typography.labelSmall, maxLines = 1) },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = CyanAccent,
+                        selectedLabelColor = androidx.compose.ui.graphics.Color.Black,
+                        labelColor = MutedText
+                    )
+                )
+            }
+        }
+        if (calState.mealPlanMode == "Repeat Weekly") {
+            Text(
+                "Repeat Weekly is useful for meal prep and bulk grocery shopping.",
+                color = MutedText,
+                style = MaterialTheme.typography.bodySmall
+            )
         }
 
         if (!calState.isGenerated) {

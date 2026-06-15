@@ -32,7 +32,8 @@ data class MealCalendarUiState(
     val selectedSlot: PlannedMealSlot? = null,
     val weekGroceryListOpen: Boolean = false,
     val weekGroceryItems: List<GroceryItem> = emptyList(),
-    val weekGroceryCheckedKeys: Set<String> = emptySet()
+    val weekGroceryCheckedKeys: Set<String> = emptySet(),
+    val mealPlanMode: String = "Variety"
 )
 
 data class RecipesUiState(

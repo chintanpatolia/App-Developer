@@ -65,7 +65,8 @@ class RecipesViewModel(
         val plans: Map<Int, List<DayMealPlanUiState>> = emptyMap(),
         val selectedSlot: PlannedMealSlot? = null,
         val weekGroceryListOpen: Boolean = false,
-        val weekGroceryCheckedKeys: Set<String> = emptySet()
+        val weekGroceryCheckedKeys: Set<String> = emptySet(),
+        val mealPlanMode: String = "Variety"
     )
 
     private val calendarInternal = MutableStateFlow(MealCalendarInternal())
@@ -77,6 +78,7 @@ class RecipesViewModel(
             else -> if (cal.weekOffset > 0) "+${cal.weekOffset} Weeks" else "${-cal.weekOffset} Weeks Ago"
         }
         val weekGroceryIds = currentPlan.flatMap { it.meals.values }.mapNotNull { it?.id }.toSet()
+        val isRepeatWeekly = cal.mealPlanMode == "Repeat Weekly"
         MealCalendarUiState(
             weekOffset = cal.weekOffset,
             weekLabel = weekLabel,
@@ -84,8 +86,12 @@ class RecipesViewModel(
             isGenerated = currentPlan.isNotEmpty(),
             selectedSlot = cal.selectedSlot,
             weekGroceryListOpen = cal.weekGroceryListOpen,
-            weekGroceryItems = if (cal.weekGroceryListOpen) buildGroceryItems(weekGroceryIds) else emptyList(),
-            weekGroceryCheckedKeys = cal.weekGroceryCheckedKeys
+            weekGroceryItems = if (cal.weekGroceryListOpen) {
+                if (isRepeatWeekly) buildWeeklyRepeatGroceryItems(weekGroceryIds)
+                else buildGroceryItems(weekGroceryIds)
+            } else emptyList(),
+            weekGroceryCheckedKeys = cal.weekGroceryCheckedKeys,
+            mealPlanMode = cal.mealPlanMode
         )
     }.stateIn(
         scope = viewModelScope,
@@ -97,17 +103,31 @@ class RecipesViewModel(
         calendarInternal.update { it.copy(weekOffset = it.weekOffset + delta) }
     }
 
+    fun setMealPlanMode(mode: String) {
+        calendarInternal.update { it.copy(mealPlanMode = mode) }
+    }
+
     fun generateWeekPlan() {
         val profile = userProfileState.value
         val offset = calendarInternal.value.weekOffset
+        val mode = calendarInternal.value.mealPlanMode
         val weekStart = todayDate.plusWeeks(offset.toLong())
             .with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
-        val days = MealPlanEngine.generateWeek(
-            allRecipes = RecipeCatalog.ALL,
-            weekStart = weekStart,
-            nutritionGoal = profile?.nutritionGoal,
-            dietPreference = profile?.dietPreference
-        )
+        val days = if (mode == "Repeat Weekly") {
+            MealPlanEngine.generateWeekRepeat(
+                allRecipes = RecipeCatalog.ALL,
+                weekStart = weekStart,
+                nutritionGoal = profile?.nutritionGoal,
+                dietPreference = profile?.dietPreference
+            )
+        } else {
+            MealPlanEngine.generateWeek(
+                allRecipes = RecipeCatalog.ALL,
+                weekStart = weekStart,
+                nutritionGoal = profile?.nutritionGoal,
+                dietPreference = profile?.dietPreference
+            )
+        }
         calendarInternal.update { state -> state.copy(plans = state.plans + (offset to days)) }
     }
 
@@ -369,6 +389,29 @@ class RecipesViewModel(
             .map { (key, items) ->
                 val first = items.first()
                 val totalQty = if (items.all { it.qty != null }) items.sumOf { it.qty!! } else null
+                val displayName = first.normalizedName.replaceFirstChar { it.uppercase() }
+                GroceryItem(
+                    key = key,
+                    displayLine = buildDisplayLine(totalQty, first.unit, displayName),
+                    recipeSources = items.map { it.recipeName }.distinct(),
+                    category = categorizeIngredient(first.normalizedName)
+                )
+            }
+            .sortedBy { it.category.ordinal }
+    }
+
+    // Multiply per-day ingredient quantities by 7 for a full week's bulk shopping list.
+    private fun buildWeeklyRepeatGroceryItems(selectedIds: Set<String>): List<GroceryItem> {
+        if (selectedIds.isEmpty()) return emptyList()
+        val allParsed = selectedIds.flatMap { id ->
+            val recipe = RecipeCatalog.ALL.find { it.id == id } ?: return@flatMap emptyList()
+            recipe.ingredients.map { raw -> parseIngredientLine(raw, recipe.name) }
+        }
+        return allParsed
+            .groupBy { "${it.normalizedName}::${it.unit}" }
+            .map { (key, items) ->
+                val first = items.first()
+                val totalQty = if (items.all { it.qty != null }) items.sumOf { it.qty!! } * 7 else null
                 val displayName = first.normalizedName.replaceFirstChar { it.uppercase() }
                 GroceryItem(
                     key = key,

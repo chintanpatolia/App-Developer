@@ -35,6 +35,28 @@ object MealPlanEngine {
         }
     }
 
+    // Pick one recipe per meal type and apply it to every day — ideal for meal prep.
+    fun generateWeekRepeat(
+        allRecipes: List<Recipe>,
+        weekStart: LocalDate,
+        nutritionGoal: String?,
+        dietPreference: String?
+    ): List<DayMealPlanUiState> {
+        val filtered = filterByDiet(allRecipes, dietPreference)
+        val chosenMeals: Map<String, Recipe?> = MEAL_TYPES.associateWith { mealType ->
+            rankRecipes(filtered.filter { it.mealType == mealType }, nutritionGoal).firstOrNull()
+        }
+        return (0..6).map { offset ->
+            val day = weekStart.plusDays(offset.toLong())
+            DayMealPlanUiState(
+                date = day.toString(),
+                dayLabel = day.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.getDefault()),
+                dateNumber = day.dayOfMonth,
+                meals = chosenMeals
+            )
+        }
+    }
+
     // Regenerate a single meal slot, avoiding already-used recipes in the week
     fun pickReplacement(
         allRecipes: List<Recipe>,
