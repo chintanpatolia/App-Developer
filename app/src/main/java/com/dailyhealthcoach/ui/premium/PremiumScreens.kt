@@ -57,7 +57,9 @@ import com.dailyhealthcoach.ui.nutrition.NutritionViewModel
 import com.dailyhealthcoach.ui.nutrition.QuickAddFoodUiState
 import com.dailyhealthcoach.ui.nutrition.RecipeSuggestionUiState
 import com.dailyhealthcoach.ui.nutrition.UsualMealUiState
+import androidx.compose.foundation.BorderStroke
 import com.dailyhealthcoach.ui.workout.ActivityDraft
+import com.dailyhealthcoach.ui.workout.CalendarDayUiState
 import com.dailyhealthcoach.ui.workout.DraftWorkoutSetUiState
 import com.dailyhealthcoach.ui.workout.ExerciseDetailUiState
 import com.dailyhealthcoach.ui.workout.ExerciseOptionUiState
@@ -200,7 +202,8 @@ fun PremiumWorkoutRoute(viewModel: WorkoutViewModel) {
             viewModel.saveRecoverySession(drafts, notes)
             showNonStrengthSession = false
         },
-        onDismissPr = viewModel::dismissPrCelebration
+        onDismissPr = viewModel::dismissPrCelebration,
+        onNavigateCalendarWeek = viewModel::navigateCalendarWeek
     )
 }
 
@@ -233,7 +236,8 @@ private fun PremiumWorkoutScreen(
     onSetInlineRpeChange: (Long, Int, String) -> Unit,
     onSaveWorkout: (List<ActivityDraft>, List<ActivityDraft>) -> Unit,
     onSaveRecoverySession: (List<ActivityDraft>, String) -> Unit,
-    onDismissPr: () -> Unit
+    onDismissPr: () -> Unit,
+    onNavigateCalendarWeek: (Int) -> Unit = {}
 ) {
     Column(modifier = Modifier.padding(bottom = 40.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
         when {
@@ -273,6 +277,17 @@ private fun PremiumWorkoutScreen(
                     PrCelebrationBanner(
                         achievements = uiState.newPrAchievements,
                         onDismiss = onDismissPr
+                    )
+                }
+                if (uiState.calendarDays.isNotEmpty()) {
+                    WorkoutCalendarCard(
+                        calendarDays = uiState.calendarDays,
+                        hasWorkoutTodayCompleted = uiState.hasWorkoutTodayCompleted,
+                        weekOffset = uiState.selectedWeekOffset,
+                        weekLabel = uiState.calendarWeekLabel,
+                        onDayTapped = { day -> day.completedWorkoutId?.let { onWorkoutSelected(it) } },
+                        onStartTodayWorkout = onStartWorkout,
+                        onNavigateWeek = onNavigateCalendarWeek
                     )
                 }
                 PremiumWorkoutPlanCard(
@@ -1436,6 +1451,476 @@ private fun RecoveryActivityDetailSection(activity: RecoveryActivityDetailUiStat
         }
         if (!activity.notes.isNullOrBlank()) {
             Text(text = activity.notes, color = MutedText, style = MaterialTheme.typography.bodySmall)
+        }
+    }
+}
+
+@Composable
+private fun WorkoutCalendarCard(
+    calendarDays: List<CalendarDayUiState>,
+    hasWorkoutTodayCompleted: Boolean,
+    weekOffset: Int,
+    weekLabel: String,
+    onDayTapped: (CalendarDayUiState) -> Unit,
+    onStartTodayWorkout: () -> Unit,
+    onNavigateWeek: (Int) -> Unit
+) {
+    val isProjectedWeek = weekOffset > 0
+    val todayDay = calendarDays.firstOrNull { it.isToday }
+    val showStartButton = todayDay != null && !hasWorkoutTodayCompleted && todayDay.workoutTag == "STRENGTH"
+    val showLogButton = todayDay != null && !hasWorkoutTodayCompleted && todayDay.workoutTag != "STRENGTH"
+    var previewDay by remember { mutableStateOf<CalendarDayUiState?>(null) }
+
+    ElevatedCard(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.elevatedCardColors(containerColor = MainCard),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            // Title row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Workout Calendar",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = PrimaryText
+                )
+                if (isProjectedWeek) {
+                    Surface(
+                        shape = RoundedCornerShape(999.dp),
+                        color = CyanAccent.copy(alpha = 0.12f)
+                    ) {
+                        Text(
+                            text = "Projected plan",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = CyanAccent,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                        )
+                    }
+                }
+            }
+            // Week navigation row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                TextButton(
+                    onClick = { onNavigateWeek(-1) },
+                    enabled = weekOffset > -4
+                ) {
+                    Text(text = "< Prev", color = if (weekOffset > -4) CyanAccent else MutedControl)
+                }
+                Text(
+                    text = weekLabel,
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = PrimaryText
+                )
+                TextButton(
+                    onClick = { onNavigateWeek(+1) },
+                    enabled = weekOffset < 4
+                ) {
+                    Text(text = "Next >", color = if (weekOffset < 4) CyanAccent else MutedControl)
+                }
+            }
+            // Day pills
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                contentPadding = PaddingValues(horizontal = 2.dp)
+            ) {
+                items(calendarDays) { day ->
+                    CalendarDayPill(
+                        day = day,
+                        onTap = { if (day.isCompleted) onDayTapped(day) else previewDay = day }
+                    )
+                }
+            }
+            // Action buttons — only shown on current week
+            if (!isProjectedWeek) {
+                if (showStartButton) {
+                    PrimaryBlueButton(
+                        text = "Start Today's Workout",
+                        onClick = onStartTodayWorkout,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                } else if (showLogButton) {
+                    OutlinedButton(
+                        onClick = onStartTodayWorkout,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        border = BorderStroke(1.dp, PositiveAccent)
+                    ) {
+                        Text(
+                            text = "Log ${todayDay?.workoutTypeLabel?.take(20) ?: "Session"}",
+                            color = PositiveAccent,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    previewDay?.let { selected ->
+        val previewIndex = calendarDays.indexOfFirst { it.date == selected.date }
+        CalendarDayPreviewDialog(
+            day = selected,
+            onDismiss = { previewDay = null },
+            onStartWorkout = { onStartTodayWorkout(); previewDay = null },
+            onPrevious = if (previewIndex > 0) { { previewDay = calendarDays[previewIndex - 1] } } else null,
+            onNext = if (previewIndex < calendarDays.lastIndex) { { previewDay = calendarDays[previewIndex + 1] } } else null
+        )
+    }
+}
+
+@Composable
+private fun CalendarDayPreviewDialog(
+    day: CalendarDayUiState,
+    onDismiss: () -> Unit,
+    onStartWorkout: () -> Unit,
+    onPrevious: (() -> Unit)?,
+    onNext: (() -> Unit)?
+) {
+    val plan = day.projectedPlan
+    val showStartEnabled = day.isToday && day.workoutTag != "REST" && day.workoutTag != "SKIPPED"
+    val startLabel = if (plan?.isStrengthDay == true) "Start Workout" else "Log Session"
+    val headerTag = when {
+        day.isToday -> "Today"
+        day.isProjected -> "Projected"
+        day.isFuture -> "Planned"
+        day.workoutTag == "SKIPPED" -> "Skipped"
+        else -> "Past"
+    }
+    val headerTagColor = when (headerTag) {
+        "Today" -> AccentBlue
+        "Projected", "Planned" -> CyanAccent
+        "Skipped" -> WarningAccent
+        else -> MutedText
+    }
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight(0.88f)
+                .padding(horizontal = 16.dp),
+            shape = RoundedCornerShape(20.dp),
+            color = MainCard
+        ) {
+            Column(modifier = Modifier.padding(20.dp)) {
+                // Scrollable content
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    // Header
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "${day.dayLabel}, ${day.dateNumber}",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MutedText
+                            )
+                            Text(
+                                text = plan?.focus ?: day.workoutTypeLabel,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = PrimaryText
+                            )
+                        }
+                        Surface(
+                            shape = RoundedCornerShape(999.dp),
+                            color = headerTagColor.copy(alpha = 0.14f)
+                        ) {
+                            Text(
+                                text = headerTag,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = headerTagColor,
+                                fontWeight = FontWeight.SemiBold,
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                            )
+                        }
+                    }
+
+                    if (plan != null) {
+                        val statLine = buildList {
+                            if (plan.durationMinutes.isNotEmpty()) add("${plan.durationMinutes} min")
+                            if (plan.setsPerExercise > 0) add("${plan.setsPerExercise} sets")
+                            if (plan.repsRange.isNotEmpty()) add("${plan.repsRange} reps")
+                            if (plan.rpeTarget.isNotEmpty()) add("RPE ${plan.rpeTarget}")
+                        }.joinToString(" · ")
+                        if (statLine.isNotEmpty()) {
+                            Text(text = statLine, style = MaterialTheme.typography.bodySmall, color = MutedText)
+                        }
+
+                        if (plan.isStrengthDay && plan.suggestedExercises.isNotEmpty()) {
+                            if (plan.warmUp.isNotEmpty()) {
+                                PlanSection(title = "Warm-Up") { plan.warmUp.forEach { BulletRow(it) } }
+                            }
+                            PlanSection(title = "Exercises") {
+                                plan.suggestedExercises.forEach { ExercisePreviewRow(it) }
+                            }
+                            if (plan.coolDown.isNotEmpty()) {
+                                PlanSection(title = "Cool-Down") { plan.coolDown.forEach { BulletRow(it) } }
+                            }
+                        } else if (plan.nonStrengthActivities.isNotEmpty()) {
+                            if (plan.warmUp.isNotEmpty()) {
+                                PlanSection(title = "Warm-Up") { plan.warmUp.forEach { BulletRow(it) } }
+                            }
+                            PlanSection(title = "Activities") {
+                                plan.nonStrengthActivities.forEach { BulletRow(it) }
+                            }
+                            if (plan.coolDown.isNotEmpty()) {
+                                PlanSection(title = "Cool-Down") { plan.coolDown.forEach { BulletRow(it) } }
+                            }
+                        }
+
+                        if (plan.postWorkoutRecommendations.isNotEmpty()) {
+                            PlanSection(title = "Post-Session") {
+                                plan.postWorkoutRecommendations.forEach { BulletRow(it) }
+                            }
+                        }
+                        if (plan.reasons.isNotEmpty()) {
+                            PlanSection(title = "Why This Plan") {
+                                plan.reasons.forEach { BulletRow(it) }
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Future-day hint
+                if (!showStartEnabled && (day.isFuture || day.isProjected)) {
+                    Text(
+                        text = "Available on ${day.dayLabel}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MutedText,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                }
+
+                // Fixed bottom: Prev · Start/Close · Next
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    TextButton(
+                        onClick = { onPrevious?.invoke() },
+                        enabled = onPrevious != null
+                    ) {
+                        Text(
+                            text = "< Prev",
+                            color = if (onPrevious != null) CyanAccent else MutedControl
+                        )
+                    }
+                    if (showStartEnabled) {
+                        PrimaryBlueButton(text = startLabel, onClick = onStartWorkout)
+                    } else {
+                        TextButton(onClick = onDismiss) {
+                            Text(text = "Close", color = MutedText)
+                        }
+                    }
+                    TextButton(
+                        onClick = { onNext?.invoke() },
+                        enabled = onNext != null
+                    ) {
+                        Text(
+                            text = "Next >",
+                            color = if (onNext != null) CyanAccent else MutedControl
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PlanSection(title: String, content: @Composable () -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = CyanAccent
+        )
+        content()
+    }
+}
+
+@Composable
+private fun BulletRow(text: String) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalAlignment = Alignment.Top
+    ) {
+        Text(text = "·", style = MaterialTheme.typography.bodySmall, color = MutedText)
+        Text(text = text, style = MaterialTheme.typography.bodySmall, color = MutedText)
+    }
+}
+
+@Composable
+private fun ExercisePreviewRow(exercise: SuggestedExerciseUiState) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        verticalArrangement = Arrangement.spacedBy(2.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = exercise.name,
+                style = MaterialTheme.typography.bodySmall,
+                fontWeight = FontWeight.SemiBold,
+                color = PrimaryText,
+                modifier = Modifier.weight(1f)
+            )
+            Text(
+                text = exercise.muscleGroup,
+                style = MaterialTheme.typography.labelSmall,
+                color = MutedText
+            )
+        }
+        val detail = buildList {
+            if (exercise.prescribedSets > 0) add("${exercise.prescribedSets} sets")
+            if (exercise.prescribedRepsRange.isNotEmpty()) add("${exercise.prescribedRepsRange} reps")
+            if (exercise.prescribedRpe.isNotEmpty()) add("RPE ${exercise.prescribedRpe}")
+        }.joinToString(" · ")
+        if (detail.isNotEmpty()) {
+            Text(text = detail, style = MaterialTheme.typography.labelSmall, color = MutedText)
+        }
+        if (exercise.suggestedWeightText.isNotEmpty()) {
+            Text(
+                text = exercise.suggestedWeightText,
+                style = MaterialTheme.typography.labelSmall,
+                color = CyanAccent
+            )
+        }
+        if (exercise.progressionNote.isNotEmpty()) {
+            Text(
+                text = exercise.progressionNote,
+                style = MaterialTheme.typography.labelSmall,
+                color = PositiveAccent
+            )
+        }
+    }
+}
+
+@Composable
+private fun CalendarDayPill(day: CalendarDayUiState, onTap: () -> Unit) {
+    val isInteractive = true
+    val dotColor = when {
+        day.isCompleted -> PositiveAccent
+        day.isToday -> when (day.workoutTag) {
+            "STRENGTH" -> AccentBlue
+            "MOBILITY" -> CyanAccent
+            "RECOVERY", "WALK" -> PositiveAccent
+            else -> MutedText
+        }
+        day.isFuture -> when (day.workoutTag) {
+            "STRENGTH" -> AccentBlue.copy(alpha = 0.4f)
+            "MOBILITY" -> CyanAccent.copy(alpha = 0.4f)
+            "RECOVERY", "WALK" -> PositiveAccent.copy(alpha = 0.4f)
+            else -> MutedText.copy(alpha = 0.25f)
+        }
+        else -> when (day.workoutTag) {
+            "SKIPPED" -> WarningAccent.copy(alpha = 0.5f)
+            else -> MutedText.copy(alpha = 0.2f)
+        }
+    }
+    val dotSymbol = when {
+        day.isCompleted -> "✓"
+        day.workoutTag == "STRENGTH" -> "S"
+        day.workoutTag == "MOBILITY" -> "M"
+        day.workoutTag == "RECOVERY" || day.workoutTag == "WALK" -> "R"
+        day.workoutTag == "SKIPPED" -> "✕"
+        else -> "–"
+    }
+    val typeShort = when (day.workoutTag) {
+        "STRENGTH" -> day.workoutTypeLabel.take(9)
+        "MOBILITY" -> "Mobility"
+        "RECOVERY" -> "Recovery"
+        "WALK" -> "Walking"
+        "REST" -> "Rest"
+        "SKIPPED" -> "Skipped"
+        else -> day.workoutTypeLabel.take(9)
+    }
+    val containerColor = if (day.isToday) SecondaryCard else Color.Transparent
+    val borderColor = if (day.isToday) CyanAccent else Color.Transparent
+
+    Surface(
+        modifier = Modifier
+            .width(50.dp)
+            .clickable(enabled = isInteractive, onClick = onTap),
+        shape = RoundedCornerShape(12.dp),
+        color = containerColor,
+        border = BorderStroke(if (day.isToday) 1.5.dp else 0.dp, borderColor)
+    ) {
+        Column(
+            modifier = Modifier.padding(vertical = 8.dp, horizontal = 2.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(
+                text = day.dayLabel,
+                style = MaterialTheme.typography.labelSmall,
+                color = if (day.isToday) CyanAccent else MutedText,
+                fontWeight = if (day.isToday) FontWeight.Bold else FontWeight.Normal
+            )
+            Text(
+                text = "${day.dateNumber}",
+                style = MaterialTheme.typography.bodySmall,
+                color = if (day.isToday) PrimaryText else MutedText,
+                fontWeight = if (day.isToday) FontWeight.SemiBold else FontWeight.Normal
+            )
+            Box(
+                modifier = Modifier
+                    .size(22.dp)
+                    .clip(CircleShape)
+                    .background(dotColor),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = dotSymbol,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = PrimaryText,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+            Text(
+                text = typeShort,
+                style = MaterialTheme.typography.labelSmall,
+                color = if (day.isToday) PrimaryText else MutedText.copy(alpha = 0.7f),
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
         }
     }
 }

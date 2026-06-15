@@ -8,6 +8,7 @@ import com.dailyhealthcoach.domain.model.Exercise
 import com.dailyhealthcoach.domain.model.RecoveryActivity
 import com.dailyhealthcoach.domain.model.Workout
 import com.dailyhealthcoach.domain.model.WorkoutExercise
+import com.dailyhealthcoach.domain.model.WorkoutPlan
 import com.dailyhealthcoach.domain.model.WorkoutSetInput
 import com.dailyhealthcoach.domain.model.WorkoutStatus
 import com.dailyhealthcoach.domain.repository.DailyRecommendationRepository
@@ -199,6 +200,10 @@ class WorkoutViewModel(
 
     fun dismissPrCelebration() {
         _pendingPrAchievements.value = emptyList()
+    }
+
+    fun navigateCalendarWeek(delta: Int) {
+        draftState.update { it.copy(calendarWeekOffset = (it.calendarWeekOffset + delta).coerceIn(-4, 4)) }
     }
 
     fun startWorkoutWithPlan(suggestedExercises: List<SuggestedExerciseUiState>) {
@@ -402,7 +407,8 @@ private data class WorkoutDraftState(
     val workoutNotes: String = "",
     val selectedStatus: WorkoutStatus = WorkoutStatus.COMPLETED,
     val selectedExercises: List<DraftExerciseState> = emptyList(),
-    val selectedWorkoutId: Long? = null
+    val selectedWorkoutId: Long? = null,
+    val calendarWeekOffset: Int = 0
 )
 
 private data class DraftExerciseState(
@@ -501,46 +507,23 @@ private fun buildUiState(
     }
 
     val workoutPlan = if (recommendation != null) {
-        val plan = generateWorkoutPlanUseCase.generate(
+        generateWorkoutPlanUseCase.generate(
             recommendationType = recommendation.recommendationType,
             exercises = exercises,
             recentWorkouts = workouts,
             recentSets = workoutSets,
             today = today,
             workoutGoals = workoutGoals
-        )
-        WorkoutPlanUiState(
-            focus = plan.focus,
-            setsPerExercise = plan.setsPerExercise,
-            repsRange = plan.repsRange,
-            rpeTarget = plan.rpeTarget,
-            durationMinutes = plan.durationMinutes,
-            suggestedExercises = plan.suggestedExercises.map {
-                SuggestedExerciseUiState(
-                    exerciseId = it.exerciseId,
-                    name = it.name,
-                    muscleGroup = it.muscleGroup,
-                    prescribedSets = it.prescribedSets,
-                    prescribedRepsRange = it.prescribedRepsRange,
-                    prescribedRpe = it.prescribedRpe,
-                    suggestedWeightText = it.suggestedWeightText,
-                    progressionNote = it.progressionNote,
-                    alternatives = it.alternatives
-                )
-            },
-            isStrengthDay = plan.isStrengthDay,
-            reasons = plan.reasons,
-            nonStrengthActivities = plan.nonStrengthActivities,
-            warmUp = plan.warmUp,
-            coolDown = plan.coolDown,
-            postWorkoutRecommendations = plan.postWorkoutRecommendations
-        )
+        ).toWorkoutPlanUiState()
     } else null
 
     val todayWorkouts = workouts.filter { it.date == today }
     val hasWorkoutTodayCompleted = todayWorkouts.any { WorkoutStatus.fromStorageValue(it.status) != WorkoutStatus.SKIPPED }
     val personalRecords = computePersonalRecords(workoutSets, exerciseById)
     val weeklyLoads = computeWeeklyLoads(workouts, workoutSets, today)
+    val calendarWeekOffset = draft.calendarWeekOffset
+    val calendarDays = buildCalendarWeek(workouts, workoutSets, exerciseById, today, workoutPlan, generateWorkoutPlanUseCase, calendarWeekOffset, workoutGoals)
+    val calendarWeekLabel = calendarWeekLabel(calendarWeekOffset)
 
     return WorkoutUiState(
         isWorkoutStarted = draft.isWorkoutStarted,
@@ -595,7 +578,10 @@ private fun buildUiState(
         workoutPlan = workoutPlan,
         hasWorkoutTodayCompleted = hasWorkoutTodayCompleted,
         personalRecords = personalRecords,
-        weeklyLoads = weeklyLoads
+        weeklyLoads = weeklyLoads,
+        calendarDays = calendarDays,
+        selectedWeekOffset = calendarWeekOffset,
+        calendarWeekLabel = calendarWeekLabel
     )
 }
 
@@ -736,6 +722,318 @@ private fun detectNewPrs(
     }
     return achievements.take(3)
 }
+
+private fun buildCalendarWeek(
+    workouts: List<Workout>,
+    workoutSets: List<WorkoutExercise>,
+    exerciseById: Map<Long, Exercise>,
+    today: String,
+    todayPlan: WorkoutPlanUiState?,
+    useCase: GenerateWorkoutPlanUseCase,
+    weekOffset: Int = 0,
+    workoutGoals: List<String> = listOf("General Fitness")
+): List<CalendarDayUiState> {
+    val todayDate = try { LocalDate.parse(today) } catch (e: Exception) { return emptyList() }
+    val weekStart = todayDate.with(DayOfWeek.MONDAY).plusWeeks(weekOffset.toLong())
+    val workoutsByDate = workouts.groupBy { it.date }
+    val setsByWorkoutId = workoutSets.groupBy { it.workoutId }
+    val exerciseList = exerciseById.values.toList()
+
+    // All days in a future week are projected — use chained planning
+    if (weekOffset > 0) {
+        return buildProjectedWeek(weekStart, workouts, workoutSets, exerciseById, todayDate, workoutGoals, useCase)
+    }
+
+    // Seed upper/lower alternation from last real strength session (mirrors buildProjectedWeek logic)
+    val calUpper = setOf("Chest", "Back", "Shoulders", "Arms")
+    val calLower = setOf("Legs", "Core")
+    val calLastStrength = workouts
+        .filter { w -> isStrengthWorkoutName(w.name) && WorkoutStatus.fromStorageValue(w.status) != WorkoutStatus.SKIPPED }
+        .maxByOrNull { it.date }
+    val calLastMuscles = if (calLastStrength != null) {
+        workoutSets.filter { it.workoutId == calLastStrength.id }
+            .mapNotNull { exerciseById[it.exerciseId]?.muscleGroup }.toSet()
+    } else emptySet()
+    var calNextIsUpper = !(calLastMuscles.any { it in calUpper } && calLastMuscles.none { it in calLower })
+
+    // Augment with projected strength sessions so planFutureDay sees prior within-week projections
+    val augmentedWorkouts = workouts.toMutableList()
+
+    return (0..6).map { offset ->
+        val day = weekStart.plusDays(offset.toLong())
+        val dateStr = day.toString()
+        val isToday = dateStr == today
+        val isPast = day.isBefore(todayDate)
+        val dayLabel = day.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.getDefault())
+        val dayWorkouts = workoutsByDate[dateStr] ?: emptyList()
+        val completedWorkout = dayWorkouts.firstOrNull {
+            WorkoutStatus.fromStorageValue(it.status) != WorkoutStatus.SKIPPED
+        }
+        when {
+            completedWorkout != null -> {
+                val sets = setsByWorkoutId[completedWorkout.id].orEmpty()
+                val muscleGroups = sets.mapNotNull { exerciseById[it.exerciseId]?.muscleGroup }.distinct()
+                CalendarDayUiState(
+                    date = dateStr, dayLabel = dayLabel, dateNumber = day.dayOfMonth, isToday = isToday,
+                    workoutTypeLabel = completedWorkout.name,
+                    workoutTag = calendarTagFromName(completedWorkout.name, muscleGroups),
+                    isCompleted = true, completedWorkoutId = completedWorkout.id
+                )
+            }
+            isToday -> {
+                val tag = when {
+                    todayPlan == null -> "REST"
+                    todayPlan.isStrengthDay -> "STRENGTH"
+                    todayPlan.focus.contains("Mobil", ignoreCase = true) -> "MOBILITY"
+                    todayPlan.focus.contains("Walk", ignoreCase = true) -> "WALK"
+                    todayPlan.focus.contains("Rest", ignoreCase = true) -> "REST"
+                    else -> "RECOVERY"
+                }
+                CalendarDayUiState(
+                    date = dateStr, dayLabel = dayLabel, dateNumber = day.dayOfMonth, isToday = true,
+                    workoutTypeLabel = todayPlan?.focus ?: "Rest", workoutTag = tag, isCompleted = false,
+                    projectedPlan = todayPlan
+                )
+            }
+            isPast -> {
+                val skipped = dayWorkouts.any { WorkoutStatus.fromStorageValue(it.status) == WorkoutStatus.SKIPPED }
+                CalendarDayUiState(
+                    date = dateStr, dayLabel = dayLabel, dateNumber = day.dayOfMonth, isToday = false,
+                    workoutTypeLabel = if (skipped) "Skipped" else "–",
+                    workoutTag = if (skipped) "SKIPPED" else "REST", isCompleted = false
+                )
+            }
+            else -> {
+                val (rawLabel, tag) = planFutureDay(day, augmentedWorkouts, workoutSets, exerciseById, todayDate, workoutGoals)
+                // For STRENGTH days, bypass planFutureDay's alternation (it can't read synthetic workout sets)
+                // and use our own tracked nextIsUpper toggle instead.
+                val label = if (tag == "STRENGTH") {
+                    val l = if (calNextIsUpper) "Upper Body" else "Lower Body"
+                    calNextIsUpper = !calNextIsUpper
+                    l
+                } else rawLabel
+                if (tag == "STRENGTH") {
+                    augmentedWorkouts.add(Workout(
+                        id = -(2000L + offset),
+                        date = dateStr,
+                        name = label,
+                        durationMinutes = 60,
+                        status = WorkoutStatus.COMPLETED.storageValue,
+                        overallRpe = 7,
+                        notes = null
+                    ))
+                }
+                val plan = useCase.generate(
+                    recommendationType = workoutTagToRecType(tag),
+                    exercises = exerciseList,
+                    recentWorkouts = augmentedWorkouts.toList(),
+                    recentSets = workoutSets,
+                    today = dateStr,
+                    workoutGoals = workoutGoals,
+                    focusOverride = if (tag == "STRENGTH") label else null
+                ).toWorkoutPlanUiState()
+                CalendarDayUiState(
+                    date = dateStr, dayLabel = dayLabel, dateNumber = day.dayOfMonth, isToday = false,
+                    workoutTypeLabel = plan.focus, workoutTag = tag, isCompleted = false, isFuture = true,
+                    projectedPlan = plan
+                )
+            }
+        }
+    }
+}
+
+private fun buildProjectedWeek(
+    weekStart: LocalDate,
+    allWorkouts: List<Workout>,
+    workoutSets: List<WorkoutExercise>,
+    exerciseById: Map<Long, Exercise>,
+    today: LocalDate,
+    workoutGoals: List<String> = listOf("General Fitness"),
+    useCase: GenerateWorkoutPlanUseCase
+): List<CalendarDayUiState> {
+    val upper = setOf("Chest", "Back", "Shoulders", "Arms")
+    val lower = setOf("Legs", "Core")
+    val exerciseList = exerciseById.values.toList()
+
+    // Determine alternation starting point from last DB strength session
+    val lastStrengthFromDb = allWorkouts
+        .filter { w -> isStrengthWorkoutName(w.name) && WorkoutStatus.fromStorageValue(w.status) != WorkoutStatus.SKIPPED }
+        .maxByOrNull { it.date }
+    val lastMuscles = if (lastStrengthFromDb != null) {
+        workoutSets.filter { it.workoutId == lastStrengthFromDb.id }
+            .mapNotNull { exerciseById[it.exerciseId]?.muscleGroup }.toSet()
+    } else emptySet()
+    var nextIsUpper = !(lastMuscles.any { it in upper } && lastMuscles.none { it in lower })
+
+    // Augmented list allows planFutureDay to see simulated completed strength days
+    val augmented = allWorkouts.toMutableList()
+
+    return (0..6).map { offset ->
+        val day = weekStart.plusDays(offset.toLong())
+        val dateStr = day.toString()
+        val dayLabel = day.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.getDefault())
+        val (rawLabel, tag) = planFutureDay(day, augmented, workoutSets, exerciseById, today, workoutGoals)
+
+        // For STRENGTH days, apply tracked alternation and advance the toggle
+        val finalLabel = if (tag == "STRENGTH") {
+            val label = if (nextIsUpper) "Upper Body" else "Lower Body"
+            nextIsUpper = !nextIsUpper
+            // Add synthetic entry so subsequent days see a completed strength session
+            augmented.add(
+                Workout(
+                    id = -(1000L + offset),
+                    date = dateStr,
+                    name = label,
+                    durationMinutes = 60,
+                    status = WorkoutStatus.COMPLETED.storageValue,
+                    overallRpe = 7,
+                    notes = null
+                )
+            )
+            label
+        } else rawLabel
+
+        val plan = useCase.generate(
+            recommendationType = workoutTagToRecType(tag),
+            exercises = exerciseList,
+            recentWorkouts = augmented.toList(),
+            recentSets = workoutSets,
+            today = dateStr,
+            workoutGoals = workoutGoals,
+            focusOverride = if (tag == "STRENGTH") finalLabel else null
+        ).toWorkoutPlanUiState()
+
+        CalendarDayUiState(
+            date = dateStr, dayLabel = dayLabel, dateNumber = day.dayOfMonth, isToday = false,
+            workoutTypeLabel = plan.focus, workoutTag = tag,
+            isCompleted = false, isFuture = true, isProjected = true,
+            projectedPlan = plan
+        )
+    }
+}
+
+private fun isStrengthWorkoutName(name: String): Boolean {
+    val n = name.lowercase()
+    return !n.contains("rest") && !n.contains("mobil") && !n.contains("recovery")
+        && !n.contains("walk") && !n.contains("gentle")
+}
+
+private fun calendarWeekLabel(offset: Int): String = when (offset) {
+    0 -> "This Week"
+    1 -> "Next Week"
+    -1 -> "Last Week"
+    else -> if (offset > 0) "$offset Weeks Ahead" else "${-offset} Weeks Ago"
+}
+
+private fun calendarTagFromName(workoutName: String, muscleGroups: List<String>): String {
+    val name = workoutName.lowercase()
+    return when {
+        name.contains("mobil") || name.contains("stretch") || name.contains("flexibility") -> "MOBILITY"
+        name.contains("walk") -> "WALK"
+        name.contains("recovery") -> "RECOVERY"
+        name.contains("rest") -> "REST"
+        muscleGroups.isNotEmpty() -> "STRENGTH"
+        else -> "RECOVERY"
+    }
+}
+
+private fun planFutureDay(
+    day: LocalDate,
+    allWorkouts: List<Workout>,
+    workoutSets: List<WorkoutExercise>,
+    exerciseById: Map<Long, Exercise>,
+    today: LocalDate,
+    workoutGoals: List<String> = listOf("General Fitness")
+): Pair<String, String> {
+    // Use day's own week boundary so projected weeks don't bleed current-week completions
+    val weekStart = day.with(DayOfWeek.MONDAY)
+    val completedThisWeek = allWorkouts.count { w ->
+        val d = try { LocalDate.parse(w.date) } catch (e: Exception) { return@count false }
+        d >= weekStart && d < day && WorkoutStatus.fromStorageValue(w.status) != WorkoutStatus.SKIPPED
+    }
+    val isConservative = workoutGoals.any { it in listOf("Physical Therapy / Rehab", "Postpartum Recovery", "Beginner / Low Impact", "Recovery Focus") }
+    val isAggressive = workoutGoals.any { it in listOf("Strength Training", "Muscle Gain", "Fat Loss", "Metabolic Reset", "Insulin Resistance / Prediabetes") }
+    val targetSessions = when {
+        isConservative -> 2
+        isAggressive -> 4
+        else -> 3
+    }
+    if (completedThisWeek >= targetSessions) return "Rest" to "REST"
+
+    val workoutsByDate = allWorkouts.groupBy { it.date }
+    fun completedOn(d: LocalDate) = workoutsByDate[d.toString()]
+        ?.firstOrNull { WorkoutStatus.fromStorageValue(it.status) != WorkoutStatus.SKIPPED }
+
+    val prevWorkout = completedOn(day.minusDays(1))
+    val prev2Workout = completedOn(day.minusDays(2))
+
+    fun isStrength(w: Workout?): Boolean {
+        if (w == null) return false
+        val n = w.name.lowercase()
+        return !n.contains("rest") && !n.contains("mobil") && !n.contains("recovery")
+            && !n.contains("walk") && !n.contains("gentle")
+    }
+
+    if (isStrength(prevWorkout) && isStrength(prev2Workout)) return "Mobility" to "MOBILITY"
+    if (isStrength(prevWorkout)) return "Active Recovery" to "RECOVERY"
+
+    // Alternate upper/lower based on last strength session muscle groups
+    val lastStrength = allWorkouts
+        .filter { isStrength(it) && WorkoutStatus.fromStorageValue(it.status) != WorkoutStatus.SKIPPED }
+        .filter { w ->
+            val d = try { LocalDate.parse(w.date) } catch (e: Exception) { return@filter false }
+            d < day
+        }
+        .maxByOrNull { it.date }
+
+    if (lastStrength != null) {
+        val lastSets = workoutSets.filter { it.workoutId == lastStrength.id }
+        val lastMuscles = lastSets.mapNotNull { exerciseById[it.exerciseId]?.muscleGroup }.toSet()
+        val upper = setOf("Chest", "Back", "Shoulders", "Arms")
+        val lower = setOf("Legs", "Core")
+        return when {
+            lastMuscles.any { it in upper } && lastMuscles.none { it in lower } -> "Lower Body" to "STRENGTH"
+            lastMuscles.any { it in lower } && lastMuscles.none { it in upper } -> "Upper Body" to "STRENGTH"
+            else -> "Upper Body" to "STRENGTH"
+        }
+    }
+    return "Strength" to "STRENGTH"
+}
+
+private fun workoutTagToRecType(tag: String): String = when (tag) {
+    "STRENGTH" -> "STRENGTH"
+    "MOBILITY" -> "WALKING_MOBILITY"
+    "RECOVERY" -> "ACTIVE_RECOVERY"
+    "WALK" -> "WALKING_MOBILITY"
+    else -> "REST"
+}
+
+private fun WorkoutPlan.toWorkoutPlanUiState(): WorkoutPlanUiState = WorkoutPlanUiState(
+    focus = focus,
+    setsPerExercise = setsPerExercise,
+    repsRange = repsRange,
+    rpeTarget = rpeTarget,
+    durationMinutes = durationMinutes,
+    suggestedExercises = suggestedExercises.map {
+        SuggestedExerciseUiState(
+            exerciseId = it.exerciseId,
+            name = it.name,
+            muscleGroup = it.muscleGroup,
+            prescribedSets = it.prescribedSets,
+            prescribedRepsRange = it.prescribedRepsRange,
+            prescribedRpe = it.prescribedRpe,
+            suggestedWeightText = it.suggestedWeightText,
+            progressionNote = it.progressionNote,
+            alternatives = it.alternatives
+        )
+    },
+    isStrengthDay = isStrengthDay,
+    reasons = reasons,
+    nonStrengthActivities = nonStrengthActivities,
+    warmUp = warmUp,
+    coolDown = coolDown,
+    postWorkoutRecommendations = postWorkoutRecommendations
+)
 
 private fun mergeRecoveryLogs(
     state: WorkoutUiState,

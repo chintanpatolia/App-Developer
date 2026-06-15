@@ -18,7 +18,24 @@ data class WorkoutUiState(
     val hasWorkoutTodayCompleted: Boolean = false,
     val personalRecords: List<PersonalRecordUiState> = emptyList(),
     val newPrAchievements: List<String> = emptyList(),
-    val weeklyLoads: List<WeeklyLoadUiState> = emptyList()
+    val weeklyLoads: List<WeeklyLoadUiState> = emptyList(),
+    val calendarDays: List<CalendarDayUiState> = emptyList(),
+    val selectedWeekOffset: Int = 0,
+    val calendarWeekLabel: String = "This Week"
+)
+
+data class CalendarDayUiState(
+    val date: String,
+    val dayLabel: String,
+    val dateNumber: Int,
+    val isToday: Boolean,
+    val workoutTypeLabel: String,
+    val workoutTag: String,           // "STRENGTH" | "MOBILITY" | "RECOVERY" | "WALK" | "REST" | "SKIPPED"
+    val isCompleted: Boolean,
+    val completedWorkoutId: Long? = null,
+    val isFuture: Boolean = false,
+    val isProjected: Boolean = false,
+    val projectedPlan: WorkoutPlanUiState? = null
 )
 
 data class PersonalRecordUiState(

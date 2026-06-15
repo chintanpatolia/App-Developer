@@ -16,7 +16,8 @@ class GenerateWorkoutPlanUseCase {
         recentWorkouts: List<Workout>,
         recentSets: List<WorkoutExercise>,
         today: String,
-        workoutGoals: List<String> = listOf("General Fitness")
+        workoutGoals: List<String> = listOf("General Fitness"),
+        focusOverride: String? = null
     ): WorkoutPlan {
         val goals = workoutGoals.ifEmpty { listOf("General Fitness") }
 
@@ -53,7 +54,7 @@ class GenerateWorkoutPlanUseCase {
         // Beginner — always light; integrate mobility warm-up when selected together
         if (hasBeginner) {
             return when (recommendationType) {
-                "STRENGTH", "LOWER_INTENSITY_STRENGTH" -> strengthPlan(exercises, recentWorkouts, recentSets, today, isLight = true, workoutGoals = goals)
+                "STRENGTH", "LOWER_INTENSITY_STRENGTH" -> strengthPlan(exercises, recentWorkouts, recentSets, today, isLight = true, workoutGoals = goals, focusOverride = focusOverride)
                 "ACTIVE_RECOVERY" -> if (hasMobility) mobilityFocusPlan() else activeRecoveryPlan()
                 "WALKING_MOBILITY" -> walkingMobilityPlan()
                 else -> restDayPlan()
@@ -62,8 +63,8 @@ class GenerateWorkoutPlanUseCase {
 
         // Standard routing with goal-aware tuning
         return when (recommendationType) {
-            "STRENGTH" -> strengthPlan(exercises, recentWorkouts, recentSets, today, isLight = false, workoutGoals = goals)
-            "LOWER_INTENSITY_STRENGTH" -> strengthPlan(exercises, recentWorkouts, recentSets, today, isLight = true, workoutGoals = goals)
+            "STRENGTH" -> strengthPlan(exercises, recentWorkouts, recentSets, today, isLight = false, workoutGoals = goals, focusOverride = focusOverride)
+            "LOWER_INTENSITY_STRENGTH" -> strengthPlan(exercises, recentWorkouts, recentSets, today, isLight = true, workoutGoals = goals, focusOverride = focusOverride)
             "ACTIVE_RECOVERY" -> if (hasMobility) mobilityFocusPlan() else activeRecoveryPlan()
             "WALKING_MOBILITY" -> walkingMobilityPlan()
             else -> restDayPlan()
@@ -76,7 +77,8 @@ class GenerateWorkoutPlanUseCase {
         recentSets: List<WorkoutExercise>,
         today: String,
         isLight: Boolean,
-        workoutGoals: List<String> = listOf("General Fitness")
+        workoutGoals: List<String> = listOf("General Fitness"),
+        focusOverride: String? = null
     ): WorkoutPlan {
         val cutoff48h = LocalDate.parse(today).minusDays(2).toString()
         val exerciseById = exercises.associateBy { it.id }
@@ -92,7 +94,7 @@ class GenerateWorkoutPlanUseCase {
         val upperTrained = musclesLast48h.any { it in upperMuscles }
         val lowerTrained = musclesLast48h.any { it in lowerMuscles }
 
-        val focus = when {
+        val focus = focusOverride ?: when {
             upperTrained && lowerTrained -> "Full Body"
             upperTrained -> "Lower Body"
             lowerTrained -> "Upper Body"
