@@ -11,12 +11,15 @@ import com.dailyhealthcoach.domain.usecase.HabitAutoUpdateUseCase
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
+import java.time.DayOfWeek
+import java.time.temporal.TemporalAdjusters
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -46,13 +49,156 @@ class RecipesViewModel(
     private val habitAutoUpdateUseCase: HabitAutoUpdateUseCase
 ) : ViewModel() {
 
-    private val today = LocalDate.now().toString()
+    private val todayDate: LocalDate = LocalDate.now()
+    private val today = todayDate.toString()
     private val selectedDialogState = MutableStateFlow<Recipe?>(null)
     private val logMessageState = MutableStateFlow<String?>(null)
     private val selectionState = MutableStateFlow(RecipeSelectionState())
 
     private val userProfileState = userProfileRepository.observeUserProfile()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    // ── Meal Calendar ──────────────────────────────────────────────────────
+
+    private data class MealCalendarInternal(
+        val weekOffset: Int = 0,
+        val plans: Map<Int, List<DayMealPlanUiState>> = emptyMap(),
+        val selectedSlot: PlannedMealSlot? = null,
+        val weekGroceryListOpen: Boolean = false,
+        val weekGroceryCheckedKeys: Set<String> = emptySet()
+    )
+
+    private val calendarInternal = MutableStateFlow(MealCalendarInternal())
+
+    val mealCalendarUiState: StateFlow<MealCalendarUiState> = calendarInternal.map { cal ->
+        val currentPlan = cal.plans[cal.weekOffset] ?: emptyList()
+        val weekLabel = when (cal.weekOffset) {
+            0 -> "This Week"; 1 -> "Next Week"; -1 -> "Last Week"
+            else -> if (cal.weekOffset > 0) "+${cal.weekOffset} Weeks" else "${-cal.weekOffset} Weeks Ago"
+        }
+        val weekGroceryIds = currentPlan.flatMap { it.meals.values }.mapNotNull { it?.id }.toSet()
+        MealCalendarUiState(
+            weekOffset = cal.weekOffset,
+            weekLabel = weekLabel,
+            days = currentPlan,
+            isGenerated = currentPlan.isNotEmpty(),
+            selectedSlot = cal.selectedSlot,
+            weekGroceryListOpen = cal.weekGroceryListOpen,
+            weekGroceryItems = if (cal.weekGroceryListOpen) buildGroceryItems(weekGroceryIds) else emptyList(),
+            weekGroceryCheckedKeys = cal.weekGroceryCheckedKeys
+        )
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5_000),
+        initialValue = MealCalendarUiState()
+    )
+
+    fun navigateCalendarWeek(delta: Int) {
+        calendarInternal.update { it.copy(weekOffset = it.weekOffset + delta) }
+    }
+
+    fun generateWeekPlan() {
+        val profile = userProfileState.value
+        val offset = calendarInternal.value.weekOffset
+        val weekStart = todayDate.plusWeeks(offset.toLong())
+            .with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+        val days = MealPlanEngine.generateWeek(
+            allRecipes = RecipeCatalog.ALL,
+            weekStart = weekStart,
+            nutritionGoal = profile?.nutritionGoal,
+            dietPreference = profile?.dietPreference
+        )
+        calendarInternal.update { state -> state.copy(plans = state.plans + (offset to days)) }
+    }
+
+    fun regenerateWeekPlan() = generateWeekPlan()
+
+    fun selectCalendarMeal(date: String, mealType: String) {
+        val offset = calendarInternal.value.weekOffset
+        val day = calendarInternal.value.plans[offset]?.find { it.date == date } ?: return
+        calendarInternal.update { it.copy(selectedSlot = PlannedMealSlot(date, mealType, day.meals[mealType])) }
+    }
+
+    fun dismissCalendarMeal() {
+        calendarInternal.update { it.copy(selectedSlot = null) }
+    }
+
+    fun replaceCalendarMeal(date: String, mealType: String) {
+        val offset = calendarInternal.value.weekOffset
+        val currentPlan = calendarInternal.value.plans[offset] ?: return
+        val profile = userProfileState.value
+        val usedIds = currentPlan.flatMap { it.meals.values }.mapNotNull { it?.id }.toSet()
+        val replacement = MealPlanEngine.pickReplacement(
+            allRecipes = RecipeCatalog.ALL,
+            mealType = mealType,
+            usedIds = usedIds,
+            nutritionGoal = profile?.nutritionGoal,
+            dietPreference = profile?.dietPreference
+        ) ?: return
+        val updated = currentPlan.map { day ->
+            if (day.date == date) day.copy(meals = day.meals + (mealType to replacement)) else day
+        }
+        calendarInternal.update { state ->
+            state.copy(
+                plans = state.plans + (offset to updated),
+                selectedSlot = PlannedMealSlot(date, mealType, replacement)
+            )
+        }
+    }
+
+    fun logCalendarMeal(recipe: Recipe, mealName: String) {
+        viewModelScope.launch {
+            nutritionRepository.saveFoodEntry(
+                FoodEntryInput(
+                    id = 0, date = today, mealName = mealName, foodName = recipe.name,
+                    brandName = null, servingDescription = "1 serving",
+                    calories = recipe.calories, proteinGrams = recipe.proteinGrams,
+                    carbGrams = recipe.carbGrams, fatGrams = recipe.fatGrams,
+                    fiberGrams = recipe.fiberGrams,
+                    mealTime = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm")),
+                    isWholeFoodBased = recipe.tags.any {
+                        it.equals("Vegan", ignoreCase = true) ||
+                        it.equals("Whole Foods", ignoreCase = true) ||
+                        it.equals("Vegetarian", ignoreCase = true)
+                    },
+                    isProcessed = false, isFermented = false, source = "RECIPE"
+                )
+            )
+            habitAutoUpdateUseCase(today)
+            logMessageState.value = "${recipe.name} added to your log."
+            calendarInternal.update { it.copy(selectedSlot = null) }
+        }
+    }
+
+    fun openWeekGroceryList() {
+        calendarInternal.update { it.copy(weekGroceryListOpen = true) }
+    }
+
+    fun closeWeekGroceryList() {
+        calendarInternal.update { it.copy(weekGroceryListOpen = false) }
+    }
+
+    fun toggleWeekGroceryItem(key: String) {
+        calendarInternal.update { s ->
+            val updated = if (key in s.weekGroceryCheckedKeys) s.weekGroceryCheckedKeys - key
+                          else s.weekGroceryCheckedKeys + key
+            s.copy(weekGroceryCheckedKeys = updated)
+        }
+    }
+
+    fun getWeekGroceryShareText(): String {
+        val items = mealCalendarUiState.value.weekGroceryItems
+        if (items.isEmpty()) return "No items in grocery list."
+        val grouped = items.groupBy { it.category }
+        return buildString {
+            GroceryCategory.values().forEach { cat ->
+                val catItems = grouped[cat] ?: return@forEach
+                appendLine(cat.name.replace("_", "/").lowercase().replaceFirstChar { it.uppercase() })
+                catItems.forEach { appendLine("[ ] ${it.displayLine}") }
+                appendLine()
+            }
+        }.trim()
+    }
 
     val uiState: StateFlow<RecipesUiState> = combine(
         nutritionRepository.observeFoodEntriesForDate(today),

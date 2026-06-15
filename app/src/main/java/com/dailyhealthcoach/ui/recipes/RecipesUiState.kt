@@ -9,6 +9,32 @@ data class GroceryItem(
     val category: GroceryCategory
 )
 
+data class PlannedMealSlot(
+    val date: String,
+    val mealType: String,
+    val recipe: Recipe?
+)
+
+data class DayMealPlanUiState(
+    val date: String,
+    val dayLabel: String,
+    val dateNumber: Int,
+    val meals: Map<String, Recipe?> = mapOf(
+        "Breakfast" to null, "Lunch" to null, "Dinner" to null, "Snack" to null
+    )
+)
+
+data class MealCalendarUiState(
+    val weekOffset: Int = 0,
+    val weekLabel: String = "This Week",
+    val days: List<DayMealPlanUiState> = emptyList(),
+    val isGenerated: Boolean = false,
+    val selectedSlot: PlannedMealSlot? = null,
+    val weekGroceryListOpen: Boolean = false,
+    val weekGroceryItems: List<GroceryItem> = emptyList(),
+    val weekGroceryCheckedKeys: Set<String> = emptySet()
+)
+
 data class RecipesUiState(
     val remainingCalories: Int = 0,
     val remainingProtein: Double = 0.0,
