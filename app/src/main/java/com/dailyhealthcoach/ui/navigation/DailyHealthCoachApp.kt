@@ -63,6 +63,9 @@ import com.dailyhealthcoach.ui.premium.AppBackground
 import com.dailyhealthcoach.ui.premium.NutritionRoute
 import com.dailyhealthcoach.ui.premium.PremiumWorkoutRoute
 import com.dailyhealthcoach.ui.premium.ScreenHeader
+import com.dailyhealthcoach.ui.auth.AuthRoute
+import com.dailyhealthcoach.ui.auth.AuthViewModel
+import com.dailyhealthcoach.ui.auth.AuthViewModelFactory
 import com.dailyhealthcoach.ui.profile.ProfileRoute
 import com.dailyhealthcoach.ui.profile.ProfileViewModel
 import com.dailyhealthcoach.ui.profile.ProfileViewModelFactory
@@ -159,14 +162,42 @@ fun DailyHealthCoachApp(appContainer: AppContainer) {
                             dataRestoreService = appContainer.dataRestoreService
                         )
                     )
+                    // Optional: only created when Supabase is enabled
+                    val authRepo = appContainer.authRepository
+                    val authViewModel: AuthViewModel? = if (authRepo != null) {
+                        viewModel(factory = AuthViewModelFactory(authRepo))
+                    } else null
+                    val authUiState = authViewModel?.uiState?.collectAsState()?.value
                     ProfileRoute(
                         viewModel = profileViewModel,
                         onBack = { selectedScreen = AppScreen.DASHBOARD },
                         onNavigateToReminders = { selectedScreen = AppScreen.REMINDERS },
+                        authUiState = authUiState,
+                        onNavigateToSignIn = if (authRepo != null) {
+                            { selectedScreen = AppScreen.SIGN_IN }
+                        } else null,
+                        onSignOut = { authViewModel?.signOut() },
                         modifier = Modifier
                             .fillMaxSize()
                             .padding(bottom = 112.dp)
                     )
+                }
+
+                AppScreen.SIGN_IN -> {
+                    val authRepo = appContainer.authRepository
+                    if (authRepo != null) {
+                        AuthRoute(
+                            authRepository = authRepo,
+                            onBack = { selectedScreen = AppScreen.SETTINGS },
+                            onAuthSuccess = { selectedScreen = AppScreen.SETTINGS },
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(bottom = 112.dp)
+                        )
+                    } else {
+                        // Should not happen; guard against misconfiguration
+                        selectedScreen = AppScreen.SETTINGS
+                    }
                 }
 
                 AppScreen.PROGRESS -> {
@@ -330,7 +361,8 @@ private fun MainShellContent(
             AppScreen.SETTINGS,
             AppScreen.REMINDERS,
             AppScreen.DASHBOARD,
-            AppScreen.HABITS -> Unit
+            AppScreen.HABITS,
+            AppScreen.SIGN_IN -> Unit
         }
     }
 }

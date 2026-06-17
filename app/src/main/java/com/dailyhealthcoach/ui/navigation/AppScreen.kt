@@ -9,5 +9,6 @@ enum class AppScreen(val label: String, val showInNav: Boolean = true) {
     BODY("Body"),
     PROGRESS("Progress", showInNav = false),
     SETTINGS("Settings", showInNav = false),
-    REMINDERS("Reminders", showInNav = false)
+    REMINDERS("Reminders", showInNav = false),
+    SIGN_IN("Sign In", showInNav = false)
 }

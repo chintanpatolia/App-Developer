@@ -64,6 +64,7 @@ import com.dailyhealthcoach.ui.theme.PositiveAccent
 import com.dailyhealthcoach.ui.theme.PrimaryText
 import com.dailyhealthcoach.ui.theme.SecondaryCard
 import com.dailyhealthcoach.ui.theme.WarningAccent
+import com.dailyhealthcoach.ui.auth.AuthUiState
 
 private data class HcDataState(
     val steps: Long? = null,
@@ -78,7 +79,11 @@ fun ProfileRoute(
     viewModel: ProfileViewModel,
     onBack: () -> Unit,
     onNavigateToReminders: () -> Unit = {},
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    // Null when Supabase is disabled — entire cloud section is hidden
+    authUiState: AuthUiState? = null,
+    onNavigateToSignIn: (() -> Unit)? = null,
+    onSignOut: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
@@ -130,6 +135,9 @@ fun ProfileRoute(
             )
         },
         onRemovePhoto = { viewModel.removeProfilePhoto(context) },
+        authUiState = authUiState,
+        onNavigateToSignIn = onNavigateToSignIn,
+        onSignOut = onSignOut,
         modifier = modifier
     )
 }
@@ -155,7 +163,10 @@ fun ProfileScreen(
     onCancelRestore: () -> Unit = {},
     onPickPhoto: () -> Unit = {},
     onRemovePhoto: () -> Unit = {},
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    authUiState: AuthUiState? = null,
+    onNavigateToSignIn: (() -> Unit)? = null,
+    onSignOut: () -> Unit = {}
 ) {
     Box(
         modifier = modifier
@@ -620,6 +631,16 @@ fun ProfileScreen(
                 )
             }
 
+            // Cloud backup section — only shown when Supabase is enabled
+            if (onNavigateToSignIn != null && authUiState != null) {
+                CloudBackupCard(
+                    isAuthenticated = authUiState.isAuthenticated,
+                    userEmail = authUiState.userEmail,
+                    onSignIn = onNavigateToSignIn,
+                    onSignOut = onSignOut
+                )
+            }
+
             Button(
                 onClick = onSave,
                 modifier = Modifier.fillMaxWidth(),
@@ -627,6 +648,58 @@ fun ProfileScreen(
                 colors = ButtonDefaults.buttonColors(containerColor = AccentBlue)
             ) {
                 Text("Save Profile", color = PrimaryText, fontWeight = FontWeight.Bold, modifier = Modifier.padding(vertical = 6.dp))
+            }
+        }
+    }
+}
+
+@Composable
+private fun CloudBackupCard(
+    isAuthenticated: Boolean,
+    userEmail: String?,
+    onSignIn: () -> Unit,
+    onSignOut: () -> Unit
+) {
+    ElevatedCard(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = SecondaryCard),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp)
+    ) {
+        Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text(
+                text = "Cloud Backup",
+                color = PrimaryText,
+                fontWeight = FontWeight.SemiBold,
+                style = MaterialTheme.typography.titleSmall
+            )
+            if (isAuthenticated) {
+                Text(
+                    text = if (userEmail != null) "Signed in as $userEmail" else "Signed in",
+                    color = PositiveAccent,
+                    style = MaterialTheme.typography.bodySmall
+                )
+                OutlinedButton(
+                    onClick = onSignOut,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Text("Sign Out", color = MutedText)
+                }
+            } else {
+                Text(
+                    text = "Sign in to enable optional cloud backup and sync.",
+                    color = MutedText,
+                    style = MaterialTheme.typography.bodySmall
+                )
+                Button(
+                    onClick = onSignIn,
+                    colors = ButtonDefaults.buttonColors(containerColor = AccentBlue),
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Text("Sign In / Create Account", color = PrimaryText)
+                }
             }
         }
     }
