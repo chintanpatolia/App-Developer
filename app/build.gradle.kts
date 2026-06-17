@@ -1,8 +1,15 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose")
     id("com.google.devtools.ksp")
+}
+
+val localProperties = Properties().apply {
+    val f = rootProject.file("local.properties")
+    if (f.exists()) load(f.inputStream())
 }
 
 android {
@@ -17,10 +24,15 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField("String",  "SUPABASE_URL",      "\"${localProperties.getProperty("SUPABASE_URL",      "")}\"")
+        buildConfigField("String",  "SUPABASE_ANON_KEY", "\"${localProperties.getProperty("SUPABASE_ANON_KEY", "")}\"")
+        buildConfigField("Boolean", "SUPABASE_ENABLED",  "${localProperties.getProperty("SUPABASE_ENABLED",  "false")}")
     }
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     compileOptions {
@@ -75,6 +87,12 @@ dependencies {
     implementation("androidx.camera:camera-view:1.4.0")
     implementation("com.google.mlkit:barcode-scanning:17.3.0")
     implementation("com.google.mlkit:text-recognition:16.0.1")
+
+    // Supabase — behind SupabaseFeatureFlags.isEnabled at runtime
+    implementation(platform("io.github.jan-tennermann:supabase-bom:2.6.1"))
+    implementation("io.github.jan-tennermann:gotrue-kt")
+    implementation("io.github.jan-tennermann:postgrest-kt")
+    implementation("io.ktor:ktor-client-okhttp:2.3.12")
 
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")

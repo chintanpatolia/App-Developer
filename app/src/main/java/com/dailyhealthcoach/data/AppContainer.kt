@@ -34,6 +34,10 @@ import com.dailyhealthcoach.domain.usecase.GetDashboardSummaryUseCase
 import com.dailyhealthcoach.domain.usecase.GetTodayHabitsUseCase
 import com.dailyhealthcoach.domain.usecase.HabitAutoUpdateUseCase
 import com.dailyhealthcoach.domain.usecase.SetHabitStatusForTodayUseCase
+import com.dailyhealthcoach.data.remote.SupabaseClientProvider
+import com.dailyhealthcoach.data.remote.SupabaseFeatureFlags
+import com.dailyhealthcoach.data.repository.AuthRepositoryImpl
+import com.dailyhealthcoach.domain.repository.AuthRepository
 
 class AppContainer(context: Context) {
     private val database = AppDatabaseProvider.getDatabase(context)
@@ -119,4 +123,9 @@ class AppContainer(context: Context) {
 
     val dataExportService: DataExportService = DataExportService(database)
     val dataRestoreService: DataRestoreService = DataRestoreService(database)
+
+    // Null when SUPABASE_ENABLED=false or keys are blank — app runs fully offline.
+    val authRepository: AuthRepository? = if (SupabaseFeatureFlags.isEnabled) {
+        AuthRepositoryImpl(SupabaseClientProvider.client)
+    } else null
 }
