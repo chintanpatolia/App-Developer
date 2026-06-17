@@ -40,7 +40,16 @@ data class MealCalendarUiState(
     val weekGroceryItems: List<GroceryItem> = emptyList(),
     val weekGroceryCheckedKeys: Set<String> = emptySet(),
     val mealPlanMode: String = "Variety",
-    val replacementCandidates: List<Recipe> = emptyList()
+    val replacementCandidates: List<Recipe> = emptyList(),
+    val inlineReplaceSlot: PlannedMealSlot? = null,
+    val selectedGrocerySlots: Set<String> = emptySet(),
+    // Today's accepted meal plan macro totals (offset=0, today's date)
+    val todayHasPlan: Boolean = false,
+    val todayPlannedCalories: Int = 0,
+    val todayPlannedProtein: Double = 0.0,
+    val todayPlannedCarbs: Double = 0.0,
+    val todayPlannedFat: Double = 0.0,
+    val todayPlannedFiber: Double = 0.0
 )
 
 data class RecipesUiState(
@@ -48,6 +57,9 @@ data class RecipesUiState(
     val remainingProtein: Double = 0.0,
     val calorieTarget: Int = 2000,
     val proteinTarget: Double = 170.0,
+    val carbTarget: Int = 0,
+    val fatTarget: Int = 0,
+    val fiberTarget: Int = 0,
     val recommendedRecipes: List<Recipe> = emptyList(),
     val breakfastRecipes: List<Recipe> = emptyList(),
     val lunchRecipes: List<Recipe> = emptyList(),

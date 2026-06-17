@@ -31,6 +31,8 @@ private data class ParsedIngredient(
     val recipeName: String
 )
 
+private data class MealSlotContext(val dayLabel: String, val mealType: String, val recipe: Recipe)
+
 private data class RecipeSelectionState(
     val selectedRecipeIds: Set<String> = emptySet(),
     val recommendedOverrides: List<String> = emptyList(),
@@ -70,7 +72,9 @@ class RecipesViewModel(
         val weekGroceryListOpen: Boolean = false,
         val weekGroceryCheckedKeys: Set<String> = emptySet(),
         val mealPlanMode: String = "Variety",
-        val replacementCandidates: List<Recipe> = emptyList()
+        val replacementCandidates: List<Recipe> = emptyList(),
+        val inlineReplaceSlot: PlannedMealSlot? = null,
+        val selectedGrocerySlots: Set<String> = emptySet()
     )
 
     private data class DraftPlanInternal(
@@ -97,8 +101,8 @@ class RecipesViewModel(
             0 -> "This Week"; 1 -> "Next Week"; -1 -> "Last Week"
             else -> if (cal.weekOffset > 0) "+${cal.weekOffset} Weeks" else "${-cal.weekOffset} Weeks Ago"
         }
-        val weekGroceryIds = currentPlan.flatMap { it.meals.values }.mapNotNull { it?.id }.toSet()
-        val isRepeatWeekly = cal.mealPlanMode == "Repeat Weekly"
+        val todayDay = cal.plans[0]?.find { it.date == today }
+        val todayMeals = todayDay?.meals?.values?.filterNotNull() ?: emptyList()
         MealCalendarUiState(
             weekOffset = cal.weekOffset,
             weekLabel = weekLabel,
@@ -107,12 +111,27 @@ class RecipesViewModel(
             selectedSlot = cal.selectedSlot,
             weekGroceryListOpen = cal.weekGroceryListOpen,
             weekGroceryItems = if (cal.weekGroceryListOpen) {
-                if (isRepeatWeekly) buildWeeklyRepeatGroceryItems(weekGroceryIds)
-                else buildGroceryItems(weekGroceryIds)
+                val slots = currentPlan.flatMap { day ->
+                    listOf("Breakfast", "Lunch", "Dinner", "Snack").mapNotNull { mealType ->
+                        if ("${day.date}::$mealType" in cal.selectedGrocerySlots) {
+                            val recipe = day.meals[mealType] ?: return@mapNotNull null
+                            MealSlotContext(day.dayLabel, mealType, recipe)
+                        } else null
+                    }
+                }
+                buildGroceryItemsFromSlots(slots)
             } else emptyList(),
             weekGroceryCheckedKeys = cal.weekGroceryCheckedKeys,
             mealPlanMode = cal.mealPlanMode,
-            replacementCandidates = cal.replacementCandidates
+            replacementCandidates = cal.replacementCandidates,
+            inlineReplaceSlot = cal.inlineReplaceSlot,
+            selectedGrocerySlots = cal.selectedGrocerySlots,
+            todayHasPlan = todayMeals.isNotEmpty(),
+            todayPlannedCalories = todayMeals.sumOf { it.calories },
+            todayPlannedProtein = todayMeals.sumOf { it.proteinGrams },
+            todayPlannedCarbs = todayMeals.sumOf { it.carbGrams },
+            todayPlannedFat = todayMeals.sumOf { it.fatGrams },
+            todayPlannedFiber = todayMeals.sumOf { it.fiberGrams ?: 0.0 }
         )
     }.stateIn(
         scope = viewModelScope,
@@ -189,7 +208,11 @@ class RecipesViewModel(
     fun selectCalendarMeal(date: String, mealType: String) {
         val offset = calendarInternal.value.weekOffset
         val day = calendarInternal.value.plans[offset]?.find { it.date == date } ?: return
-        calendarInternal.update { it.copy(selectedSlot = PlannedMealSlot(date, mealType, day.meals[mealType])) }
+        calendarInternal.update { it.copy(
+            selectedSlot = PlannedMealSlot(date, mealType, day.meals[mealType]),
+            inlineReplaceSlot = null,
+            replacementCandidates = emptyList()
+        ) }
     }
 
     fun dismissCalendarMeal() {
@@ -220,6 +243,60 @@ class RecipesViewModel(
 
     fun clearCalendarAlternatives() {
         calendarInternal.update { it.copy(replacementCandidates = emptyList()) }
+    }
+
+    fun startInlineReplace(date: String, mealType: String) {
+        val offset = calendarInternal.value.weekOffset
+        val currentPlan = calendarInternal.value.plans[offset] ?: return
+        val recipe = currentPlan.find { it.date == date }?.meals?.get(mealType)
+        val slot = PlannedMealSlot(date, mealType, recipe)
+        val profile = userProfileState.value
+        val usedInPlan = currentPlan.flatMap { it.meals.values }.mapNotNull { it?.id }.toSet()
+        val usedInCandidates = mutableSetOf<String>()
+        val candidates = mutableListOf<Recipe>()
+        repeat(3) {
+            MealPlanEngine.pickReplacement(
+                allRecipes = RecipeCatalog.ALL,
+                mealType = mealType,
+                usedIds = usedInPlan + usedInCandidates,
+                nutritionGoal = profile?.nutritionGoal,
+                dietPreference = profile?.dietPreference
+            )?.let {
+                candidates.add(it)
+                usedInCandidates.add(it.id)
+            }
+        }
+        calendarInternal.update { it.copy(
+            inlineReplaceSlot = slot,
+            replacementCandidates = candidates,
+            selectedSlot = null
+        ) }
+    }
+
+    fun clearInlineReplace() {
+        calendarInternal.update { it.copy(inlineReplaceSlot = null, replacementCandidates = emptyList()) }
+    }
+
+    fun replaceInlineCalendarMeal(date: String, mealType: String, recipe: Recipe) {
+        val offset = calendarInternal.value.weekOffset
+        val currentPlan = calendarInternal.value.plans[offset] ?: return
+        val updated = currentPlan.map { day ->
+            if (day.date == date) day.copy(meals = day.meals + (mealType to recipe)) else day
+        }
+        calendarInternal.update { state ->
+            state.copy(
+                plans = state.plans + (offset to updated),
+                inlineReplaceSlot = null,
+                replacementCandidates = emptyList()
+            )
+        }
+    }
+
+    fun quickLogCalendarMeal(date: String, mealType: String) {
+        val offset = calendarInternal.value.weekOffset
+        val recipe = calendarInternal.value.plans[offset]
+            ?.find { it.date == date }?.meals?.get(mealType) ?: return
+        logCalendarMeal(recipe, mealType)
     }
 
     fun replaceCalendarMealWith(date: String, mealType: String, recipe: Recipe) {
@@ -284,6 +361,30 @@ class RecipesViewModel(
         }
     }
 
+    fun toggleGrocerySlot(date: String, mealType: String) {
+        val key = "$date::$mealType"
+        calendarInternal.update { s ->
+            val updated = if (key in s.selectedGrocerySlots) s.selectedGrocerySlots - key
+                          else s.selectedGrocerySlots + key
+            s.copy(selectedGrocerySlots = updated)
+        }
+    }
+
+    fun selectAllGrocerySlots() {
+        val offset = calendarInternal.value.weekOffset
+        val currentPlan = calendarInternal.value.plans[offset] ?: return
+        val allKeys = currentPlan.flatMap { day ->
+            listOf("Breakfast", "Lunch", "Dinner", "Snack")
+                .filter { day.meals[it] != null }
+                .map { mealType -> "${day.date}::$mealType" }
+        }.toSet()
+        calendarInternal.update { it.copy(selectedGrocerySlots = allKeys) }
+    }
+
+    fun clearGrocerySlots() {
+        calendarInternal.update { it.copy(selectedGrocerySlots = emptySet()) }
+    }
+
     fun openWeekGroceryList() {
         calendarInternal.update { it.copy(weekGroceryListOpen = true) }
     }
@@ -325,6 +426,9 @@ class RecipesViewModel(
         val consumedProtein = entries.sumOf { it.proteinGrams ?: 0.0 }
         val calTarget = macroTarget?.calorieTarget ?: 2000
         val protTarget = macroTarget?.proteinMaxGrams?.toDouble() ?: 170.0
+        val carbTarget = macroTarget?.carbTargetGrams ?: 0
+        val fatTarget = macroTarget?.fatTargetGrams ?: 0
+        val fiberTarget = macroTarget?.fiberTargetGrams ?: 0
         val remainCal = calTarget - consumedCal
         val remainProtein = protTarget - consumedProtein
         val goal = userProfileState.value?.nutritionGoal
@@ -345,6 +449,9 @@ class RecipesViewModel(
             remainingProtein = remainProtein,
             calorieTarget = calTarget,
             proteinTarget = protTarget,
+            carbTarget = carbTarget,
+            fatTarget = fatTarget,
+            fiberTarget = fiberTarget,
             recommendedRecipes = recommendedRecipes,
             breakfastRecipes = ranked.filter { it.mealType == "Breakfast" },
             lunchRecipes = ranked.filter { it.mealType == "Lunch" },
@@ -477,6 +584,30 @@ class RecipesViewModel(
         val allParsed = selectedIds.flatMap { id ->
             val recipe = RecipeCatalog.ALL.find { it.id == id } ?: return@flatMap emptyList()
             recipe.ingredients.map { raw -> parseIngredientLine(raw, recipe.name) }
+        }
+        return allParsed
+            .groupBy { "${it.normalizedName}::${it.unit}" }
+            .map { (key, items) ->
+                val first = items.first()
+                val totalQty = if (items.all { it.qty != null }) items.sumOf { it.qty!! } else null
+                val displayName = first.normalizedName.replaceFirstChar { it.uppercase() }
+                GroceryItem(
+                    key = key,
+                    displayLine = buildDisplayLine(totalQty, first.unit, displayName),
+                    recipeSources = items.map { it.recipeName }.distinct(),
+                    category = categorizeIngredient(first.normalizedName)
+                )
+            }
+            .sortedBy { it.category.ordinal }
+    }
+
+    private fun buildGroceryItemsFromSlots(slots: List<MealSlotContext>): List<GroceryItem> {
+        if (slots.isEmpty()) return emptyList()
+        val allParsed = slots.flatMap { ctx ->
+            ctx.recipe.ingredients.map { raw ->
+                val parsed = parseIngredientLine(raw, ctx.recipe.name)
+                parsed.copy(recipeName = "${ctx.dayLabel} ${ctx.mealType}: ${ctx.recipe.name}")
+            }
         }
         return allParsed
             .groupBy { "${it.normalizedName}::${it.unit}" }
