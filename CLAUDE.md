@@ -74,6 +74,18 @@ Each feature has a `Screen.kt`, `ViewModel.kt`, and `UiState.kt`. ViewModels are
 8. **Consistent UI styling** — keep styling uniform across Dashboard, Habits, Workout, Nutrition, Body, Recovery, and Profile screens. Don't introduce new color tokens, typography, or layout patterns that diverge from the existing theme.
 9. **Pre-commit summary** — before the user commits, list every changed file and a one-line reason for why it changed.
 
+## Bug Triage and Debugging
+
+For bug triage, debugging, issue analysis, or root-cause investigation:
+
+1. **Use memory bank first** — check `.claude/memory_bank/troubleshooting/` and `decisions/` before reading any code.
+2. **Use the ponytail skill** — invoke `/ponytail` for structured triage and root-cause analysis before editing.
+3. **Understand the symptom** — reproduce or describe the issue precisely before touching code.
+4. **Trace the minimal data/UI flow** — identify whether the issue is in UI, ViewModel, repository, database, navigation, or build layer.
+5. **Propose smallest safe fix** — state the root cause and fix plan before editing.
+6. **List exact files before changing anything** — no edits without upfront file list.
+7. **Prefer the smallest safe change** — do not refactor or clean up surrounding code during a bug fix.
+
 ## Token and Context Efficiency Rules
 
 - Always query the memory bank before scanning the codebase.
