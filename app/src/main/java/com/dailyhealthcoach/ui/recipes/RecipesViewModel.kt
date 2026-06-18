@@ -58,10 +58,10 @@ class RecipesViewModel(
     private val selectionState = MutableStateFlow(RecipeSelectionState())
 
     private val userProfileState = userProfileRepository.observeUserProfile()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     private val macroTargetState = macroTargetRepository.observeActiveTarget()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     // ── Meal Calendar ──────────────────────────────────────────────────────
 
@@ -112,7 +112,7 @@ class RecipesViewModel(
             weekGroceryListOpen = cal.weekGroceryListOpen,
             weekGroceryItems = if (cal.weekGroceryListOpen) {
                 val slots = currentPlan.flatMap { day ->
-                    listOf("Breakfast", "Lunch", "Dinner", "Snack").mapNotNull { mealType ->
+                    listOf("Breakfast", "Lunch", "Dinner", "Snack", "Protein Booster 1", "Protein Booster 2").mapNotNull { mealType ->
                         if ("${day.date}::$mealType" in cal.selectedGrocerySlots) {
                             val recipe = day.meals[mealType] ?: return@mapNotNull null
                             MealSlotContext(day.dayLabel, mealType, recipe)
@@ -391,7 +391,7 @@ class RecipesViewModel(
         val offset = calendarInternal.value.weekOffset
         val currentPlan = calendarInternal.value.plans[offset] ?: return
         val allKeys = currentPlan.flatMap { day ->
-            listOf("Breakfast", "Lunch", "Dinner", "Snack")
+            listOf("Breakfast", "Lunch", "Dinner", "Snack", "Protein Booster 1", "Protein Booster 2")
                 .filter { day.meals[it] != null }
                 .map { mealType -> "${day.date}::$mealType" }
         }.toSet()

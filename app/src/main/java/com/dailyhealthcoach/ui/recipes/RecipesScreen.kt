@@ -995,8 +995,11 @@ private fun DraftDayCard(
                 color = proteinColor,
                 style = MaterialTheme.typography.labelSmall
             )
-            listOf("Breakfast", "Lunch", "Dinner", "Snack").forEach { mealType ->
+            (listOf("Breakfast", "Lunch", "Dinner", "Snack") +
+             listOf("Protein Booster 1", "Protein Booster 2").filter { day.meals.containsKey(it) }
+            ).forEach { mealType ->
                 val recipe = day.meals[mealType]
+                val isBooster = mealType.startsWith("Protein Booster")
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -1008,7 +1011,11 @@ private fun DraftDayCard(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
-                        Text(mealType, color = MutedText, style = MaterialTheme.typography.labelSmall)
+                        Text(
+                            mealType,
+                            color = if (isBooster) PositiveAccent else MutedText,
+                            style = MaterialTheme.typography.labelSmall
+                        )
                         Text(
                             recipe?.name ?: "—",
                             color = if (recipe != null) PrimaryText else MutedText,
@@ -1254,8 +1261,11 @@ private fun CalendarDayCard(
                     style = MaterialTheme.typography.labelSmall
                 )
             }
-            listOf("Breakfast", "Lunch", "Dinner", "Snack").forEach { mealType ->
+            (listOf("Breakfast", "Lunch", "Dinner", "Snack") +
+             listOf("Protein Booster 1", "Protein Booster 2").filter { day.meals.containsKey(it) }
+            ).forEach { mealType ->
                 val recipe = day.meals[mealType]
+                val isBooster = mealType.startsWith("Protein Booster")
                 val slotKey = "${day.date}::$mealType"
                 val isGrocerySelected = slotKey in selectedGrocerySlots
                 val isReplacing = inlineReplaceSlot?.date == day.date &&
@@ -1288,7 +1298,8 @@ private fun CalendarDayCard(
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 mealType,
-                                color = MutedText, style = MaterialTheme.typography.labelSmall
+                                color = if (isBooster) PositiveAccent else MutedText,
+                                style = MaterialTheme.typography.labelSmall
                             )
                             Text(
                                 recipe?.name ?: "—",
@@ -1417,7 +1428,8 @@ private fun CalendarMealDetailDialog(
     onReplaceWith: (Recipe) -> Unit,
     onClearAlternatives: () -> Unit
 ) {
-    var selectedMeal by remember(recipe.id) { mutableStateOf(slot.mealType) }
+    val logMealType = if (slot.mealType.startsWith("Protein Booster")) "Snack" else slot.mealType
+    var selectedMeal by remember(recipe.id) { mutableStateOf(logMealType) }
 
     Dialog(
         onDismissRequest = onDismiss,

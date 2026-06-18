@@ -36,11 +36,23 @@ object MealPlanEngine {
             } else {
                 snackPool.removeFirstOrNull()
             }
+            val totalProtein = (breakfast?.proteinGrams ?: 0.0) + (lunch?.proteinGrams ?: 0.0) +
+                               (dinner?.proteinGrams ?: 0.0) + (snack?.proteinGrams ?: 0.0)
+            val gap1 = if (proteinTargetGrams > 0) (proteinTargetGrams - totalProtein).coerceAtLeast(0.0) else 0.0
+            val usedIds = setOfNotNull(breakfast?.id, lunch?.id, dinner?.id, snack?.id)
+            val booster1 = if (gap1 > 30.0) pickBooster(filtered.filter { it.id !in usedIds }, gap1) else null
+            val gap2 = gap1 - (booster1?.proteinGrams ?: 0.0)
+            val booster2 = if (gap2 > 30.0) pickBooster(filtered.filter { it.id !in usedIds && it.id != booster1?.id }, gap2) else null
             DayMealPlanUiState(
                 date = day.toString(),
                 dayLabel = day.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.getDefault()),
                 dateNumber = day.dayOfMonth,
-                meals = mapOf("Breakfast" to breakfast, "Lunch" to lunch, "Dinner" to dinner, "Snack" to snack)
+                meals = buildMap {
+                    put("Breakfast", breakfast); put("Lunch", lunch)
+                    put("Dinner", dinner); put("Snack", snack)
+                    if (booster1 != null) put("Protein Booster 1", booster1)
+                    if (booster2 != null) put("Protein Booster 2", booster2)
+                }
             )
         }
     }
@@ -67,7 +79,19 @@ object MealPlanEngine {
         } else {
             rankedSnacks.firstOrNull()
         }
-        val chosenMeals = chosenNonSnacks + ("Snack" to chosenSnack)
+        val totalProtein = nonSnackTypes.sumOf { chosenNonSnacks[it]?.proteinGrams ?: 0.0 } +
+                           (chosenSnack?.proteinGrams ?: 0.0)
+        val gap1 = if (proteinTargetGrams > 0) (proteinTargetGrams - totalProtein).coerceAtLeast(0.0) else 0.0
+        val usedIds = (chosenNonSnacks.values.filterNotNull() + listOfNotNull(chosenSnack)).map { it.id }.toSet()
+        val booster1 = if (gap1 > 30.0) pickBooster(filtered.filter { it.id !in usedIds }, gap1) else null
+        val gap2 = gap1 - (booster1?.proteinGrams ?: 0.0)
+        val booster2 = if (gap2 > 30.0) pickBooster(filtered.filter { it.id !in usedIds && it.id != booster1?.id }, gap2) else null
+        val chosenMeals = buildMap {
+            putAll(chosenNonSnacks)
+            put("Snack", chosenSnack)
+            if (booster1 != null) put("Protein Booster 1", booster1)
+            if (booster2 != null) put("Protein Booster 2", booster2)
+        }
         return (0..6).map { offset ->
             val day = weekStart.plusDays(offset.toLong())
             DayMealPlanUiState(
@@ -127,6 +151,11 @@ object MealPlanEngine {
     private fun pickSnackForGap(rankedSnacks: List<Recipe>, proteinGap: Double): Recipe? {
         if (proteinGap <= 0.0) return rankedSnacks.firstOrNull()
         return rankedSnacks.minByOrNull { kotlin.math.abs(it.proteinGrams - proteinGap) }
+    }
+
+    private fun pickBooster(candidates: List<Recipe>, targetGrams: Double): Recipe? {
+        val boosters = candidates.filter { it.mealType == "Snack" && it.proteinGrams >= 25.0 }
+        return boosters.minByOrNull { kotlin.math.abs(it.proteinGrams - targetGrams) }
     }
 
     private fun rankRecipes(
