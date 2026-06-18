@@ -154,21 +154,26 @@ class RecipesViewModel(
         val weekStart = todayDate.plusWeeks(offset.toLong())
             .with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
         val proteinTarget = macroTargetState.value?.proteinMaxGrams ?: 0
+        val calTarget = macroTargetState.value?.calorieTarget ?: 0
         val days = if (mode == "Repeat Weekly") {
             MealPlanEngine.generateWeekRepeat(
                 allRecipes = RecipeCatalog.ALL,
                 weekStart = weekStart,
                 nutritionGoal = profile?.nutritionGoal,
-                dietPreference = profile?.dietPreferences?.firstOrNull(),
-                proteinTargetGrams = proteinTarget
+                dietPreferences = profile?.dietPreferences ?: emptyList(),
+                foodRestrictions = profile?.foodRestrictions ?: emptyList(),
+                proteinTargetGrams = proteinTarget,
+                calorieTarget = calTarget
             )
         } else {
             MealPlanEngine.generateWeek(
                 allRecipes = RecipeCatalog.ALL,
                 weekStart = weekStart,
                 nutritionGoal = profile?.nutritionGoal,
-                dietPreference = profile?.dietPreferences?.firstOrNull(),
-                proteinTargetGrams = proteinTarget
+                dietPreferences = profile?.dietPreferences ?: emptyList(),
+                foodRestrictions = profile?.foodRestrictions ?: emptyList(),
+                proteinTargetGrams = proteinTarget,
+                calorieTarget = calTarget
             )
         }
         draftPlanInternal.value = DraftPlanInternal(weekOffset = offset, days = days, mealPlanMode = mode)
@@ -197,7 +202,10 @@ class RecipesViewModel(
             mealType = mealType,
             usedIds = usedIds,
             nutritionGoal = profile?.nutritionGoal,
-            dietPreference = profile?.dietPreferences?.firstOrNull()
+            dietPreferences = profile?.dietPreferences ?: emptyList(),
+            foodRestrictions = profile?.foodRestrictions ?: emptyList(),
+            proteinTargetGrams = macroTargetState.value?.proteinMaxGrams ?: 0,
+            calorieTarget = macroTargetState.value?.calorieTarget ?: 0
         ) ?: return
         val updatedDays = draft.days.map { day ->
             if (day.date == date) day.copy(meals = day.meals + (mealType to replacement)) else day
@@ -232,7 +240,10 @@ class RecipesViewModel(
                 mealType = mealType,
                 usedIds = usedInPlan + usedInCandidates,
                 nutritionGoal = profile?.nutritionGoal,
-                dietPreference = profile?.dietPreferences?.firstOrNull()
+                dietPreferences = profile?.dietPreferences ?: emptyList(),
+                foodRestrictions = profile?.foodRestrictions ?: emptyList(),
+                proteinTargetGrams = macroTargetState.value?.proteinMaxGrams ?: 0,
+                calorieTarget = macroTargetState.value?.calorieTarget ?: 0
             )?.let {
                 candidates.add(it)
                 usedInCandidates.add(it.id)
@@ -260,7 +271,10 @@ class RecipesViewModel(
                 mealType = mealType,
                 usedIds = usedInPlan + usedInCandidates,
                 nutritionGoal = profile?.nutritionGoal,
-                dietPreference = profile?.dietPreference
+                dietPreferences = profile?.dietPreferences ?: emptyList(),
+                foodRestrictions = profile?.foodRestrictions ?: emptyList(),
+                proteinTargetGrams = macroTargetState.value?.proteinMaxGrams ?: 0,
+                calorieTarget = macroTargetState.value?.calorieTarget ?: 0
             )?.let {
                 candidates.add(it)
                 usedInCandidates.add(it.id)
@@ -324,7 +338,10 @@ class RecipesViewModel(
             mealType = mealType,
             usedIds = usedIds,
             nutritionGoal = profile?.nutritionGoal,
-            dietPreference = profile?.dietPreferences?.firstOrNull()
+            dietPreferences = profile?.dietPreferences ?: emptyList(),
+            foodRestrictions = profile?.foodRestrictions ?: emptyList(),
+            proteinTargetGrams = macroTargetState.value?.proteinMaxGrams ?: 0,
+            calorieTarget = macroTargetState.value?.calorieTarget ?: 0
         ) ?: return
         val updated = currentPlan.map { day ->
             if (day.date == date) day.copy(meals = day.meals + (mealType to replacement)) else day
@@ -424,6 +441,9 @@ class RecipesViewModel(
     ) { entries, macroTarget, selected, logMsg, sel ->
         val consumedCal = entries.sumOf { it.calories ?: 0 }
         val consumedProtein = entries.sumOf { it.proteinGrams ?: 0.0 }
+        val consumedCarbs = entries.sumOf { it.carbGrams ?: 0.0 }
+        val consumedFat = entries.sumOf { it.fatGrams ?: 0.0 }
+        val consumedFiber = entries.sumOf { it.fiberGrams ?: 0.0 }
         val calTarget = macroTarget?.calorieTarget ?: 2000
         val protTarget = macroTarget?.proteinMaxGrams?.toDouble() ?: 170.0
         val carbTarget = macroTarget?.carbTargetGrams ?: 0
@@ -447,6 +467,11 @@ class RecipesViewModel(
         RecipesUiState(
             remainingCalories = remainCal,
             remainingProtein = remainProtein,
+            consumedCalories = consumedCal,
+            consumedProtein = consumedProtein,
+            consumedCarbs = consumedCarbs,
+            consumedFat = consumedFat,
+            consumedFiber = consumedFiber,
             calorieTarget = calTarget,
             proteinTarget = protTarget,
             carbTarget = carbTarget,

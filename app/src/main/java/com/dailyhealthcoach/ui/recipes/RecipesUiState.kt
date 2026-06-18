@@ -55,6 +55,11 @@ data class MealCalendarUiState(
 data class RecipesUiState(
     val remainingCalories: Int = 0,
     val remainingProtein: Double = 0.0,
+    val consumedCalories: Int = 0,
+    val consumedProtein: Double = 0.0,
+    val consumedCarbs: Double = 0.0,
+    val consumedFat: Double = 0.0,
+    val consumedFiber: Double = 0.0,
     val calorieTarget: Int = 2000,
     val proteinTarget: Double = 170.0,
     val carbTarget: Int = 0,

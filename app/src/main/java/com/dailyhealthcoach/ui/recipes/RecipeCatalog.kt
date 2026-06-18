@@ -1522,6 +1522,110 @@ object RecipeCatalog {
                 "Stir in protein powder until smooth.",
                 "Top with honey and cinnamon. Serve warm."
             )
+        ),
+
+        Recipe(
+            id = "tofu_snack_bowl",
+            name = "Quick Sesame Tofu Bowl",
+            description = "Firm tofu cubed and pan-fried in sesame oil with soy sauce and chilli. Ready in 10 minutes with 22g of complete plant protein and under 200 calories.",
+            mealType = "Snack",
+            tags = listOf("Vegan", "High Protein"),
+            collection = emptyList(),
+            ingredients = listOf(
+                "150g firm tofu (cubed)",
+                "1 tsp sesame oil",
+                "1 tsp soy sauce",
+                "½ tsp garlic powder",
+                "¼ tsp chilli flakes",
+                "1 tsp sesame seeds"
+            ),
+            calories = 200, proteinGrams = 22.0, carbGrams = 4.0, fatGrams = 11.0, fiberGrams = 1.0,
+            prepMinutes = 3, cookMinutes = 7,
+            instructions = listOf(
+                "Press tofu dry with a kitchen towel; cube into bite-sized pieces.",
+                "Heat sesame oil in a non-stick pan over high heat.",
+                "Add tofu; fry 3–4 minutes per side until golden.",
+                "Toss with soy sauce, garlic powder, and chilli flakes.",
+                "Finish with sesame seeds; serve warm."
+            )
+        ),
+
+        Recipe(
+            id = "tempeh_bites_snack",
+            name = "Crispy Marinated Tempeh Bites",
+            description = "Tempeh sliced thin, marinated in tamari and smoked paprika, then pan-crisped. At 28g protein per serving it is the highest-protein vegan snack in the app.",
+            mealType = "Snack",
+            tags = listOf("Vegan", "High Protein"),
+            collection = emptyList(),
+            ingredients = listOf(
+                "150g tempeh (sliced)",
+                "1 tbsp tamari or soy sauce",
+                "½ tsp smoked paprika",
+                "½ tsp garlic powder",
+                "1 tsp olive oil",
+                "1 tsp apple cider vinegar"
+            ),
+            calories = 220, proteinGrams = 28.0, carbGrams = 8.0, fatGrams = 10.0, fiberGrams = 3.0,
+            prepMinutes = 5, cookMinutes = 10,
+            instructions = listOf(
+                "Mix tamari, smoked paprika, garlic powder, and apple cider vinegar.",
+                "Toss tempeh slices in marinade; rest 5 minutes.",
+                "Heat olive oil in a non-stick pan over medium-high heat.",
+                "Fry tempeh 4–5 minutes per side until crispy and golden.",
+                "Serve immediately."
+            )
+        ),
+
+        Recipe(
+            id = "soy_chunks_snack",
+            name = "Spiced Soy Protein Chunks",
+            description = "Rehydrated textured soy protein simmered in a bold cumin-coriander broth. 28g of protein and under 200 calories from one of the highest-protein plant foods available.",
+            mealType = "Snack",
+            tags = listOf("Vegan", "High Protein"),
+            collection = emptyList(),
+            ingredients = listOf(
+                "50g soy chunks / textured soy protein (dry weight)",
+                "1 cup water or vegetable broth",
+                "½ tsp cumin",
+                "½ tsp coriander powder",
+                "¼ tsp turmeric",
+                "¼ tsp chilli powder",
+                "Salt to taste",
+                "1 tsp lemon juice"
+            ),
+            calories = 200, proteinGrams = 28.0, carbGrams = 10.0, fatGrams = 2.0, fiberGrams = 2.0,
+            prepMinutes = 5, cookMinutes = 10,
+            instructions = listOf(
+                "Boil soy chunks in broth 8 minutes until tender; drain and squeeze dry.",
+                "Return to pan; add cumin, coriander, turmeric, and chilli powder.",
+                "Cook on medium heat 3–4 minutes, stirring often.",
+                "Finish with lemon juice and salt. Serve hot."
+            )
+        ),
+
+        Recipe(
+            id = "paneer_protein_cup",
+            name = "Chilli Lime Paneer Protein Cup",
+            description = "Fresh paneer cubes tossed with lime juice, chilli powder, and chaat masala — no cooking needed. 26g of protein in 200 calories; the fastest high-protein vegetarian snack.",
+            mealType = "Snack",
+            tags = listOf("Vegetarian", "High Protein"),
+            collection = emptyList(),
+            ingredients = listOf(
+                "130g paneer (cubed)",
+                "Juice of ½ lime",
+                "¼ tsp chilli powder",
+                "½ tsp chaat masala",
+                "Salt to taste",
+                "Fresh coriander (optional)"
+            ),
+            calories = 200, proteinGrams = 26.0, carbGrams = 4.0, fatGrams = 13.0, fiberGrams = 0.5,
+            prepMinutes = 3, cookMinutes = 0,
+            instructions = listOf(
+                "Cube paneer into bite-sized pieces.",
+                "Toss with lime juice, chilli powder, and chaat masala.",
+                "Season with salt; garnish with coriander if using.",
+                "Serve immediately — no cooking required."
+            )
         )
     )
 }

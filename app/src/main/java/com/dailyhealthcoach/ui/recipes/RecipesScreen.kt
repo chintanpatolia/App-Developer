@@ -185,12 +185,11 @@ fun RecipesRoute(viewModel: RecipesViewModel) {
             }
 
             DailyPlanSummary(
-                hasPlan = calState.todayHasPlan,
-                plannedCalories = calState.todayPlannedCalories,
-                plannedProtein = calState.todayPlannedProtein,
-                plannedCarbs = calState.todayPlannedCarbs,
-                plannedFat = calState.todayPlannedFat,
-                plannedFiber = calState.todayPlannedFiber,
+                consumedCalories = uiState.consumedCalories,
+                consumedProtein = uiState.consumedProtein,
+                consumedCarbs = uiState.consumedCarbs,
+                consumedFat = uiState.consumedFat,
+                consumedFiber = uiState.consumedFiber,
                 calorieTarget = uiState.calorieTarget,
                 proteinTarget = uiState.proteinTarget,
                 carbTarget = uiState.carbTarget,
@@ -298,12 +297,11 @@ fun RecipesRoute(viewModel: RecipesViewModel) {
 
 @Composable
 private fun DailyPlanSummary(
-    hasPlan: Boolean,
-    plannedCalories: Int,
-    plannedProtein: Double,
-    plannedCarbs: Double,
-    plannedFat: Double,
-    plannedFiber: Double,
+    consumedCalories: Int,
+    consumedProtein: Double,
+    consumedCarbs: Double,
+    consumedFat: Double,
+    consumedFiber: Double,
     calorieTarget: Int,
     proteinTarget: Double,
     carbTarget: Int,
@@ -311,26 +309,26 @@ private fun DailyPlanSummary(
     fiberTarget: Int
 ) {
     val proteinColor = when {
-        !hasPlan || proteinTarget <= 0 -> MutedText
-        plannedProtein >= proteinTarget * 0.9 -> PositiveAccent
-        plannedProtein >= proteinTarget * 0.6 -> WarningAccent
+        proteinTarget <= 0 -> MutedText
+        consumedProtein >= proteinTarget * 0.9 -> PositiveAccent
+        consumedProtein >= proteinTarget * 0.6 -> WarningAccent
         else -> Color(0xFFE57373)
     }
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             MacroHeroTile(
-                value = if (hasPlan) "$plannedCalories" else "—",
-                label = if (calorieTarget > 0) "/ $calorieTarget kcal" else "kcal planned",
-                progress = if (hasPlan && calorieTarget > 0)
-                    (plannedCalories.toFloat() / calorieTarget).coerceIn(0f, 1f) else 0f,
+                value = "$consumedCalories",
+                label = if (calorieTarget > 0) "/ $calorieTarget kcal" else "kcal",
+                progress = if (calorieTarget > 0)
+                    (consumedCalories.toFloat() / calorieTarget).coerceIn(0f, 1f) else 0f,
                 color = AccentBlue,
                 modifier = Modifier.weight(1f)
             )
             MacroHeroTile(
-                value = if (hasPlan) "${plannedProtein.clean()}g" else "—",
-                label = if (proteinTarget > 0) "/ ${proteinTarget.clean()}g protein" else "protein planned",
-                progress = if (hasPlan && proteinTarget > 0)
-                    (plannedProtein / proteinTarget).coerceIn(0.0, 1.0).toFloat() else 0f,
+                value = "${consumedProtein.clean()}g",
+                label = if (proteinTarget > 0) "/ ${proteinTarget.clean()}g protein" else "protein",
+                progress = if (proteinTarget > 0)
+                    (consumedProtein / proteinTarget).coerceIn(0.0, 1.0).toFloat() else 0f,
                 color = proteinColor,
                 modifier = Modifier.weight(1f)
             )
@@ -341,7 +339,7 @@ private fun DailyPlanSummary(
                 if (carbTarget > 0) {
                     MacroMiniChip(
                         label = "Carbs",
-                        value = if (hasPlan) "${plannedCarbs.clean()}g" else "—",
+                        value = "${consumedCarbs.clean()}g",
                         target = "${carbTarget}g",
                         color = CyanAccent,
                         modifier = Modifier.weight(1f)
@@ -350,7 +348,7 @@ private fun DailyPlanSummary(
                 if (fatTarget > 0) {
                     MacroMiniChip(
                         label = "Fat",
-                        value = if (hasPlan) "${plannedFat.clean()}g" else "—",
+                        value = "${consumedFat.clean()}g",
                         target = "${fatTarget}g",
                         color = WarningAccent,
                         modifier = Modifier.weight(1f)
@@ -359,7 +357,7 @@ private fun DailyPlanSummary(
                 if (fiberTarget > 0) {
                     MacroMiniChip(
                         label = "Fiber",
-                        value = if (hasPlan) "${plannedFiber.clean()}g" else "—",
+                        value = "${consumedFiber.clean()}g",
                         target = "${fiberTarget}g",
                         color = PositiveAccent,
                         modifier = Modifier.weight(1f)
@@ -367,14 +365,8 @@ private fun DailyPlanSummary(
                 }
             }
         }
-        if (!hasPlan) {
-            Text(
-                "Generate and accept a meal plan to see planned coverage.",
-                color = MutedText,
-                style = MaterialTheme.typography.bodySmall
-            )
-        } else if (proteinTarget > 0 && plannedProtein < proteinTarget * 0.9) {
-            val gap = (proteinTarget - plannedProtein).coerceAtLeast(0.0)
+        if (proteinTarget > 0 && consumedProtein < proteinTarget * 0.9) {
+            val gap = (proteinTarget - consumedProtein).coerceAtLeast(0.0)
             Text(
                 "Protein short by ${gap.clean()}g — consider a higher-protein snack.",
                 color = WarningAccent,
