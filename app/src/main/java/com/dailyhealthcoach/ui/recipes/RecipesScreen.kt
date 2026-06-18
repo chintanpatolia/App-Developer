@@ -18,10 +18,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
-import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.MaterialTheme
@@ -29,11 +27,6 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
@@ -41,11 +34,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
-import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -260,9 +250,7 @@ fun RecipesRoute(viewModel: RecipesViewModel) {
                     RecipeSection(
                         title = "Recommended for Today",
                         recipes = uiState.recommendedRecipes,
-                        selectedIds = uiState.selectedRecipeIds,
                         onViewRecipe = viewModel::selectRecipe,
-                        onToggleSelect = viewModel::toggleSelection,
                         onTryAnother = viewModel::tryAnother,
                         highlightFirst = true
                     )
@@ -272,9 +260,7 @@ fun RecipesRoute(viewModel: RecipesViewModel) {
                     RecipeSection(
                         title = "Breakfast",
                         recipes = uiState.breakfastRecipes,
-                        selectedIds = uiState.selectedRecipeIds,
                         onViewRecipe = viewModel::selectRecipe,
-                        onToggleSelect = viewModel::toggleSelection,
                         onTryAnother = null
                     )
                 }
@@ -283,9 +269,7 @@ fun RecipesRoute(viewModel: RecipesViewModel) {
                     RecipeSection(
                         title = "Lunch",
                         recipes = uiState.lunchRecipes,
-                        selectedIds = uiState.selectedRecipeIds,
                         onViewRecipe = viewModel::selectRecipe,
-                        onToggleSelect = viewModel::toggleSelection,
                         onTryAnother = null
                     )
                 }
@@ -294,9 +278,7 @@ fun RecipesRoute(viewModel: RecipesViewModel) {
                     RecipeSection(
                         title = "Dinner",
                         recipes = uiState.dinnerRecipes,
-                        selectedIds = uiState.selectedRecipeIds,
                         onViewRecipe = viewModel::selectRecipe,
-                        onToggleSelect = viewModel::toggleSelection,
                         onTryAnother = null
                     )
                 }
@@ -305,9 +287,7 @@ fun RecipesRoute(viewModel: RecipesViewModel) {
                     RecipeSection(
                         title = "Snacks",
                         recipes = uiState.snackRecipes,
-                        selectedIds = uiState.selectedRecipeIds,
                         onViewRecipe = viewModel::selectRecipe,
-                        onToggleSelect = viewModel::toggleSelection,
                         onTryAnother = null
                     )
                 }
@@ -389,7 +369,7 @@ private fun DailyPlanSummary(
         }
         if (!hasPlan) {
             Text(
-                "Generate a meal plan to see today's coverage.",
+                "Generate and accept a meal plan to see planned coverage.",
                 color = MutedText,
                 style = MaterialTheme.typography.bodySmall
             )
@@ -479,9 +459,7 @@ private fun MacroHeroTile(
 private fun RecipeSection(
     title: String,
     recipes: List<Recipe>,
-    selectedIds: Set<String>,
     onViewRecipe: (Recipe) -> Unit,
-    onToggleSelect: (String) -> Unit,
     onTryAnother: ((String) -> Unit)?,
     highlightFirst: Boolean = false
 ) {
@@ -514,9 +492,7 @@ private fun RecipeSection(
         recipes.forEach { recipe ->
             RecipeCard(
                 recipe = recipe,
-                isSelected = recipe.id in selectedIds,
                 onView = { onViewRecipe(recipe) },
-                onToggleSelect = { onToggleSelect(recipe.id) },
                 onTryAnother = onTryAnother?.let { { it(recipe.id) } }
             )
         }
@@ -526,37 +502,14 @@ private fun RecipeSection(
 @Composable
 private fun RecipeCard(
     recipe: Recipe,
-    isSelected: Boolean,
     onView: () -> Unit,
-    onToggleSelect: () -> Unit,
     onTryAnother: (() -> Unit)?
 ) {
-    val bgColor by animateColorAsState(
-        if (isSelected) CyanAccent.copy(alpha = 0.10f) else SecondaryCard.copy(alpha = 0.72f),
-        label = "recipe_bg"
-    )
-    val borderColor by animateColorAsState(
-        if (isSelected) CyanAccent.copy(alpha = 0.6f) else Color.Transparent,
-        label = "recipe_border"
-    )
-    val pressScale = remember { Animatable(1f) }
-    val scope = rememberCoroutineScope()
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .graphicsLayer { scaleX = pressScale.value; scaleY = pressScale.value }
-            .pointerInput(Unit) {
-                detectTapGestures(
-                    onPress = {
-                        scope.launch { pressScale.animateTo(0.97f, tween(80)) }
-                        tryAwaitRelease()
-                        scope.launch { pressScale.animateTo(1f, spring(stiffness = Spring.StiffnessMediumLow)) }
-                    }
-                )
-            }
             .clip(RoundedCornerShape(18.dp))
-            .border(1.dp, borderColor, RoundedCornerShape(18.dp))
-            .background(bgColor)
+            .background(SecondaryCard.copy(alpha = 0.72f))
             .padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
@@ -606,37 +559,16 @@ private fun RecipeCard(
             color = MutedText,
             style = MaterialTheme.typography.bodySmall
         )
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically
+        OutlinedButton(
+            onClick = onView,
+            shape = RoundedCornerShape(999.dp),
+            contentPadding = PaddingValues(vertical = 8.dp)
         ) {
-            OutlinedButton(
-                onClick = onView,
-                modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(999.dp),
-                contentPadding = PaddingValues(vertical = 8.dp)
-            ) {
-                Text(
-                    "View Recipe",
-                    color = CyanAccent,
-                    fontWeight = FontWeight.SemiBold,
-                    style = MaterialTheme.typography.labelMedium
-                )
-            }
-            FilterChip(
-                selected = isSelected,
-                onClick = onToggleSelect,
-                label = {
-                    Text(
-                        if (isSelected) "Selected" else "Select",
-                        style = MaterialTheme.typography.labelSmall
-                    )
-                },
-                colors = FilterChipDefaults.filterChipColors(
-                    selectedContainerColor = CyanAccent,
-                    selectedLabelColor = Color.Black
-                )
+            Text(
+                "View Recipe",
+                color = CyanAccent,
+                fontWeight = FontWeight.SemiBold,
+                style = MaterialTheme.typography.labelMedium
             )
         }
         if (onTryAnother != null) {
@@ -1465,7 +1397,7 @@ private fun CalendarDayCard(
                                             contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
                                         ) {
                                             Text(
-                                                "Select",
+                                                "Use This",
                                                 color = CyanAccent,
                                                 fontWeight = FontWeight.Bold,
                                                 style = MaterialTheme.typography.labelSmall
@@ -1653,7 +1585,7 @@ private fun CalendarMealDetailDialog(
                                 contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
                             ) {
                                 Text(
-                                    "Select",
+                                    "Use This",
                                     color = CyanAccent,
                                     fontWeight = FontWeight.Bold,
                                     style = MaterialTheme.typography.labelSmall
