@@ -88,11 +88,11 @@ dependencies {
     implementation("com.google.mlkit:barcode-scanning:17.3.0")
     implementation("com.google.mlkit:text-recognition:16.0.1")
 
-    // Supabase — behind SupabaseFeatureFlags.isEnabled at runtime
-    implementation(platform("io.github.jan-tennermann:supabase-bom:2.6.1"))
-    implementation("io.github.jan-tennermann:gotrue-kt")
-    implementation("io.github.jan-tennermann:postgrest-kt")
-    implementation("io.ktor:ktor-client-okhttp:2.3.12")
+    // TODO: Supabase backend disabled — local-first build. Re-enable in backend integration phase.
+    // implementation(platform("io.github.jan-tennermann:supabase-bom:2.6.1"))
+    // implementation("io.github.jan-tennermann:gotrue-kt")
+    // implementation("io.github.jan-tennermann:postgrest-kt")
+    // implementation("io.ktor:ktor-client-okhttp:2.3.12")
 
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
