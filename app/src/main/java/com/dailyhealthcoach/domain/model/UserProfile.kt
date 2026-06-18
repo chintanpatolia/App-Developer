@@ -15,7 +15,8 @@ data class UserProfile(
     val sleepTargetHours: Double? = null,
     val strengthTrainingDaysPerWeek: Int? = null,
     val nutritionGoal: String? = null,
-    val dietPreference: String? = null,
+    val dietPreferences: List<String> = emptyList(),
+    val foodRestrictions: List<String> = emptyList(),
     val workoutGoals: List<String> = emptyList(),
     val activityLevel: String? = null
 )

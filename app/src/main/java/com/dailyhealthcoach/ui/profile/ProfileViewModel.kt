@@ -67,7 +67,8 @@ class ProfileViewModel(
                 sleepTarget = profile?.sleepTargetHours?.cleanString() ?: "7",
                 strengthTarget = profile?.strengthTrainingDaysPerWeek?.toString() ?: "3",
                 nutritionGoal = profile?.nutritionGoal ?: "Maintain",
-                dietPreference = profile?.dietPreference ?: "No Restriction",
+                dietPreferences = profile?.dietPreferences?.takeIf { it.isNotEmpty() } ?: listOf("Vegetarian"),
+                foodRestrictions = profile?.foodRestrictions ?: emptyList(),
                 workoutGoals = profile?.workoutGoals?.takeIf { it.isNotEmpty() } ?: listOf("General Fitness"),
                 activityLevel = profile?.activityLevel ?: "Moderately Active",
                 calorieTarget = macroTarget?.calorieTarget?.toString() ?: "",
@@ -133,7 +134,8 @@ class ProfileViewModel(
                     sleepTargetHours = sleepTarget,
                     strengthTrainingDaysPerWeek = strengthTarget,
                     nutritionGoal = s.nutritionGoal.ifBlank { null },
-                    dietPreference = s.dietPreference.ifBlank { null },
+                    dietPreferences = s.dietPreferences,
+                    foodRestrictions = s.foodRestrictions,
                     workoutGoals = s.workoutGoals,
                     activityLevel = s.activityLevel.ifBlank { null }
                 )

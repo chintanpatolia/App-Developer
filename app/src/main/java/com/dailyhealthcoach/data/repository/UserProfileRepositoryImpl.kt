@@ -34,7 +34,8 @@ class UserProfileRepositoryImpl(
                 sleepTargetHours = profile.sleepTargetHours,
                 strengthTrainingDaysPerWeek = profile.strengthTrainingDaysPerWeek,
                 nutritionGoal = profile.nutritionGoal,
-                dietPreference = profile.dietPreference,
+                dietPreference = profile.dietPreferences.joinToString(",").ifBlank { null },
+                foodRestrictions = profile.foodRestrictions.joinToString(",").ifBlank { null },
                 workoutGoal = profile.workoutGoals.joinToString(",").ifBlank { null },
                 activityLevel = profile.activityLevel,
                 createdAt = existing?.createdAt ?: now,
@@ -60,7 +61,8 @@ private fun UserProfileEntity.toDomain(): UserProfile {
         sleepTargetHours = sleepTargetHours,
         strengthTrainingDaysPerWeek = strengthTrainingDaysPerWeek,
         nutritionGoal = nutritionGoal,
-        dietPreference = dietPreference,
+        dietPreferences = dietPreference?.split(",")?.filter { it.isNotBlank() } ?: emptyList(),
+        foodRestrictions = foodRestrictions?.split(",")?.filter { it.isNotBlank() } ?: emptyList(),
         workoutGoals = workoutGoal?.split(",")?.filter { it.isNotBlank() } ?: emptyList(),
         activityLevel = activityLevel
     )

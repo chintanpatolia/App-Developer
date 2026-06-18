@@ -578,6 +578,91 @@ fun ProfileScreen(
                 }
             }
 
+            ProfileCard(title = "Diet Preferences") {
+                Text(
+                    "Choose up to 3 preferences. Used to personalise recipes and meal planning.",
+                    color = MutedText,
+                    style = MaterialTheme.typography.bodySmall
+                )
+                var showDietLimitWarning by remember { mutableStateOf(false) }
+                val dietOptions = listOf(
+                    "Vegetarian", "High Protein Vegetarian", "Vegan", "Lacto Vegetarian",
+                    "Ovo Vegetarian", "Pescatarian", "Mediterranean", "Balanced", "Custom"
+                )
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    dietOptions.chunked(3).forEach { rowOptions ->
+                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            rowOptions.forEach { option ->
+                                val isSelected = option in uiState.dietPreferences
+                                FilterChip(
+                                    selected = isSelected,
+                                    onClick = {
+                                        showDietLimitWarning = false
+                                        if (isSelected) {
+                                            onUpdate { it.copy(dietPreferences = it.dietPreferences - option) }
+                                        } else if (uiState.dietPreferences.size < 3) {
+                                            onUpdate { it.copy(dietPreferences = it.dietPreferences + option) }
+                                        } else {
+                                            showDietLimitWarning = true
+                                        }
+                                    },
+                                    label = { Text(option, maxLines = 2, style = MaterialTheme.typography.labelSmall) },
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = AccentBlue,
+                                        selectedLabelColor = PrimaryText,
+                                        labelColor = MutedText
+                                    ),
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
+                            repeat(3 - rowOptions.size) { Spacer(modifier = Modifier.weight(1f)) }
+                        }
+                    }
+                }
+                if (showDietLimitWarning) {
+                    Text("Choose up to 3 diet preferences.", color = WarningAccent, style = MaterialTheme.typography.bodySmall)
+                }
+            }
+
+            ProfileCard(title = "Food Restrictions") {
+                Text(
+                    "Select all that apply.",
+                    color = MutedText,
+                    style = MaterialTheme.typography.bodySmall
+                )
+                val restrictionOptions = listOf(
+                    "Dairy Free", "Gluten Free", "Nut Free", "Soy Free",
+                    "Egg Free", "Low Sodium", "Custom"
+                )
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    restrictionOptions.chunked(3).forEach { rowOptions ->
+                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            rowOptions.forEach { option ->
+                                val isSelected = option in uiState.foodRestrictions
+                                FilterChip(
+                                    selected = isSelected,
+                                    onClick = {
+                                        if (isSelected) {
+                                            onUpdate { it.copy(foodRestrictions = it.foodRestrictions - option) }
+                                        } else {
+                                            onUpdate { it.copy(foodRestrictions = it.foodRestrictions + option) }
+                                        }
+                                    },
+                                    label = { Text(option, maxLines = 2, style = MaterialTheme.typography.labelSmall) },
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = AccentBlue,
+                                        selectedLabelColor = PrimaryText,
+                                        labelColor = MutedText
+                                    ),
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
+                            repeat(3 - rowOptions.size) { Spacer(modifier = Modifier.weight(1f)) }
+                        }
+                    }
+                }
+            }
+
             HealthConnectCard(
                 hcImportConflict = uiState.hcImportConflict,
                 hcImportMessage = uiState.hcImportMessage,

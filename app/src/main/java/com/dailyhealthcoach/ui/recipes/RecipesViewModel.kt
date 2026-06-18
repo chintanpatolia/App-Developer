@@ -159,7 +159,7 @@ class RecipesViewModel(
                 allRecipes = RecipeCatalog.ALL,
                 weekStart = weekStart,
                 nutritionGoal = profile?.nutritionGoal,
-                dietPreference = profile?.dietPreference,
+                dietPreference = profile?.dietPreferences?.firstOrNull(),
                 proteinTargetGrams = proteinTarget
             )
         } else {
@@ -167,7 +167,7 @@ class RecipesViewModel(
                 allRecipes = RecipeCatalog.ALL,
                 weekStart = weekStart,
                 nutritionGoal = profile?.nutritionGoal,
-                dietPreference = profile?.dietPreference,
+                dietPreference = profile?.dietPreferences?.firstOrNull(),
                 proteinTargetGrams = proteinTarget
             )
         }
@@ -197,7 +197,7 @@ class RecipesViewModel(
             mealType = mealType,
             usedIds = usedIds,
             nutritionGoal = profile?.nutritionGoal,
-            dietPreference = profile?.dietPreference
+            dietPreference = profile?.dietPreferences?.firstOrNull()
         ) ?: return
         val updatedDays = draft.days.map { day ->
             if (day.date == date) day.copy(meals = day.meals + (mealType to replacement)) else day
@@ -232,7 +232,7 @@ class RecipesViewModel(
                 mealType = mealType,
                 usedIds = usedInPlan + usedInCandidates,
                 nutritionGoal = profile?.nutritionGoal,
-                dietPreference = profile?.dietPreference
+                dietPreference = profile?.dietPreferences?.firstOrNull()
             )?.let {
                 candidates.add(it)
                 usedInCandidates.add(it.id)
@@ -324,7 +324,7 @@ class RecipesViewModel(
             mealType = mealType,
             usedIds = usedIds,
             nutritionGoal = profile?.nutritionGoal,
-            dietPreference = profile?.dietPreference
+            dietPreference = profile?.dietPreferences?.firstOrNull()
         ) ?: return
         val updated = currentPlan.map { day ->
             if (day.date == date) day.copy(meals = day.meals + (mealType to replacement)) else day
@@ -432,7 +432,7 @@ class RecipesViewModel(
         val remainCal = calTarget - consumedCal
         val remainProtein = protTarget - consumedProtein
         val goal = userProfileState.value?.nutritionGoal
-        val dietPref = userProfileState.value?.dietPreference
+        val dietPref = userProfileState.value?.dietPreferences?.firstOrNull()
 
         val filtered = filterByDiet(RecipeCatalog.ALL, dietPref)
         val ranked = rankRecipes(filtered, remainCal, remainProtein, goal)
@@ -508,7 +508,7 @@ class RecipesViewModel(
             uiState.value.recommendedRecipes.map { it.id }
 
         val currentRecipe = RecipeCatalog.ALL.find { it.id == recipeId } ?: return
-        val dietPref = userProfileState.value?.dietPreference
+        val dietPref = userProfileState.value?.dietPreferences?.firstOrNull()
         val goal = userProfileState.value?.nutritionGoal
         val curr = uiState.value
         val filtered = filterByDiet(RecipeCatalog.ALL, dietPref)

@@ -20,6 +20,7 @@ data class UserProfileEntity(
     val strengthTrainingDaysPerWeek: Int? = null,
     val nutritionGoal: String? = null,
     val dietPreference: String? = null,
+    val foodRestrictions: String? = null,
     val workoutGoal: String? = null,
     val activityLevel: String? = null,
     val createdAt: String,

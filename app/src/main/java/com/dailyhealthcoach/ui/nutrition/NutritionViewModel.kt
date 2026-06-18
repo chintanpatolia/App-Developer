@@ -51,7 +51,7 @@ class NutritionViewModel(
             proteinGoalMax = macroTarget?.proteinMaxGrams ?: 200,
             macroTarget = macroTarget,
             goal = userProfileState.value?.nutritionGoal,
-            dietPreference = userProfileState.value?.dietPreference,
+            dietPreference = userProfileState.value?.dietPreferences?.firstOrNull(),
             form = form,
             allEntries = allEntries,
             hour = LocalTime.now().hour
