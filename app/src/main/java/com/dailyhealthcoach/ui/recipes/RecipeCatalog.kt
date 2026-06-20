@@ -1,10 +1,10 @@
-package com.dailyhealthcoach.ui.recipes
+﻿package com.dailyhealthcoach.ui.recipes
 
 object RecipeCatalog {
 
     val ALL: List<Recipe> = listOf(
 
-        // ── BREAKFASTS ─────────────────────────────────────────────────────────
+        // â”€â”€ BREAKFASTS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
         Recipe(
             id = "greek_yogurt_bowl",
@@ -16,7 +16,7 @@ object RecipeCatalog {
             ingredients = listOf(
                 "1 cup non-fat Greek yogurt",
                 "1 scoop protein powder",
-                "½ cup mixed berries",
+                "Â½ cup mixed berries",
                 "2 tbsp low-fat granola",
                 "1 tbsp honey"
             ),
@@ -29,7 +29,6 @@ object RecipeCatalog {
                 "Drizzle honey and serve immediately."
             ),
             storageNotes = "Best consumed fresh. Do not pre-mix protein powder.",
-            metabolicResetScore = 8, isGlucoseConscious = true
         ),
 
         Recipe(
@@ -40,13 +39,13 @@ object RecipeCatalog {
             tags = listOf("Vegetarian", "High Protein"),
             collection = listOf("Anti-Inflammatory"),
             ingredients = listOf(
-                "½ cup rolled oats",
+                "Â½ cup rolled oats",
                 "1 scoop protein powder",
                 "1 cup plant milk",
                 "1 banana (sliced)",
-                "½ cup blueberries",
+                "Â½ cup blueberries",
                 "1 tbsp almond butter",
-                "½ tsp cinnamon"
+                "Â½ tsp cinnamon"
             ),
             calories = 440, proteinGrams = 32.0, carbGrams = 58.0, fatGrams = 9.0, fiberGrams = 6.0,
             prepMinutes = 5, cookMinutes = 0,
@@ -62,15 +61,15 @@ object RecipeCatalog {
         Recipe(
             id = "egg_white_scramble",
             name = "Egg White Veggie Scramble",
-            description = "Light, high-protein scramble loaded with colourful vegetables. Low in calories and carbs — ideal for blood sugar management.",
+            description = "Light, high-protein scramble loaded with colourful vegetables. Low in calories and carbs â€” ideal for blood sugar management.",
             mealType = "Breakfast",
             tags = listOf("Vegetarian", "High Protein", "Low Calorie"),
             collection = listOf("Metabolic Reset"),
             ingredients = listOf(
                 "6 egg whites",
-                "½ cup fresh spinach",
-                "¼ cup bell peppers (diced)",
-                "¼ cup mushrooms (sliced)",
+                "Â½ cup fresh spinach",
+                "Â¼ cup bell peppers (diced)",
+                "Â¼ cup mushrooms (sliced)",
                 "1 tsp olive oil",
                 "Salt, pepper, chilli flakes to taste"
             ),
@@ -78,12 +77,11 @@ object RecipeCatalog {
             prepMinutes = 5, cookMinutes = 8,
             instructions = listOf(
                 "Heat olive oil in a non-stick pan over medium heat.",
-                "Sauté bell peppers and mushrooms until soft, about 3 minutes.",
+                "SautÃ© bell peppers and mushrooms until soft, about 3 minutes.",
                 "Add spinach and cook 1 minute until wilted.",
                 "Pour in egg whites; scramble gently until just set.",
                 "Season and serve immediately."
             ),
-            metabolicResetScore = 9, isGlucoseConscious = true
         ),
 
         Recipe(
@@ -97,9 +95,9 @@ object RecipeCatalog {
                 "1 cup split moong dal (soaked 4 hours, drained)",
                 "1 green chilli (chopped)",
                 "1 tsp fresh ginger (grated)",
-                "½ tsp cumin seeds",
-                "¼ tsp turmeric",
-                "½ cup fresh spinach (chopped)",
+                "Â½ tsp cumin seeds",
+                "Â¼ tsp turmeric",
+                "Â½ cup fresh spinach (chopped)",
                 "Salt to taste",
                 "1 tsp olive oil (for cooking)"
             ),
@@ -114,7 +112,6 @@ object RecipeCatalog {
             ),
             storageNotes = "Batter keeps in the fridge for 2 days.",
             mealPrepNotes = "Soak dal overnight for a quick morning cook.",
-            metabolicResetScore = 9, isGlucoseConscious = true
         ),
 
         Recipe(
@@ -129,8 +126,8 @@ object RecipeCatalog {
                 "1 medium tomato (diced)",
                 "1 green chilli (finely chopped)",
                 "2 tbsp fresh coriander (chopped)",
-                "¼ tsp turmeric",
-                "¼ tsp cumin",
+                "Â¼ tsp turmeric",
+                "Â¼ tsp cumin",
                 "1 tsp olive oil",
                 "Salt and black pepper to taste"
             ),
@@ -143,23 +140,22 @@ object RecipeCatalog {
                 "Scatter tomato, green chilli, and coriander over one half.",
                 "Fold and cook 2 more minutes. Serve hot."
             ),
-            metabolicResetScore = 8, isGlucoseConscious = true
         ),
 
         Recipe(
             id = "golden_milk_oats",
             name = "Golden Milk Overnight Oats",
-            description = "Overnight oats infused with turmeric and ginger — two of the most potent anti-inflammatory compounds in the kitchen. Creamy, warming, and ready in the morning.",
+            description = "Overnight oats infused with turmeric and ginger â€” two of the most potent anti-inflammatory compounds in the kitchen. Creamy, warming, and ready in the morning.",
             mealType = "Breakfast",
             tags = listOf("Vegan", "High Protein"),
             collection = listOf("Anti-Inflammatory"),
             ingredients = listOf(
-                "½ cup rolled oats",
+                "Â½ cup rolled oats",
                 "1 scoop vanilla protein powder",
                 "1 cup unsweetened almond milk",
-                "½ tsp turmeric",
-                "¼ tsp ground ginger",
-                "¼ tsp cinnamon",
+                "Â½ tsp turmeric",
+                "Â¼ tsp ground ginger",
+                "Â¼ tsp cinnamon",
                 "Pinch of black pepper",
                 "1 tbsp chia seeds",
                 "1 tsp maple syrup"
@@ -189,7 +185,7 @@ object RecipeCatalog {
                 "1 scoop vanilla protein powder",
                 "1 cup unsweetened almond milk",
                 "1 tbsp chia seeds",
-                "½ cup frozen pineapple chunks"
+                "Â½ cup frozen pineapple chunks"
             ),
             calories = 340, proteinGrams = 30.0, carbGrams = 38.0, fatGrams = 7.0, fiberGrams = 6.0,
             prepMinutes = 5, cookMinutes = 0,
@@ -205,18 +201,18 @@ object RecipeCatalog {
         Recipe(
             id = "besan_cheela",
             name = "High-Protein Besan Cheela",
-            description = "Chickpea flour pancakes seasoned with ajwain and asafoetida — a traditional Indian breakfast that packs impressive plant protein and soluble fiber for sustained energy.",
+            description = "Chickpea flour pancakes seasoned with ajwain and asafoetida â€” a traditional Indian breakfast that packs impressive plant protein and soluble fiber for sustained energy.",
             mealType = "Breakfast",
             tags = listOf("Vegan", "High Protein", "Whole Foods"),
             collection = listOf("Metabolic Reset"),
             ingredients = listOf(
                 "1 cup chickpea flour (besan)",
-                "¼ cup low-fat yogurt",
-                "¼ tsp ajwain (carom seeds)",
-                "¼ tsp turmeric",
+                "Â¼ cup low-fat yogurt",
+                "Â¼ tsp ajwain (carom seeds)",
+                "Â¼ tsp turmeric",
                 "Pinch of asafoetida",
-                "½ cup onion (finely diced)",
-                "½ cup tomato (finely diced)",
+                "Â½ cup onion (finely diced)",
+                "Â½ cup tomato (finely diced)",
                 "1 green chilli (minced)",
                 "Salt to taste",
                 "1 tsp olive oil"
@@ -230,7 +226,6 @@ object RecipeCatalog {
                 "Pour a ladleful, spread thin, and cook 3 minutes per side until crisp and golden.",
                 "Serve with green chutney."
             ),
-            metabolicResetScore = 8, isGlucoseConscious = true
         ),
 
         Recipe(
@@ -242,7 +237,7 @@ object RecipeCatalog {
             collection = listOf("Metabolic Reset", "Anti-Inflammatory"),
             ingredients = listOf(
                 "2 slices whole-grain bread",
-                "½ ripe avocado",
+                "Â½ ripe avocado",
                 "2 eggs",
                 "1 tsp lemon juice",
                 "Pinch of red chilli flakes",
@@ -255,10 +250,9 @@ object RecipeCatalog {
                 "Toast bread until golden.",
                 "Mash avocado with lemon juice, salt, and pepper; spread on toast.",
                 "Bring a pot of water to a gentle simmer; add vinegar.",
-                "Crack each egg into a small cup and slide into the water; poach 3–4 minutes.",
+                "Crack each egg into a small cup and slide into the water; poach 3â€“4 minutes.",
                 "Place eggs on avocado toast; season with chilli flakes and serve."
             ),
-            metabolicResetScore = 7, antiInflammatoryScore = 8, isGlucoseConscious = true
         ),
 
         Recipe(
@@ -274,15 +268,15 @@ object RecipeCatalog {
                 "1 cup unsweetened almond milk",
                 "1 egg",
                 "1 tbsp honey",
-                "½ tsp baking powder",
-                "½ tsp cinnamon",
-                "¾ cup mixed frozen berries",
+                "Â½ tsp baking powder",
+                "Â½ tsp cinnamon",
+                "Â¾ cup mixed frozen berries",
                 "1 tbsp walnuts (chopped)"
             ),
             calories = 420, proteinGrams = 30.0, carbGrams = 54.0, fatGrams = 10.0, fiberGrams = 7.0,
             prepMinutes = 10, cookMinutes = 25,
             instructions = listOf(
-                "Preheat oven to 190 °C (375 °F).",
+                "Preheat oven to 190 Â°C (375 Â°F).",
                 "Mix oats, protein powder, baking powder, and cinnamon in a baking dish.",
                 "Whisk together almond milk, egg, and honey; pour over oat mixture.",
                 "Scatter berries and walnuts on top.",
@@ -297,7 +291,7 @@ object RecipeCatalog {
         Recipe(
             id = "paneer_bhurji",
             name = "Paneer Bhurji (Spiced Scrambled Paneer)",
-            description = "The Indian equivalent of scrambled eggs — crumbled paneer tossed with onions, tomatoes, and aromatic spices. High in protein and ready in under 15 minutes.",
+            description = "The Indian equivalent of scrambled eggs â€” crumbled paneer tossed with onions, tomatoes, and aromatic spices. High in protein and ready in under 15 minutes.",
             mealType = "Breakfast",
             tags = listOf("Vegetarian", "High Protein"),
             collection = listOf("Metabolic Reset"),
@@ -306,9 +300,9 @@ object RecipeCatalog {
                 "1 medium onion (finely diced)",
                 "1 medium tomato (diced)",
                 "1 green chilli (minced)",
-                "½ tsp cumin seeds",
-                "¼ tsp turmeric",
-                "½ tsp garam masala",
+                "Â½ tsp cumin seeds",
+                "Â¼ tsp turmeric",
+                "Â½ tsp garam masala",
                 "1 tbsp fresh coriander (chopped)",
                 "1 tsp olive oil",
                 "Salt to taste"
@@ -328,14 +322,14 @@ object RecipeCatalog {
         Recipe(
             id = "quinoa_breakfast_bowl",
             name = "Quinoa Protein Breakfast Bowl",
-            description = "Warm cooked quinoa — a complete plant protein — topped with berries, crushed walnuts, and a drizzle of honey. Sustained energy from morning to midday.",
+            description = "Warm cooked quinoa â€” a complete plant protein â€” topped with berries, crushed walnuts, and a drizzle of honey. Sustained energy from morning to midday.",
             mealType = "Breakfast",
             tags = listOf("Vegan", "High Protein", "Whole Foods"),
             collection = listOf("Metabolic Reset", "Anti-Inflammatory"),
             ingredients = listOf(
-                "½ cup dry quinoa (cooked)",
+                "Â½ cup dry quinoa (cooked)",
                 "1 cup unsweetened almond milk",
-                "½ cup blueberries",
+                "Â½ cup blueberries",
                 "2 tbsp walnuts (crushed)",
                 "1 tbsp chia seeds",
                 "1 scoop vanilla protein powder",
@@ -350,13 +344,12 @@ object RecipeCatalog {
                 "Serve warm."
             ),
             mealPrepNotes = "Cook a large batch of quinoa and refrigerate up to 5 days.",
-            metabolicResetScore = 8, antiInflammatoryScore = 8, isGlucoseConscious = true
         ),
 
         Recipe(
             id = "blueberry_chia_bowl",
             name = "Blueberry Walnut Chia Bowl",
-            description = "A thick overnight chia pudding loaded with omega-3 fats, topped with blueberries and walnuts — two of the most well-researched anti-inflammatory foods.",
+            description = "A thick overnight chia pudding loaded with omega-3 fats, topped with blueberries and walnuts â€” two of the most well-researched anti-inflammatory foods.",
             mealType = "Breakfast",
             tags = listOf("Vegan", "High Protein"),
             collection = listOf("Anti-Inflammatory"),
@@ -364,10 +357,10 @@ object RecipeCatalog {
                 "4 tbsp chia seeds",
                 "1 cup unsweetened almond milk",
                 "1 scoop vanilla protein powder",
-                "½ cup blueberries (fresh or frozen)",
+                "Â½ cup blueberries (fresh or frozen)",
                 "2 tbsp walnuts (chopped)",
                 "1 tsp honey",
-                "¼ tsp cinnamon"
+                "Â¼ tsp cinnamon"
             ),
             calories = 380, proteinGrams = 24.0, carbGrams = 34.0, fatGrams = 18.0, fiberGrams = 14.0,
             prepMinutes = 5, cookMinutes = 0,
@@ -383,17 +376,17 @@ object RecipeCatalog {
         Recipe(
             id = "cottage_cheese_pancakes",
             name = "Cottage Cheese Protein Pancakes",
-            description = "Fluffy, high-protein pancakes made by blending cottage cheese, oats, eggs, and protein powder into a batter. No flour needed — the oats bind everything and keep the glycaemic load low.",
+            description = "Fluffy, high-protein pancakes made by blending cottage cheese, oats, eggs, and protein powder into a batter. No flour needed â€” the oats bind everything and keep the glycaemic load low.",
             mealType = "Breakfast",
             tags = listOf("Vegetarian", "High Protein"),
             collection = listOf("Metabolic Reset"),
             ingredients = listOf(
                 "1 cup low-fat cottage cheese",
                 "2 eggs",
-                "½ cup rolled oats",
+                "Â½ cup rolled oats",
                 "1 scoop vanilla protein powder",
                 "1 tsp baking powder",
-                "½ tsp vanilla extract",
+                "Â½ tsp vanilla extract",
                 "Pinch of salt",
                 "1 tsp olive oil (for cooking)"
             ),
@@ -402,18 +395,17 @@ object RecipeCatalog {
             instructions = listOf(
                 "Blend cottage cheese, eggs, oats, protein powder, baking powder, vanilla, and salt until smooth.",
                 "Heat a non-stick pan over medium heat; brush with olive oil.",
-                "Pour ¼ cup batter per pancake; cook 2–3 minutes until bubbles form, then flip.",
-                "Cook 1–2 minutes more until golden. Serve with berries or a drizzle of honey."
+                "Pour Â¼ cup batter per pancake; cook 2â€“3 minutes until bubbles form, then flip.",
+                "Cook 1â€“2 minutes more until golden. Serve with berries or a drizzle of honey."
             ),
             storageNotes = "Refrigerate cooked pancakes up to 3 days; reheat in a pan or microwave.",
             mealPrepNotes = "Make batter the night before and refrigerate; blend briefly before cooking.",
-            metabolicResetScore = 8, isGlucoseConscious = true
         ),
 
         Recipe(
             id = "cottage_cheese_protein_bowl",
             name = "High-Protein Cottage Cheese Breakfast Bowl",
-            description = "The fastest 44 g protein breakfast in the app: cottage cheese stirred with protein powder, topped with berries and hemp seeds. No cooking, no blending — just stir and eat.",
+            description = "The fastest 44 g protein breakfast in the app: cottage cheese stirred with protein powder, topped with berries and hemp seeds. No cooking, no blending â€” just stir and eat.",
             mealType = "Breakfast",
             tags = listOf("Vegetarian", "High Protein"),
             collection = listOf("Metabolic Reset"),
@@ -421,9 +413,9 @@ object RecipeCatalog {
                 "1 cup low-fat cottage cheese",
                 "1 scoop vanilla protein powder",
                 "2 tbsp hemp seeds",
-                "½ cup mixed berries",
+                "Â½ cup mixed berries",
                 "1 tsp honey",
-                "¼ tsp cinnamon"
+                "Â¼ tsp cinnamon"
             ),
             calories = 390, proteinGrams = 44.0, carbGrams = 32.0, fatGrams = 10.0, fiberGrams = 5.0,
             prepMinutes = 3, cookMinutes = 0,
@@ -432,7 +424,6 @@ object RecipeCatalog {
                 "Top with mixed berries, hemp seeds, and a drizzle of honey.",
                 "Sprinkle cinnamon and serve immediately."
             ),
-            metabolicResetScore = 9, isGlucoseConscious = true
         ),
 
         Recipe(
@@ -445,7 +436,7 @@ object RecipeCatalog {
             ingredients = listOf(
                 "1 cup non-fat Greek yogurt",
                 "1 scoop vanilla protein powder",
-                "½ cup mixed berries",
+                "Â½ cup mixed berries",
                 "2 tbsp low-fat granola",
                 "1 tsp honey"
             ),
@@ -456,7 +447,6 @@ object RecipeCatalog {
                 "Top with mixed berries, granola, and honey.",
                 "Serve immediately."
             ),
-            metabolicResetScore = 8, isGlucoseConscious = true
         ),
 
         Recipe(
@@ -494,11 +484,11 @@ object RecipeCatalog {
             ingredients = listOf(
                 "150g paneer (crumbled)",
                 "3 eggs",
-                "½ cup fresh spinach",
-                "¼ cup bell pepper (diced)",
+                "Â½ cup fresh spinach",
+                "Â¼ cup bell pepper (diced)",
                 "1 green chilli (minced)",
-                "¼ tsp turmeric",
-                "½ tsp cumin",
+                "Â¼ tsp turmeric",
+                "Â½ tsp cumin",
                 "1 tsp olive oil",
                 "Salt and black pepper to taste"
             ),
@@ -506,12 +496,11 @@ object RecipeCatalog {
             prepMinutes = 5, cookMinutes = 10,
             instructions = listOf(
                 "Heat olive oil in a non-stick pan over medium heat.",
-                "Sauté bell pepper and chilli 2 minutes; add spinach and wilt 1 minute.",
+                "SautÃ© bell pepper and chilli 2 minutes; add spinach and wilt 1 minute.",
                 "Add crumbled paneer, turmeric, and cumin; stir 2 minutes.",
                 "Whisk eggs, pour over paneer mixture; scramble gently until just set.",
                 "Season and serve immediately."
             ),
-            metabolicResetScore = 9, isGlucoseConscious = true
         ),
 
         Recipe(
@@ -525,8 +514,8 @@ object RecipeCatalog {
                 "1 cup non-fat Greek yogurt",
                 "1 scoop vanilla protein powder",
                 "1 cup frozen mango chunks",
-                "½ cup oat milk",
-                "¼ tsp cardamom",
+                "Â½ cup oat milk",
+                "Â¼ tsp cardamom",
                 "Pinch of saffron (optional)",
                 "1 tsp honey"
             ),
@@ -537,13 +526,12 @@ object RecipeCatalog {
                 "Blend on high 45 seconds until smooth and creamy.",
                 "Taste; add honey if needed. Serve cold."
             ),
-            metabolicResetScore = 8, isGlucoseConscious = true
         ),
 
         Recipe(
             id = "hemp_tofu_power_breakfast",
             name = "Hemp & Tofu High-Protein Breakfast Bowl",
-            description = "Silken tofu blended smooth and folded with hemp seeds and plant protein powder — a completely dairy-free, egg-free breakfast hitting 38 g of protein. Hemp seeds are the only nut-free, soy-independent way to stack plant protein this high.",
+            description = "Silken tofu blended smooth and folded with hemp seeds and plant protein powder â€” a completely dairy-free, egg-free breakfast hitting 38 g of protein. Hemp seeds are the only nut-free, soy-independent way to stack plant protein this high.",
             mealType = "Breakfast",
             tags = listOf("Vegan", "High Protein"),
             collection = listOf("Anti-Inflammatory"),
@@ -551,10 +539,10 @@ object RecipeCatalog {
                 "200g silken tofu",
                 "1 scoop vanilla plant protein powder",
                 "3 tbsp hemp seeds",
-                "½ cup mixed berries",
-                "½ cup oat milk",
+                "Â½ cup mixed berries",
+                "Â½ cup oat milk",
                 "1 tsp maple syrup",
-                "¼ tsp cinnamon"
+                "Â¼ tsp cinnamon"
             ),
             calories = 430, proteinGrams = 38.0, carbGrams = 32.0, fatGrams = 16.0, fiberGrams = 5.0,
             prepMinutes = 5, cookMinutes = 0,
@@ -569,44 +557,43 @@ object RecipeCatalog {
         Recipe(
             id = "protein_cottage_oatmeal",
             name = "Protein-Boosted Cottage Cheese Oatmeal",
-            description = "Cottage cheese stirred into warm oatmeal is the oldest protein-stacking trick in bodybuilding — and it works. The mild flavour disappears into the oats while pushing protein to 38 g with just two key ingredients.",
+            description = "Cottage cheese stirred into warm oatmeal is the oldest protein-stacking trick in bodybuilding â€” and it works. The mild flavour disappears into the oats while pushing protein to 38 g with just two key ingredients.",
             mealType = "Breakfast",
             tags = listOf("Vegetarian", "High Protein"),
             collection = listOf("Metabolic Reset"),
             ingredients = listOf(
-                "½ cup rolled oats",
-                "½ cup low-fat cottage cheese",
+                "Â½ cup rolled oats",
+                "Â½ cup low-fat cottage cheese",
                 "1 scoop vanilla protein powder",
-                "¾ cup oat milk",
+                "Â¾ cup oat milk",
                 "1 banana (sliced)",
                 "1 tsp honey",
-                "¼ tsp cinnamon"
+                "Â¼ tsp cinnamon"
             ),
             calories = 430, proteinGrams = 38.0, carbGrams = 58.0, fatGrams = 6.0, fiberGrams = 5.0,
             prepMinutes = 2, cookMinutes = 5,
             instructions = listOf(
-                "Cook oats in oat milk over medium heat 3–4 minutes, stirring.",
+                "Cook oats in oat milk over medium heat 3â€“4 minutes, stirring.",
                 "Remove from heat; stir in cottage cheese and protein powder until smooth.",
                 "Top with banana, honey, and cinnamon. Serve warm."
             ),
-            metabolicResetScore = 8, isGlucoseConscious = true
         ),
 
-        // ── LUNCHES ───────────────────────────────────────────────────────────
+        // â”€â”€ LUNCHES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
         Recipe(
             id = "paneer_burrito_bowl",
             name = "Paneer Burrito Bowl",
-            description = "Pan-seared golden paneer cubes over brown rice and black beans — a hearty high-protein bowl with protein from two sources and blood-sugar-friendly fiber.",
+            description = "Pan-seared golden paneer cubes over brown rice and black beans â€” a hearty high-protein bowl with protein from two sources and blood-sugar-friendly fiber.",
             mealType = "Lunch",
             tags = listOf("Vegetarian", "High Protein"),
             collection = listOf("Metabolic Reset"),
             ingredients = listOf(
                 "150g paneer (cubed)",
-                "½ cup cooked brown rice",
-                "½ cup black beans (rinsed)",
-                "½ cup tomato salsa",
-                "¼ cup low-fat yogurt",
+                "Â½ cup cooked brown rice",
+                "Â½ cup black beans (rinsed)",
+                "Â½ cup tomato salsa",
+                "Â¼ cup low-fat yogurt",
                 "1 tbsp olive oil",
                 "1 tsp cumin",
                 "1 tsp smoked paprika",
@@ -616,11 +603,10 @@ object RecipeCatalog {
             prepMinutes = 10, cookMinutes = 12,
             instructions = listOf(
                 "Toss paneer cubes with cumin, paprika, and salt.",
-                "Sauté in olive oil over medium-high heat until golden on all sides, about 5 minutes.",
+                "SautÃ© in olive oil over medium-high heat until golden on all sides, about 5 minutes.",
                 "Warm rice and beans separately.",
                 "Build bowl: rice base, beans, paneer, salsa, and yogurt."
             ),
-            metabolicResetScore = 8, isGlucoseConscious = true
         ),
 
         Recipe(
@@ -634,7 +620,7 @@ object RecipeCatalog {
                 "1 cup cooked chickpeas",
                 "1 cup cucumber (diced)",
                 "1 cup cherry tomatoes (halved)",
-                "¼ cup red onion (thinly sliced)",
+                "Â¼ cup red onion (thinly sliced)",
                 "2 tbsp extra-virgin olive oil",
                 "1 tbsp lemon juice",
                 "1 tsp fresh mint (chopped)",
@@ -648,23 +634,22 @@ object RecipeCatalog {
                 "Toss salad with dressing and chill 5 minutes before serving."
             ),
             storageNotes = "Keeps refrigerated for 2 days; add dressing just before serving.",
-            metabolicResetScore = 8, antiInflammatoryScore = 8, isGlucoseConscious = true
         ),
 
         Recipe(
             id = "rajma_salad",
             name = "Spiced Rajma Bean Salad",
-            description = "Cooked red kidney beans (rajma) tossed with crisp vegetables, roasted cumin, and fresh lime — a protein-and-fiber powerhouse that keeps hunger at bay.",
+            description = "Cooked red kidney beans (rajma) tossed with crisp vegetables, roasted cumin, and fresh lime â€” a protein-and-fiber powerhouse that keeps hunger at bay.",
             mealType = "Lunch",
             tags = listOf("Vegan", "High Protein", "Whole Foods"),
             collection = listOf("Metabolic Reset"),
             ingredients = listOf(
                 "1 cup cooked red kidney beans",
-                "½ cucumber (diced)",
+                "Â½ cucumber (diced)",
                 "1 medium tomato (diced)",
-                "¼ cup red onion (diced)",
+                "Â¼ cup red onion (diced)",
                 "1 tsp roasted cumin powder",
-                "½ tsp chaat masala",
+                "Â½ tsp chaat masala",
                 "2 tbsp lime juice",
                 "2 tbsp fresh coriander (chopped)",
                 "Salt to taste"
@@ -677,7 +662,6 @@ object RecipeCatalog {
                 "Toss with cumin, chaat masala, lime juice, and coriander.",
                 "Season with salt and serve immediately or chilled."
             ),
-            metabolicResetScore = 9, isGlucoseConscious = true
         ),
 
         Recipe(
@@ -688,26 +672,25 @@ object RecipeCatalog {
             tags = listOf("Vegan", "High Protein", "Whole Foods"),
             collection = listOf("Metabolic Reset", "Anti-Inflammatory"),
             ingredients = listOf(
-                "½ cup dry quinoa (cooked)",
+                "Â½ cup dry quinoa (cooked)",
                 "1 cup chickpeas (cooked)",
                 "2 cups baby spinach",
-                "½ cup cherry tomatoes (halved)",
+                "Â½ cup cherry tomatoes (halved)",
                 "2 tbsp tahini",
                 "1 tbsp lemon juice",
                 "1 garlic clove (minced)",
                 "1 tsp olive oil",
-                "½ tsp smoked paprika",
+                "Â½ tsp smoked paprika",
                 "Salt to taste"
             ),
             calories = 490, proteinGrams = 24.0, carbGrams = 62.0, fatGrams = 16.0, fiberGrams = 12.0,
             prepMinutes = 10, cookMinutes = 25,
             instructions = listOf(
-                "Toss chickpeas with olive oil, paprika, and salt; roast at 200 °C for 20 minutes until crispy.",
+                "Toss chickpeas with olive oil, paprika, and salt; roast at 200 Â°C for 20 minutes until crispy.",
                 "Cook quinoa per packet instructions.",
                 "Whisk tahini with lemon juice, garlic, and 2 tbsp water to make dressing.",
                 "Build bowl: quinoa, spinach, tomatoes, chickpeas; drizzle with dressing."
             ),
-            metabolicResetScore = 9, antiInflammatoryScore = 9, isGlucoseConscious = true
         ),
 
         Recipe(
@@ -718,7 +701,7 @@ object RecipeCatalog {
             tags = listOf("Vegan", "High Protein", "Whole Foods"),
             collection = listOf("Anti-Inflammatory"),
             ingredients = listOf(
-                "½ cup red lentils (rinsed)",
+                "Â½ cup red lentils (rinsed)",
                 "1 can light coconut milk",
                 "1 cup vegetable broth",
                 "1 tsp turmeric",
@@ -732,7 +715,7 @@ object RecipeCatalog {
             calories = 390, proteinGrams = 20.0, carbGrams = 48.0, fatGrams = 12.0, fiberGrams = 14.0,
             prepMinutes = 5, cookMinutes = 25,
             instructions = listOf(
-                "Heat olive oil; sauté garlic and ginger 2 minutes.",
+                "Heat olive oil; sautÃ© garlic and ginger 2 minutes.",
                 "Add turmeric, lentils, coconut milk, and broth; bring to a boil.",
                 "Reduce heat and simmer 20 minutes until lentils are very soft.",
                 "Stir in spinach until wilted; season and serve with lemon."
@@ -756,20 +739,19 @@ object RecipeCatalog {
                 "1 tsp fresh ginger (grated)",
                 "1 tsp cumin",
                 "1 tsp coriander powder",
-                "½ tsp turmeric",
-                "½ tsp garam masala",
+                "Â½ tsp turmeric",
+                "Â½ tsp garam masala",
                 "1 tbsp olive oil",
                 "Salt to taste"
             ),
             calories = 380, proteinGrams = 18.0, carbGrams = 50.0, fatGrams = 10.0, fiberGrams = 13.0,
             prepMinutes = 5, cookMinutes = 20,
             instructions = listOf(
-                "Heat oil; sauté garlic and ginger for 2 minutes.",
+                "Heat oil; sautÃ© garlic and ginger for 2 minutes.",
                 "Add cumin, coriander, and turmeric; stir 30 seconds.",
                 "Add tomatoes and chickpeas; simmer 12 minutes.",
                 "Stir in spinach until wilted; add garam masala, season, and serve with brown rice."
             ),
-            antiInflammatoryScore = 9, isGlucoseConscious = true
         ),
 
         Recipe(
@@ -781,7 +763,7 @@ object RecipeCatalog {
             collection = listOf("Anti-Inflammatory"),
             ingredients = listOf(
                 "1 medium sweet potato (cubed)",
-                "½ cup red lentils (cooked)",
+                "Â½ cup red lentils (cooked)",
                 "2 tbsp tahini",
                 "1 tbsp lemon juice",
                 "1 tsp smoked paprika",
@@ -792,7 +774,7 @@ object RecipeCatalog {
             calories = 450, proteinGrams = 18.0, carbGrams = 66.0, fatGrams = 12.0, fiberGrams = 14.0,
             prepMinutes = 10, cookMinutes = 25,
             instructions = listOf(
-                "Toss sweet potato with olive oil, paprika, salt; roast at 200 °C for 25 minutes.",
+                "Toss sweet potato with olive oil, paprika, salt; roast at 200 Â°C for 25 minutes.",
                 "Cook red lentils in 1.5 cups water until soft, about 15 minutes.",
                 "Whisk tahini with lemon juice and 2 tbsp water to make dressing.",
                 "Plate spinach, lentils, roasted sweet potato; drizzle with tahini dressing."
@@ -803,16 +785,16 @@ object RecipeCatalog {
         Recipe(
             id = "greek_paneer_bowl",
             name = "Greek-Style Paneer & Quinoa Bowl",
-            description = "Pan-seared paneer over quinoa with olives, cucumber, and a lemon-herb dressing — a Mediterranean-Indian fusion bowl high in protein and satisfying healthy fats.",
+            description = "Pan-seared paneer over quinoa with olives, cucumber, and a lemon-herb dressing â€” a Mediterranean-Indian fusion bowl high in protein and satisfying healthy fats.",
             mealType = "Lunch",
             tags = listOf("Vegetarian", "High Protein"),
             collection = listOf("Metabolic Reset"),
             ingredients = listOf(
                 "150g paneer (cubed)",
-                "½ cup dry quinoa (cooked)",
-                "¼ cup kalamata olives (halved)",
+                "Â½ cup dry quinoa (cooked)",
+                "Â¼ cup kalamata olives (halved)",
                 "1 cup cucumber (diced)",
-                "½ cup cherry tomatoes (halved)",
+                "Â½ cup cherry tomatoes (halved)",
                 "2 tbsp extra-virgin olive oil",
                 "1 tbsp lemon juice",
                 "1 tsp dried oregano",
@@ -833,15 +815,15 @@ object RecipeCatalog {
         Recipe(
             id = "edamame_rice_bowl",
             name = "Ginger Edamame & Brown Rice Bowl",
-            description = "Shelled edamame tossed with sesame-ginger dressing over brown rice — a complete protein with anti-inflammatory ginger and heart-healthy omega-6 from edamame.",
+            description = "Shelled edamame tossed with sesame-ginger dressing over brown rice â€” a complete protein with anti-inflammatory ginger and heart-healthy omega-6 from edamame.",
             mealType = "Lunch",
             tags = listOf("Vegan", "High Protein"),
             collection = listOf("Anti-Inflammatory"),
             ingredients = listOf(
                 "1 cup shelled edamame (cooked)",
-                "½ cup cooked brown rice",
+                "Â½ cup cooked brown rice",
                 "1 cup cucumber (sliced)",
-                "½ cup shredded purple cabbage",
+                "Â½ cup shredded purple cabbage",
                 "1 tsp fresh ginger (grated)",
                 "1 tbsp low-sodium soy sauce",
                 "1 tbsp sesame oil",
@@ -863,20 +845,20 @@ object RecipeCatalog {
         Recipe(
             id = "soya_chunk_salad",
             name = "Soya Chunk & Vegetable Protein Salad",
-            description = "Rehydrated soya chunks — one of the highest plant protein sources — tossed with crisp vegetables, herbs, and a tangy lime dressing.",
+            description = "Rehydrated soya chunks â€” one of the highest plant protein sources â€” tossed with crisp vegetables, herbs, and a tangy lime dressing.",
             mealType = "Lunch",
             tags = listOf("Vegan", "High Protein"),
             collection = listOf("Metabolic Reset"),
             ingredients = listOf(
                 "1 cup soya chunks (mini)",
-                "½ cup cucumber (diced)",
+                "Â½ cup cucumber (diced)",
                 "1 medium tomato (diced)",
-                "¼ cup red onion (diced)",
+                "Â¼ cup red onion (diced)",
                 "2 tbsp fresh coriander (chopped)",
                 "1 tsp olive oil",
                 "2 tbsp lime juice",
-                "½ tsp chilli powder",
-                "½ tsp chaat masala",
+                "Â½ tsp chilli powder",
+                "Â½ tsp chaat masala",
                 "Salt to taste"
             ),
             calories = 340, proteinGrams = 32.0, carbGrams = 24.0, fatGrams = 6.0, fiberGrams = 8.0,
@@ -887,7 +869,6 @@ object RecipeCatalog {
                 "Toss with olive oil, lime juice, chilli powder, chaat masala, and salt.",
                 "Garnish with coriander and serve."
             ),
-            metabolicResetScore = 9, isGlucoseConscious = true
         ),
 
         Recipe(
@@ -910,7 +891,7 @@ object RecipeCatalog {
             calories = 420, proteinGrams = 24.0, carbGrams = 28.0, fatGrams = 26.0, fiberGrams = 6.0,
             prepMinutes = 10, cookMinutes = 30,
             instructions = listOf(
-                "Toss beetroot cubes with a little olive oil; roast at 200 °C for 25–30 minutes until tender.",
+                "Toss beetroot cubes with a little olive oil; roast at 200 Â°C for 25â€“30 minutes until tender.",
                 "Sear paneer in a dry pan until golden.",
                 "Whisk olive oil, balsamic, and honey for dressing.",
                 "Arrange rocket, beets, and paneer on a plate; scatter walnuts and drizzle dressing."
@@ -931,23 +912,22 @@ object RecipeCatalog {
                 "1 medium onion (diced)",
                 "2 garlic cloves (minced)",
                 "1 tsp chole masala",
-                "½ tsp cumin",
-                "½ tsp turmeric",
-                "½ cup cooked brown rice",
-                "½ cup low-fat yogurt",
-                "¼ cup cucumber (diced)",
+                "Â½ tsp cumin",
+                "Â½ tsp turmeric",
+                "Â½ cup cooked brown rice",
+                "Â½ cup low-fat yogurt",
+                "Â¼ cup cucumber (diced)",
                 "1 tbsp olive oil"
             ),
             calories = 490, proteinGrams = 22.0, carbGrams = 72.0, fatGrams = 10.0, fiberGrams = 14.0,
             prepMinutes = 10, cookMinutes = 20,
             instructions = listOf(
-                "Heat oil; sauté onion 5 minutes, add garlic and cook 2 more.",
+                "Heat oil; sautÃ© onion 5 minutes, add garlic and cook 2 more.",
                 "Add cumin, turmeric, and chole masala; stir 30 seconds.",
                 "Add tomatoes and chickpeas; simmer 15 minutes.",
                 "Mix yogurt with cucumber for raita.",
                 "Serve chickpea masala over brown rice with raita alongside."
             ),
-            metabolicResetScore = 9, isGlucoseConscious = true
         ),
 
         Recipe(
@@ -984,7 +964,7 @@ object RecipeCatalog {
         Recipe(
             id = "double_paneer_masala_bowl",
             name = "Double Paneer Masala Power Bowl",
-            description = "250 g of paneer — the highest paneer serving in this catalog — simmered in a spiced tomato masala with edamame for a complete amino acid profile. This bowl is designed for days when protein targets are hardest to hit.",
+            description = "250 g of paneer â€” the highest paneer serving in this catalog â€” simmered in a spiced tomato masala with edamame for a complete amino acid profile. This bowl is designed for days when protein targets are hardest to hit.",
             mealType = "Lunch",
             tags = listOf("Vegetarian", "High Protein"),
             collection = listOf("Metabolic Reset"),
@@ -997,33 +977,32 @@ object RecipeCatalog {
                 "1 tsp fresh ginger (grated)",
                 "1 tsp cumin",
                 "1 tsp coriander powder",
-                "½ tsp garam masala",
-                "½ tsp turmeric",
+                "Â½ tsp garam masala",
+                "Â½ tsp turmeric",
                 "1 tbsp olive oil",
                 "Salt to taste"
             ),
             calories = 560, proteinGrams = 44.0, carbGrams = 30.0, fatGrams = 30.0, fiberGrams = 10.0,
             prepMinutes = 10, cookMinutes = 18,
             instructions = listOf(
-                "Pan-sear paneer cubes in ½ tbsp oil until golden on all sides; set aside.",
-                "In the same pan, heat remaining oil; sauté onion 5 minutes until golden.",
+                "Pan-sear paneer cubes in Â½ tbsp oil until golden on all sides; set aside.",
+                "In the same pan, heat remaining oil; sautÃ© onion 5 minutes until golden.",
                 "Add garlic, ginger, cumin, coriander, and turmeric; cook 2 minutes.",
                 "Add tomatoes and simmer 8 minutes until sauce thickens.",
                 "Return paneer; add edamame and garam masala. Heat through and serve."
             ),
-            metabolicResetScore = 9, isGlucoseConscious = true
         ),
 
         Recipe(
             id = "tempeh_quinoa_bowl",
             name = "Teriyaki Tempeh & Quinoa Bowl",
-            description = "200 g of tempeh — the highest vegan protein per gram of any whole food — glazed in a quick teriyaki sauce over fluffy quinoa. At 42 g of protein, this bowl rivals most meat-based lunches.",
+            description = "200 g of tempeh â€” the highest vegan protein per gram of any whole food â€” glazed in a quick teriyaki sauce over fluffy quinoa. At 42 g of protein, this bowl rivals most meat-based lunches.",
             mealType = "Lunch",
             tags = listOf("Vegan", "High Protein"),
             collection = listOf("Metabolic Reset"),
             ingredients = listOf(
                 "200g tempeh (sliced)",
-                "½ cup dry quinoa (cooked)",
+                "Â½ cup dry quinoa (cooked)",
                 "2 cups baby spinach",
                 "1 cup cucumber (sliced)",
                 "2 tbsp low-sodium soy sauce",
@@ -1048,7 +1027,7 @@ object RecipeCatalog {
         Recipe(
             id = "large_soy_chunk_masala",
             name = "Large Soy Chunk Masala Bowl",
-            description = "75 g of dry soy chunks — the largest soy serving in the catalog — cooked in a rich tomato masala. Soy protein isolate is 90% protein by weight; this bowl delivers 42 g from a single plant source.",
+            description = "75 g of dry soy chunks â€” the largest soy serving in the catalog â€” cooked in a rich tomato masala. Soy protein isolate is 90% protein by weight; this bowl delivers 42 g from a single plant source.",
             mealType = "Lunch",
             tags = listOf("Vegan", "High Protein"),
             collection = listOf("Metabolic Reset"),
@@ -1059,9 +1038,9 @@ object RecipeCatalog {
                 "2 garlic cloves (minced)",
                 "1 tsp fresh ginger (grated)",
                 "1 tsp curry powder",
-                "½ tsp cumin",
-                "½ tsp turmeric",
-                "½ cup cooked brown rice",
+                "Â½ tsp cumin",
+                "Â½ tsp turmeric",
+                "Â½ cup cooked brown rice",
                 "1 tbsp olive oil",
                 "Salt and coriander to garnish"
             ),
@@ -1069,32 +1048,31 @@ object RecipeCatalog {
             prepMinutes = 15, cookMinutes = 20,
             instructions = listOf(
                 "Soak soy chunks in boiling water 10 minutes; drain and squeeze out excess moisture.",
-                "Heat oil; sauté onion 5 minutes, add garlic and ginger 2 minutes.",
+                "Heat oil; sautÃ© onion 5 minutes, add garlic and ginger 2 minutes.",
                 "Add cumin, turmeric, and curry powder; stir 30 seconds.",
                 "Add tomatoes and simmer 8 minutes until sauce thickens.",
                 "Add soy chunks; simmer 8 minutes. Serve over brown rice."
             ),
             storageNotes = "Refrigerates up to 3 days; flavour improves overnight.",
-            metabolicResetScore = 9, isGlucoseConscious = true
         ),
 
         Recipe(
             id = "paneer_chickpea_power_bowl",
             name = "Paneer & Roasted Chickpea Power Bowl",
-            description = "Dual protein sources: golden pan-seared paneer and crispy roasted chickpeas combine for 45 g of protein — the highest-protein vegetarian lunch in the catalog. Brown rice and vegetables round out the macros.",
+            description = "Dual protein sources: golden pan-seared paneer and crispy roasted chickpeas combine for 45 g of protein â€” the highest-protein vegetarian lunch in the catalog. Brown rice and vegetables round out the macros.",
             mealType = "Lunch",
             tags = listOf("Vegetarian", "High Protein"),
             collection = listOf("Metabolic Reset"),
             ingredients = listOf(
                 "200g paneer (cubed)",
                 "1 cup cooked chickpeas",
-                "½ cup cooked brown rice",
+                "Â½ cup cooked brown rice",
                 "2 cups baby spinach",
-                "½ cup cherry tomatoes (halved)",
+                "Â½ cup cherry tomatoes (halved)",
                 "1 tbsp olive oil",
                 "1 tsp smoked paprika",
-                "½ tsp cumin",
-                "½ tsp garlic powder",
+                "Â½ tsp cumin",
+                "Â½ tsp garlic powder",
                 "1 tbsp lemon juice",
                 "1 tbsp tahini",
                 "Salt to taste"
@@ -1102,25 +1080,24 @@ object RecipeCatalog {
             calories = 560, proteinGrams = 45.0, carbGrams = 50.0, fatGrams = 22.0, fiberGrams = 10.0,
             prepMinutes = 10, cookMinutes = 25,
             instructions = listOf(
-                "Toss chickpeas with ½ tbsp olive oil, paprika, cumin, and salt; roast at 200 °C for 20 minutes until crispy.",
+                "Toss chickpeas with Â½ tbsp olive oil, paprika, cumin, and salt; roast at 200 Â°C for 20 minutes until crispy.",
                 "Pan-sear paneer in remaining olive oil until golden on all sides.",
                 "Whisk tahini with lemon juice and 2 tbsp water for dressing.",
                 "Build bowl: brown rice, spinach, tomatoes, chickpeas, paneer; drizzle dressing."
             ),
-            metabolicResetScore = 9, isGlucoseConscious = true
         ),
 
         Recipe(
             id = "edamame_tofu_power_bowl",
             name = "Edamame & Crispy Tofu Power Bowl",
-            description = "Two soy protein sources together: crispy pan-fried tofu and warm edamame over quinoa with hemp seeds for extra complete protein. Entirely vegan and soy-based — the bowl for soy-tolerant plant-protein maximisers.",
+            description = "Two soy protein sources together: crispy pan-fried tofu and warm edamame over quinoa with hemp seeds for extra complete protein. Entirely vegan and soy-based â€” the bowl for soy-tolerant plant-protein maximisers.",
             mealType = "Lunch",
             tags = listOf("Vegan", "High Protein"),
             collection = listOf("Anti-Inflammatory"),
             ingredients = listOf(
                 "200g firm tofu (pressed, cubed)",
                 "1 cup shelled edamame (cooked)",
-                "½ cup dry quinoa (cooked)",
+                "Â½ cup dry quinoa (cooked)",
                 "2 tbsp hemp seeds",
                 "1 cup cucumber (sliced)",
                 "2 tbsp low-sodium soy sauce",
@@ -1143,13 +1120,13 @@ object RecipeCatalog {
         Recipe(
             id = "high_protein_tempeh_bowl",
             name = "Smoky Tempeh & Brown Rice Bowl",
-            description = "Tempeh marinated in smoked paprika and tamari, pan-crisped, served over brown rice with roasted peppers. 40 g of complete vegan protein from tempeh alone — the second-highest-protein vegan lunch in the catalog.",
+            description = "Tempeh marinated in smoked paprika and tamari, pan-crisped, served over brown rice with roasted peppers. 40 g of complete vegan protein from tempeh alone â€” the second-highest-protein vegan lunch in the catalog.",
             mealType = "Lunch",
             tags = listOf("Vegan", "High Protein"),
             collection = listOf("Metabolic Reset"),
             ingredients = listOf(
                 "200g tempeh (sliced)",
-                "½ cup cooked brown rice",
+                "Â½ cup cooked brown rice",
                 "1 red bell pepper (sliced)",
                 "2 cups baby spinach",
                 "1 tbsp tamari or soy sauce",
@@ -1163,26 +1140,25 @@ object RecipeCatalog {
             prepMinutes = 10, cookMinutes = 15,
             instructions = listOf(
                 "Whisk tamari, smoked paprika, and apple cider vinegar; toss with tempeh slices.",
-                "Pan-fry tempeh in olive oil over medium-high heat 4–5 minutes per side until crispy.",
+                "Pan-fry tempeh in olive oil over medium-high heat 4â€“5 minutes per side until crispy.",
                 "Char bell pepper strips in a dry pan or under the grill.",
                 "Serve tempeh over brown rice with spinach and charred pepper; finish with lemon juice."
             ),
-            metabolicResetScore = 8, isGlucoseConscious = true
         ),
 
         Recipe(
             id = "paneer_edamame_bowl",
             name = "Paneer & Edamame Super Bowl",
-            description = "Paneer and edamame are two of the densest vegetarian protein sources available. Together they hit 44 g of protein in one lunch bowl — with a sesame-ginger dressing tying the Indian-Japanese fusion together.",
+            description = "Paneer and edamame are two of the densest vegetarian protein sources available. Together they hit 44 g of protein in one lunch bowl â€” with a sesame-ginger dressing tying the Indian-Japanese fusion together.",
             mealType = "Lunch",
             tags = listOf("Vegetarian", "High Protein"),
             collection = listOf("Anti-Inflammatory"),
             ingredients = listOf(
                 "150g paneer (cubed, pan-seared)",
                 "1 cup shelled edamame (cooked)",
-                "½ cup cooked brown rice",
+                "Â½ cup cooked brown rice",
                 "1 cup cucumber (sliced)",
-                "½ cup shredded purple cabbage",
+                "Â½ cup shredded purple cabbage",
                 "1 tbsp low-sodium soy sauce",
                 "1 tsp sesame oil",
                 "1 tsp grated ginger",
@@ -1203,7 +1179,7 @@ object RecipeCatalog {
         Recipe(
             id = "large_soy_chunk_curry",
             name = "High-Protein Soy Chunk Tikka Curry",
-            description = "80 g of dry soy chunks rehydrated in a rich tikka-style curry. Soy chunks are among the cheapest and highest-density plant protein sources on the market — this bowl uses the maximum practical serving for a lunch portion.",
+            description = "80 g of dry soy chunks rehydrated in a rich tikka-style curry. Soy chunks are among the cheapest and highest-density plant protein sources on the market â€” this bowl uses the maximum practical serving for a lunch portion.",
             mealType = "Lunch",
             tags = listOf("Vegan", "High Protein"),
             collection = listOf("Metabolic Reset"),
@@ -1214,8 +1190,8 @@ object RecipeCatalog {
                 "2 garlic cloves (minced)",
                 "1 tsp fresh ginger (grated)",
                 "1 tsp tikka masala",
-                "½ tsp turmeric",
-                "½ tsp cumin",
+                "Â½ tsp turmeric",
+                "Â½ tsp cumin",
                 "1 tbsp olive oil",
                 "Salt and fresh coriander to garnish"
             ),
@@ -1223,12 +1199,11 @@ object RecipeCatalog {
             prepMinutes = 15, cookMinutes = 20,
             instructions = listOf(
                 "Soak soy chunks in boiling water 10 minutes; drain and squeeze dry.",
-                "Heat oil; sauté onion 5 minutes, add garlic, ginger, cumin, and turmeric.",
+                "Heat oil; sautÃ© onion 5 minutes, add garlic, ginger, cumin, and turmeric.",
                 "Add tomatoes and tikka masala; simmer 8 minutes.",
                 "Add soy chunks; simmer 10 minutes until flavours absorb. Garnish with coriander."
             ),
             storageNotes = "Refrigerates up to 3 days.",
-            metabolicResetScore = 10, isGlucoseConscious = true
         ),
 
         Recipe(
@@ -1240,14 +1215,14 @@ object RecipeCatalog {
             collection = listOf("Metabolic Reset"),
             ingredients = listOf(
                 "1 cup low-fat cottage cheese",
-                "½ cup dry quinoa (cooked)",
+                "Â½ cup dry quinoa (cooked)",
                 "1 cup cooked chickpeas",
                 "1 cup cherry tomatoes (halved)",
                 "1 cup cucumber (diced)",
                 "2 tbsp fresh coriander (chopped)",
                 "1 tbsp lemon juice",
                 "1 tsp olive oil",
-                "½ tsp cumin",
+                "Â½ tsp cumin",
                 "Salt and pepper to taste"
             ),
             calories = 480, proteinGrams = 36.0, carbGrams = 58.0, fatGrams = 8.0, fiberGrams = 12.0,
@@ -1257,10 +1232,9 @@ object RecipeCatalog {
                 "Add cherry tomatoes, cucumber, chickpeas, and coriander; toss.",
                 "Spoon cottage cheese over the top just before serving."
             ),
-            metabolicResetScore = 8, isGlucoseConscious = true
         ),
 
-        // ── DINNERS ───────────────────────────────────────────────────────────
+        // â”€â”€ DINNERS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
         Recipe(
             id = "tofu_stir_fry",
@@ -1272,8 +1246,8 @@ object RecipeCatalog {
             ingredients = listOf(
                 "200g firm tofu (pressed, cubed)",
                 "2 cups broccoli florets",
-                "½ cup snap peas",
-                "½ cup cooked brown rice",
+                "Â½ cup snap peas",
+                "Â½ cup cooked brown rice",
                 "2 tbsp low-sodium soy sauce",
                 "1 tbsp sesame oil",
                 "1 tsp fresh ginger (grated)",
@@ -1285,7 +1259,7 @@ object RecipeCatalog {
             instructions = listOf(
                 "Press tofu dry; toss with cornstarch and a pinch of salt.",
                 "Pan-fry in sesame oil over high heat until golden, about 5 minutes; set aside.",
-                "In the same pan, sauté garlic and ginger 1 minute.",
+                "In the same pan, sautÃ© garlic and ginger 1 minute.",
                 "Add broccoli and snap peas; stir-fry 4 minutes.",
                 "Return tofu; add soy sauce, toss to coat. Serve over brown rice."
             ),
@@ -1300,9 +1274,9 @@ object RecipeCatalog {
             tags = listOf("Vegan", "High Protein", "Whole Foods"),
             collection = listOf("Metabolic Reset", "Anti-Inflammatory"),
             ingredients = listOf(
-                "½ cup red lentils (rinsed)",
-                "½ cup basmati rice",
-                "1½ cups vegetable broth",
+                "Â½ cup red lentils (rinsed)",
+                "Â½ cup basmati rice",
+                "1Â½ cups vegetable broth",
                 "1 tsp cumin seeds",
                 "1 tsp turmeric",
                 "2 garlic cloves (minced)",
@@ -1319,7 +1293,6 @@ object RecipeCatalog {
                 "Season well; serve with lemon wedge."
             ),
             storageNotes = "Refrigerates up to 4 days; add a splash of water when reheating.",
-            metabolicResetScore = 8, antiInflammatoryScore = 9, isGlucoseConscious = true
         ),
 
         Recipe(
@@ -1330,14 +1303,14 @@ object RecipeCatalog {
             tags = listOf("Vegan", "High Protein", "Whole Foods"),
             collection = listOf("Metabolic Reset"),
             ingredients = listOf(
-                "½ cup red lentils (rinsed)",
+                "Â½ cup red lentils (rinsed)",
                 "1 cup fresh fenugreek leaves (methi, roughly chopped)",
                 "1 medium tomato (diced)",
-                "½ onion (diced)",
+                "Â½ onion (diced)",
                 "2 garlic cloves (minced)",
                 "1 tsp cumin seeds",
-                "½ tsp turmeric",
-                "½ tsp coriander powder",
+                "Â½ tsp turmeric",
+                "Â½ tsp coriander powder",
                 "1 tbsp olive oil",
                 "Salt to taste"
             ),
@@ -1345,12 +1318,11 @@ object RecipeCatalog {
             prepMinutes = 10, cookMinutes = 25,
             instructions = listOf(
                 "Cook lentils in 2 cups water with turmeric until soft, about 15 minutes.",
-                "Heat oil; sauté cumin seeds, then onion until golden.",
+                "Heat oil; sautÃ© cumin seeds, then onion until golden.",
                 "Add garlic, tomato, and coriander; cook until tomatoes break down.",
                 "Add methi leaves and cook 3 minutes.",
                 "Combine with cooked lentils; simmer together 5 minutes. Season and serve."
             ),
-            metabolicResetScore = 10, isGlucoseConscious = true
         ),
 
         Recipe(
@@ -1362,14 +1334,14 @@ object RecipeCatalog {
             collection = listOf("Metabolic Reset"),
             ingredients = listOf(
                 "1 cup soya mince (TVP, rehydrated)",
-                "½ cup green peas",
+                "Â½ cup green peas",
                 "1 medium onion (finely diced)",
                 "1 can diced tomatoes",
                 "2 garlic cloves (minced)",
                 "1 tsp fresh ginger (grated)",
                 "1 tsp cumin",
                 "1 tsp coriander powder",
-                "½ tsp garam masala",
+                "Â½ tsp garam masala",
                 "1 tbsp olive oil",
                 "Salt to taste"
             ),
@@ -1377,13 +1349,12 @@ object RecipeCatalog {
             prepMinutes = 10, cookMinutes = 20,
             instructions = listOf(
                 "Rehydrate soya mince in hot water 10 minutes; squeeze out moisture.",
-                "Heat oil; sauté onion 5 minutes until golden.",
+                "Heat oil; sautÃ© onion 5 minutes until golden.",
                 "Add garlic, ginger, cumin, and coriander; cook 2 minutes.",
                 "Add tomatoes and cook until sauce thickens.",
                 "Add soya mince and peas; simmer 10 minutes. Finish with garam masala."
             ),
             storageNotes = "Refrigerates for 3 days; great in wraps next day.",
-            metabolicResetScore = 9, isGlucoseConscious = true
         ),
 
         Recipe(
@@ -1400,9 +1371,9 @@ object RecipeCatalog {
                 "1 medium tomato (chopped)",
                 "2 garlic cloves (minced)",
                 "1 tsp fresh ginger (grated)",
-                "½ tsp turmeric",
-                "½ tsp cumin",
-                "½ tsp garam masala",
+                "Â½ tsp turmeric",
+                "Â½ tsp cumin",
+                "Â½ tsp garam masala",
                 "1 tbsp olive oil",
                 "Salt to taste"
             ),
@@ -1410,10 +1381,10 @@ object RecipeCatalog {
             prepMinutes = 10, cookMinutes = 20,
             instructions = listOf(
                 "Pan-fry tofu in 1 tsp oil until golden; set aside.",
-                "Blend blanched spinach to a smooth purée.",
-                "Heat remaining oil; sauté onion, garlic, and ginger 5 minutes.",
+                "Blend blanched spinach to a smooth purÃ©e.",
+                "Heat remaining oil; sautÃ© onion, garlic, and ginger 5 minutes.",
                 "Add cumin, turmeric, tomato; cook until soft.",
-                "Add spinach purée; simmer 5 minutes. Add tofu and garam masala; heat through."
+                "Add spinach purÃ©e; simmer 5 minutes. Add tofu and garam masala; heat through."
             ),
             antiInflammatoryScore = 9
         ),
@@ -1427,19 +1398,19 @@ object RecipeCatalog {
             collection = listOf("Anti-Inflammatory"),
             ingredients = listOf(
                 "2 cups broccoli florets",
-                "½ cup dry quinoa (cooked)",
+                "Â½ cup dry quinoa (cooked)",
                 "2 tbsp tahini",
                 "1 tbsp lemon juice",
                 "1 garlic clove (minced)",
                 "2 tbsp hemp seeds",
                 "1 tbsp olive oil",
-                "½ tsp chilli flakes",
+                "Â½ tsp chilli flakes",
                 "Salt to taste"
             ),
             calories = 460, proteinGrams = 24.0, carbGrams = 50.0, fatGrams = 20.0, fiberGrams = 10.0,
             prepMinutes = 10, cookMinutes = 25,
             instructions = listOf(
-                "Toss broccoli with olive oil, chilli flakes, and salt; roast at 200 °C for 20–25 minutes until crispy at edges.",
+                "Toss broccoli with olive oil, chilli flakes, and salt; roast at 200 Â°C for 20â€“25 minutes until crispy at edges.",
                 "Cook quinoa in 1 cup water until fluffy.",
                 "Whisk tahini, lemon juice, garlic, and 2 tbsp water to a smooth dressing.",
                 "Plate quinoa and broccoli; drizzle dressing and scatter hemp seeds."
@@ -1450,16 +1421,16 @@ object RecipeCatalog {
         Recipe(
             id = "kitchari",
             name = "Kitchari (Mung Bean & Rice Cleanse Bowl)",
-            description = "The Ayurvedic healing bowl — split mung dal and basmati rice cooked together with turmeric, cumin, and a touch of ghee. Deeply nourishing, easy to digest, and restorative.",
+            description = "The Ayurvedic healing bowl â€” split mung dal and basmati rice cooked together with turmeric, cumin, and a touch of ghee. Deeply nourishing, easy to digest, and restorative.",
             mealType = "Dinner",
             tags = listOf("Vegetarian", "Whole Foods"),
             collection = listOf("Metabolic Reset", "Anti-Inflammatory"),
             ingredients = listOf(
-                "½ cup split yellow mung dal",
-                "¼ cup basmati rice",
+                "Â½ cup split yellow mung dal",
+                "Â¼ cup basmati rice",
                 "1 tsp cumin seeds",
-                "½ tsp turmeric",
-                "½ tsp coriander powder",
+                "Â½ tsp turmeric",
+                "Â½ tsp coriander powder",
                 "1 tsp fresh ginger (grated)",
                 "1 tbsp ghee",
                 "3 cups water",
@@ -1472,11 +1443,10 @@ object RecipeCatalog {
                 "Heat ghee in a pot; add cumin seeds and let them splutter.",
                 "Add ginger, turmeric, and coriander; stir 30 seconds.",
                 "Add rinsed mung dal, rice, and water; bring to a boil.",
-                "Reduce to low, cover, and cook 25–30 minutes until soft and porridge-like.",
+                "Reduce to low, cover, and cook 25â€“30 minutes until soft and porridge-like.",
                 "Season with salt; garnish with coriander."
             ),
-            storageNotes = "Best eaten fresh; thickens as it sits — add water when reheating.",
-            metabolicResetScore = 8, antiInflammatoryScore = 9, isGlucoseConscious = true
+            storageNotes = "Best eaten fresh; thickens as it sits â€” add water when reheating.",
         ),
 
         Recipe(
@@ -1488,7 +1458,7 @@ object RecipeCatalog {
             collection = listOf("Anti-Inflammatory"),
             ingredients = listOf(
                 "2 large portobello mushrooms (sliced)",
-                "½ cup cooked brown rice",
+                "Â½ cup cooked brown rice",
                 "3 tbsp walnuts (roughly chopped)",
                 "2 garlic cloves (minced)",
                 "1 tbsp low-sodium tamari",
@@ -1500,7 +1470,7 @@ object RecipeCatalog {
             calories = 460, proteinGrams = 16.0, carbGrams = 54.0, fatGrams = 22.0, fiberGrams = 8.0,
             prepMinutes = 10, cookMinutes = 15,
             instructions = listOf(
-                "Sauté garlic in olive oil 1 minute; add mushrooms and cook until golden.",
+                "SautÃ© garlic in olive oil 1 minute; add mushrooms and cook until golden.",
                 "Add tamari and thyme; cook 3 more minutes.",
                 "Toss in walnuts; stir 1 minute.",
                 "Serve over brown rice with a bed of baby spinach."
@@ -1517,13 +1487,13 @@ object RecipeCatalog {
             collection = listOf("Metabolic Reset"),
             ingredients = listOf(
                 "200g paneer (cubed)",
-                "½ cup low-fat yogurt",
+                "Â½ cup low-fat yogurt",
                 "1 tsp tikka masala",
-                "½ tsp turmeric",
-                "½ tsp cumin",
+                "Â½ tsp turmeric",
+                "Â½ tsp cumin",
                 "2 whole-wheat rotis",
-                "½ cup red onion (sliced)",
-                "½ cup cucumber (sliced)",
+                "Â½ cup red onion (sliced)",
+                "Â½ cup cucumber (sliced)",
                 "2 tbsp mint-coriander chutney",
                 "1 tsp lemon juice"
             ),
@@ -1548,8 +1518,8 @@ object RecipeCatalog {
             ingredients = listOf(
                 "200g extra-firm tofu (sliced)",
                 "3 tbsp chia seeds",
-                "½ cup dry quinoa (cooked)",
-                "½ ripe avocado (sliced)",
+                "Â½ cup dry quinoa (cooked)",
+                "Â½ ripe avocado (sliced)",
                 "2 tbsp tahini",
                 "1 tbsp lemon juice",
                 "1 cup baby spinach",
@@ -1560,7 +1530,7 @@ object RecipeCatalog {
             prepMinutes = 10, cookMinutes = 15,
             instructions = listOf(
                 "Press tofu; coat each slice with chia seeds, pressing firmly.",
-                "Pan-fry in olive oil over medium heat 4–5 minutes per side until golden and crisp.",
+                "Pan-fry in olive oil over medium heat 4â€“5 minutes per side until golden and crisp.",
                 "Cook quinoa; whisk tahini with lemon juice and 2 tbsp water.",
                 "Plate spinach, quinoa, avocado, and tofu; drizzle with tahini dressing."
             ),
@@ -1570,7 +1540,7 @@ object RecipeCatalog {
         Recipe(
             id = "rajma_chawal",
             name = "Light Rajma Chawal",
-            description = "The beloved North Indian comfort dish made lighter — red kidney beans in a tomato-onion masala served over brown basmati rice. High in plant protein and dietary fiber.",
+            description = "The beloved North Indian comfort dish made lighter â€” red kidney beans in a tomato-onion masala served over brown basmati rice. High in plant protein and dietary fiber.",
             mealType = "Dinner",
             tags = listOf("Vegan", "High Protein", "Whole Foods"),
             collection = listOf("Metabolic Reset"),
@@ -1581,8 +1551,8 @@ object RecipeCatalog {
                 "2 garlic cloves (minced)",
                 "1 tsp fresh ginger (grated)",
                 "1 tsp rajma masala",
-                "½ tsp cumin seeds",
-                "½ cup cooked brown basmati rice",
+                "Â½ tsp cumin seeds",
+                "Â½ cup cooked brown basmati rice",
                 "1 tbsp olive oil",
                 "Salt and coriander to garnish"
             ),
@@ -1595,13 +1565,12 @@ object RecipeCatalog {
                 "Add kidney beans; cook 10 minutes on low until flavours meld.",
                 "Serve over brown rice; garnish with coriander."
             ),
-            metabolicResetScore = 9, isGlucoseConscious = true
         ),
 
         Recipe(
             id = "ginger_veggie_soup",
             name = "Ginger Turmeric Healing Vegetable Soup",
-            description = "A light, mineral-rich soup with ginger, turmeric, and seasonal vegetables. Black pepper enhances curcumin absorption by 2000% — a detail most people miss.",
+            description = "A light, mineral-rich soup with ginger, turmeric, and seasonal vegetables. Black pepper enhances curcumin absorption by 2000% â€” a detail most people miss.",
             mealType = "Dinner",
             tags = listOf("Vegan", "Whole Foods"),
             collection = listOf("Anti-Inflammatory"),
@@ -1609,19 +1578,19 @@ object RecipeCatalog {
                 "1 cup carrot (sliced)",
                 "1 cup zucchini (cubed)",
                 "1 cup spinach",
-                "½ cup red lentils",
+                "Â½ cup red lentils",
                 "3 cups vegetable broth",
                 "1 tsp turmeric",
                 "1 tsp fresh ginger (grated)",
                 "2 garlic cloves (minced)",
-                "Juice of ½ lemon",
+                "Juice of Â½ lemon",
                 "Freshly cracked black pepper",
                 "1 tbsp olive oil"
             ),
             calories = 260, proteinGrams = 14.0, carbGrams = 36.0, fatGrams = 6.0, fiberGrams = 10.0,
             prepMinutes = 10, cookMinutes = 25,
             instructions = listOf(
-                "Heat oil in a large pot; sauté garlic and ginger 2 minutes.",
+                "Heat oil in a large pot; sautÃ© garlic and ginger 2 minutes.",
                 "Add turmeric, carrots, and lentils; stir 1 minute.",
                 "Add broth and zucchini; bring to a boil.",
                 "Simmer 20 minutes; add spinach in last 2 minutes.",
@@ -1645,18 +1614,18 @@ object RecipeCatalog {
                 "1 cup cherry tomatoes",
                 "1 tbsp olive oil",
                 "1 tsp Italian herbs",
-                "½ tsp garlic powder",
-                "½ tsp smoked paprika",
+                "Â½ tsp garlic powder",
+                "Â½ tsp smoked paprika",
                 "Salt and pepper to taste",
                 "1 tbsp fresh basil to garnish"
             ),
             calories = 470, proteinGrams = 30.0, carbGrams = 18.0, fatGrams = 32.0, fiberGrams = 5.0,
             prepMinutes = 10, cookMinutes = 25,
             instructions = listOf(
-                "Preheat oven to 200 °C (400 °F).",
+                "Preheat oven to 200 Â°C (400 Â°F).",
                 "Toss paneer and vegetables with olive oil, herbs, garlic powder, paprika, salt, and pepper.",
                 "Spread on a baking sheet in a single layer.",
-                "Roast 20–25 minutes until paneer is golden and vegetables are caramelised.",
+                "Roast 20â€“25 minutes until paneer is golden and vegetables are caramelised.",
                 "Garnish with fresh basil."
             ),
             metabolicResetScore = 8
@@ -1665,21 +1634,21 @@ object RecipeCatalog {
         Recipe(
             id = "paneer_tikka_masala",
             name = "High-Protein Paneer Tikka Masala",
-            description = "The restaurant favourite made at home with a generous 250 g of paneer. The larger paneer serving is the single change that pushes this classic to 40 g of protein — the highest-protein vegetarian curry in the catalog.",
+            description = "The restaurant favourite made at home with a generous 250 g of paneer. The larger paneer serving is the single change that pushes this classic to 40 g of protein â€” the highest-protein vegetarian curry in the catalog.",
             mealType = "Dinner",
             tags = listOf("Vegetarian", "High Protein"),
             collection = listOf("Metabolic Reset"),
             ingredients = listOf(
                 "250g paneer (cubed)",
-                "½ cup low-fat yogurt",
+                "Â½ cup low-fat yogurt",
                 "1 tsp tikka masala",
                 "1 can diced tomatoes",
                 "1 medium onion (diced)",
                 "2 garlic cloves (minced)",
                 "1 tsp fresh ginger (grated)",
-                "½ tsp cumin",
-                "½ tsp turmeric",
-                "½ tsp garam masala",
+                "Â½ tsp cumin",
+                "Â½ tsp turmeric",
+                "Â½ tsp garam masala",
                 "1 tbsp olive oil",
                 "Salt and fresh coriander to garnish"
             ),
@@ -1688,7 +1657,7 @@ object RecipeCatalog {
             instructions = listOf(
                 "Marinate paneer in yogurt, tikka masala, turmeric, and a pinch of salt for 10 minutes.",
                 "Grill or pan-sear paneer until charred at edges; set aside.",
-                "Heat oil; sauté onion 5 minutes, add garlic, ginger, and cumin.",
+                "Heat oil; sautÃ© onion 5 minutes, add garlic, ginger, and cumin.",
                 "Add tomatoes and simmer 10 minutes until sauce thickens.",
                 "Add paneer, garam masala; simmer 5 minutes. Garnish with coriander."
             ),
@@ -1698,7 +1667,7 @@ object RecipeCatalog {
         Recipe(
             id = "soy_chunk_palak_curry",
             name = "High-Protein Soy Chunk Palak Curry",
-            description = "80 g of dry soy chunks simmered in a velvety spiced spinach purée. This vegan twist on palak paneer delivers 44 g of protein — the highest-protein vegan dinner in the catalog — with a fraction of the fat.",
+            description = "80 g of dry soy chunks simmered in a velvety spiced spinach purÃ©e. This vegan twist on palak paneer delivers 44 g of protein â€” the highest-protein vegan dinner in the catalog â€” with a fraction of the fat.",
             mealType = "Dinner",
             tags = listOf("Vegan", "High Protein"),
             collection = listOf("Anti-Inflammatory"),
@@ -1709,9 +1678,9 @@ object RecipeCatalog {
                 "1 medium tomato (chopped)",
                 "2 garlic cloves (minced)",
                 "1 tsp fresh ginger (grated)",
-                "½ tsp turmeric",
-                "½ tsp cumin",
-                "½ tsp garam masala",
+                "Â½ tsp turmeric",
+                "Â½ tsp cumin",
+                "Â½ tsp garam masala",
                 "1 tbsp olive oil",
                 "Salt to taste"
             ),
@@ -1719,10 +1688,10 @@ object RecipeCatalog {
             prepMinutes = 15, cookMinutes = 20,
             instructions = listOf(
                 "Soak soy chunks in boiling water 10 minutes; drain and squeeze dry.",
-                "Blend blanched spinach to a smooth purée.",
-                "Heat oil; sauté onion, garlic, and ginger 5 minutes.",
+                "Blend blanched spinach to a smooth purÃ©e.",
+                "Heat oil; sautÃ© onion, garlic, and ginger 5 minutes.",
                 "Add cumin, turmeric, and tomato; cook until soft.",
-                "Add spinach purée; simmer 5 minutes. Add soy chunks and garam masala; simmer 8 minutes more."
+                "Add spinach purÃ©e; simmer 5 minutes. Add soy chunks and garam masala; simmer 8 minutes more."
             ),
             antiInflammatoryScore = 9
         ),
@@ -1751,7 +1720,7 @@ object RecipeCatalog {
             prepMinutes = 10, cookMinutes = 20,
             instructions = listOf(
                 "Pan-fry tempeh cubes in a dry pan until golden; set aside.",
-                "In the same pan, sauté garlic, ginger, and curry paste 2 minutes.",
+                "In the same pan, sautÃ© garlic, ginger, and curry paste 2 minutes.",
                 "Add coconut milk, broth, and lemongrass; bring to a gentle simmer.",
                 "Add broccoli and bell pepper; simmer 5 minutes.",
                 "Add tempeh and soy sauce; simmer 5 more minutes. Finish with lime juice."
@@ -1762,7 +1731,7 @@ object RecipeCatalog {
         Recipe(
             id = "paneer_egg_masala",
             name = "Paneer & Egg Masala Curry",
-            description = "Boiled eggs added to a paneer curry is a classical North Indian approach to maximising protein in a single pot. Two proteins, two textures — tender paneer and firm egg — in a rich tomato-onion masala.",
+            description = "Boiled eggs added to a paneer curry is a classical North Indian approach to maximising protein in a single pot. Two proteins, two textures â€” tender paneer and firm egg â€” in a rich tomato-onion masala.",
             mealType = "Dinner",
             tags = listOf("Vegetarian", "High Protein"),
             collection = listOf("Metabolic Reset"),
@@ -1775,8 +1744,8 @@ object RecipeCatalog {
                 "1 tsp fresh ginger (grated)",
                 "1 tsp cumin",
                 "1 tsp coriander powder",
-                "½ tsp turmeric",
-                "½ tsp garam masala",
+                "Â½ tsp turmeric",
+                "Â½ tsp garam masala",
                 "1 tbsp olive oil",
                 "Salt and fresh coriander to garnish"
             ),
@@ -1784,7 +1753,7 @@ object RecipeCatalog {
             prepMinutes = 10, cookMinutes = 20,
             instructions = listOf(
                 "Pan-sear paneer cubes until golden; set aside.",
-                "Heat oil; sauté onion 5 minutes, add garlic, ginger, cumin, coriander, and turmeric.",
+                "Heat oil; sautÃ© onion 5 minutes, add garlic, ginger, cumin, coriander, and turmeric.",
                 "Add tomatoes; simmer 10 minutes until thick.",
                 "Add paneer and halved eggs; simmer gently 5 minutes.",
                 "Finish with garam masala and coriander."
@@ -1801,8 +1770,8 @@ object RecipeCatalog {
             collection = listOf("Anti-Inflammatory"),
             ingredients = listOf(
                 "200g firm tofu (pressed, cubed)",
-                "1½ cups shelled edamame (cooked)",
-                "½ cup cooked brown rice",
+                "1Â½ cups shelled edamame (cooked)",
+                "Â½ cup cooked brown rice",
                 "2 cups broccoli florets",
                 "3 garlic cloves (minced)",
                 "1 tsp fresh ginger (grated)",
@@ -1826,13 +1795,13 @@ object RecipeCatalog {
         Recipe(
             id = "high_protein_soya_biryani",
             name = "High-Protein Soya Biryani",
-            description = "The highest-protein dinner in the catalog: 100 g of dry textured soy protein layered with fragrant basmati rice and whole spices. This biryani delivers 50 g of protein — the ceiling this catalog was designed to reach.",
+            description = "The highest-protein dinner in the catalog: 100 g of dry textured soy protein layered with fragrant basmati rice and whole spices. This biryani delivers 50 g of protein â€” the ceiling this catalog was designed to reach.",
             mealType = "Dinner",
             tags = listOf("Vegan", "High Protein"),
             collection = listOf("Metabolic Reset"),
             ingredients = listOf(
                 "100g textured soy protein (soy chunks, minced or small)",
-                "½ cup basmati rice",
+                "Â½ cup basmati rice",
                 "1 large onion (thinly sliced)",
                 "1 tsp cumin seeds",
                 "2 bay leaves",
@@ -1840,7 +1809,7 @@ object RecipeCatalog {
                 "1 cinnamon stick",
                 "1 tsp fresh ginger (grated)",
                 "2 garlic cloves (minced)",
-                "½ tsp turmeric",
+                "Â½ tsp turmeric",
                 "1 tsp biryani masala",
                 "1 tbsp olive oil",
                 "Salt and fresh coriander to garnish"
@@ -1856,57 +1825,55 @@ object RecipeCatalog {
                 "Fluff gently; garnish with reserved onions and coriander."
             ),
             storageNotes = "Refrigerates up to 3 days; add a splash of water when reheating.",
-            metabolicResetScore = 9, isGlucoseConscious = true
         ),
 
         Recipe(
             id = "tempeh_black_bean_bowl",
             name = "Tempeh & Black Bean Dinner Bowl",
-            description = "Tempeh and black beans supply protein from different biological pathways — combined, they hit 46 g with a complementary amino acid profile. Smoky cumin-lime seasoning ties this Latin-fusion dinner together.",
+            description = "Tempeh and black beans supply protein from different biological pathways â€” combined, they hit 46 g with a complementary amino acid profile. Smoky cumin-lime seasoning ties this Latin-fusion dinner together.",
             mealType = "Dinner",
             tags = listOf("Vegan", "High Protein"),
             collection = listOf("Metabolic Reset"),
             ingredients = listOf(
                 "200g tempeh (cubed)",
-                "½ cup cooked black beans",
-                "½ cup cooked brown rice",
+                "Â½ cup cooked black beans",
+                "Â½ cup cooked brown rice",
                 "1 cup cherry tomatoes (halved)",
                 "1 cup baby spinach",
                 "1 tsp cumin",
                 "1 tsp smoked paprika",
                 "1 tbsp tamari or soy sauce",
                 "1 tsp olive oil",
-                "Juice of ½ lime",
+                "Juice of Â½ lime",
                 "Fresh coriander to garnish"
             ),
             calories = 510, proteinGrams = 46.0, carbGrams = 46.0, fatGrams = 18.0, fiberGrams = 12.0,
             prepMinutes = 10, cookMinutes = 15,
             instructions = listOf(
-                "Toss tempeh with cumin, paprika, and tamari; pan-fry in olive oil 4–5 minutes per side.",
+                "Toss tempeh with cumin, paprika, and tamari; pan-fry in olive oil 4â€“5 minutes per side.",
                 "Warm black beans; season with salt.",
                 "Build bowl: brown rice, spinach, tomatoes, beans, tempeh.",
                 "Drizzle lime juice and garnish with coriander."
             ),
-            metabolicResetScore = 9, isGlucoseConscious = true
         ),
 
         Recipe(
             id = "paneer_dal_makhani",
             name = "Protein-Boosted Dal Makhani with Paneer",
-            description = "Dal makhani — the slow-cooked black lentil and kidney bean dal — enriched with cubes of pan-seared paneer. Three protein sources in one pot: black lentils, kidney beans, and dairy protein from paneer, for 42 g total.",
+            description = "Dal makhani â€” the slow-cooked black lentil and kidney bean dal â€” enriched with cubes of pan-seared paneer. Three protein sources in one pot: black lentils, kidney beans, and dairy protein from paneer, for 42 g total.",
             mealType = "Dinner",
             tags = listOf("Vegetarian", "High Protein"),
             collection = listOf("Metabolic Reset"),
             ingredients = listOf(
                 "150g paneer (cubed, pan-seared)",
-                "½ cup whole black lentils (urad dal, soaked overnight)",
-                "¼ cup red kidney beans (cooked)",
+                "Â½ cup whole black lentils (urad dal, soaked overnight)",
+                "Â¼ cup red kidney beans (cooked)",
                 "1 can diced tomatoes",
                 "1 medium onion (diced)",
                 "2 garlic cloves (minced)",
                 "1 tsp fresh ginger (grated)",
                 "1 tsp cumin seeds",
-                "½ tsp garam masala",
+                "Â½ tsp garam masala",
                 "1 tbsp olive oil",
                 "Salt and coriander to garnish"
             ),
@@ -1920,13 +1887,12 @@ object RecipeCatalog {
                 "Simmer dal 10 minutes; add paneer and garam masala; heat through."
             ),
             storageNotes = "Refrigerates 4 days; freezes well.",
-            metabolicResetScore = 10, isGlucoseConscious = true
         ),
 
         Recipe(
             id = "soy_paneer_double_curry",
             name = "Double-Protein Soy Chunk & Paneer Curry",
-            description = "Soy chunks and paneer combined in one masala for 48 g of protein per serving — designed specifically for days when the protein target feels unreachable. Two complementary sources; one simple curry.",
+            description = "Soy chunks and paneer combined in one masala for 48 g of protein per serving â€” designed specifically for days when the protein target feels unreachable. Two complementary sources; one simple curry.",
             mealType = "Dinner",
             tags = listOf("Vegetarian", "High Protein"),
             collection = listOf("Metabolic Reset"),
@@ -1939,8 +1905,8 @@ object RecipeCatalog {
                 "1 tsp fresh ginger (grated)",
                 "1 tsp cumin",
                 "1 tsp coriander powder",
-                "½ tsp turmeric",
-                "½ tsp garam masala",
+                "Â½ tsp turmeric",
+                "Â½ tsp garam masala",
                 "1 tbsp olive oil",
                 "Salt and fresh coriander to garnish"
             ),
@@ -1949,14 +1915,13 @@ object RecipeCatalog {
             instructions = listOf(
                 "Soak soy chunks in boiling water 10 minutes; drain and squeeze dry.",
                 "Pan-sear paneer until golden; set aside.",
-                "Heat oil; sauté onion 5 minutes, add garlic, ginger, cumin, coriander, and turmeric.",
+                "Heat oil; sautÃ© onion 5 minutes, add garlic, ginger, cumin, coriander, and turmeric.",
                 "Add tomatoes and simmer 8 minutes until thick.",
                 "Add soy chunks; simmer 8 minutes. Add paneer and garam masala; heat through."
             ),
-            metabolicResetScore = 10, isGlucoseConscious = true
         ),
 
-        // ── SNACKS ────────────────────────────────────────────────────────────
+        // â”€â”€ SNACKS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
         Recipe(
             id = "protein_smoothie_bowl",
@@ -1967,9 +1932,9 @@ object RecipeCatalog {
             collection = emptyList(),
             ingredients = listOf(
                 "1 scoop vanilla protein powder",
-                "½ cup frozen banana",
-                "½ cup frozen mixed berries",
-                "½ cup unsweetened almond milk",
+                "Â½ cup frozen banana",
+                "Â½ cup frozen mixed berries",
+                "Â½ cup unsweetened almond milk",
                 "1 tbsp chia seeds",
                 "2 tbsp low-fat granola"
             ),
@@ -1992,9 +1957,9 @@ object RecipeCatalog {
             collection = listOf("Metabolic Reset"),
             ingredients = listOf(
                 "2 slices whole-grain bread",
-                "½ cup low-fat cottage cheese",
-                "½ cup cucumber (sliced)",
-                "½ cup cherry tomatoes (halved)",
+                "Â½ cup low-fat cottage cheese",
+                "Â½ cup cucumber (sliced)",
+                "Â½ cup cherry tomatoes (halved)",
                 "Everything bagel seasoning or black pepper"
             ),
             calories = 280, proteinGrams = 24.0, carbGrams = 30.0, fatGrams = 4.0, fiberGrams = 4.0,
@@ -2005,13 +1970,12 @@ object RecipeCatalog {
                 "Top with cucumber and tomatoes.",
                 "Season with everything bagel seasoning or pepper."
             ),
-            metabolicResetScore = 7, isGlucoseConscious = true
         ),
 
         Recipe(
             id = "protein_chia_pudding",
             name = "Protein Chia Pudding",
-            description = "Silky overnight chia pudding with protein powder and a honey-vanilla finish. Chia seeds provide 5g of omega-3 ALA per serving — a natural anti-inflammatory.",
+            description = "Silky overnight chia pudding with protein powder and a honey-vanilla finish. Chia seeds provide 5g of omega-3 ALA per serving â€” a natural anti-inflammatory.",
             mealType = "Snack",
             tags = listOf("Vegan", "High Protein"),
             collection = listOf("Anti-Inflammatory"),
@@ -2020,7 +1984,7 @@ object RecipeCatalog {
                 "1 scoop vanilla protein powder",
                 "1 cup unsweetened almond milk",
                 "1 tbsp honey",
-                "¼ tsp vanilla extract"
+                "Â¼ tsp vanilla extract"
             ),
             calories = 300, proteinGrams = 25.0, carbGrams = 28.0, fatGrams = 9.0, fiberGrams = 10.0,
             prepMinutes = 5, cookMinutes = 0,
@@ -2043,12 +2007,12 @@ object RecipeCatalog {
             collection = listOf("Metabolic Reset"),
             ingredients = listOf(
                 "1 cup sprouted moong beans",
-                "½ cup cucumber (diced)",
-                "½ cup tomato (diced)",
-                "¼ cup red onion (diced)",
+                "Â½ cup cucumber (diced)",
+                "Â½ cup tomato (diced)",
+                "Â¼ cup red onion (diced)",
                 "1 tbsp lime juice",
-                "½ tsp chaat masala",
-                "½ tsp roasted cumin powder",
+                "Â½ tsp chaat masala",
+                "Â½ tsp roasted cumin powder",
                 "2 tbsp fresh coriander (chopped)",
                 "Salt to taste"
             ),
@@ -2060,7 +2024,6 @@ object RecipeCatalog {
                 "Toss well; garnish with coriander. Serve immediately."
             ),
             mealPrepNotes = "Sprout moong beans at home in 2 days: soak overnight, then rinse and drain twice daily.",
-            metabolicResetScore = 9, isGlucoseConscious = true
         ),
 
         Recipe(
@@ -2072,15 +2035,15 @@ object RecipeCatalog {
             collection = listOf("Anti-Inflammatory"),
             ingredients = listOf(
                 "1 cup shelled edamame (cooked)",
-                "½ tsp chilli flakes",
-                "Zest and juice of ½ lime",
+                "Â½ tsp chilli flakes",
+                "Zest and juice of Â½ lime",
                 "Pinch of sea salt",
-                "½ tsp garlic powder"
+                "Â½ tsp garlic powder"
             ),
             calories = 190, proteinGrams = 17.0, carbGrams = 14.0, fatGrams = 7.0, fiberGrams = 8.0,
             prepMinutes = 5, cookMinutes = 0,
             instructions = listOf(
-                "Warm edamame in the microwave 1–2 minutes or in boiling water.",
+                "Warm edamame in the microwave 1â€“2 minutes or in boiling water.",
                 "Toss with chilli flakes, lime zest, lime juice, garlic powder, and salt.",
                 "Serve immediately."
             ),
@@ -2098,8 +2061,8 @@ object RecipeCatalog {
                 "150g paneer (cubed)",
                 "3 tbsp low-fat yogurt",
                 "1 tsp tandoori masala",
-                "½ tsp cumin",
-                "¼ tsp turmeric",
+                "Â½ tsp cumin",
+                "Â¼ tsp turmeric",
                 "1 tsp lemon juice",
                 "Salt to taste",
                 "Mint chutney to serve"
@@ -2109,7 +2072,7 @@ object RecipeCatalog {
             instructions = listOf(
                 "Mix yogurt, tandoori masala, cumin, turmeric, lemon juice, and salt.",
                 "Coat paneer cubes in marinade; rest 10 minutes.",
-                "Grill or pan-sear on high heat 3–4 minutes per side until charred.",
+                "Grill or pan-sear on high heat 3â€“4 minutes per side until charred.",
                 "Serve with mint chutney."
             ),
             metabolicResetScore = 8
@@ -2123,7 +2086,7 @@ object RecipeCatalog {
             tags = listOf("Vegan"),
             collection = listOf("Anti-Inflammatory"),
             ingredients = listOf(
-                "½ cup walnuts",
+                "Â½ cup walnuts",
                 "4 Medjool dates (pitted)",
                 "1 tbsp chia seeds",
                 "1 tbsp raw cacao powder",
@@ -2146,22 +2109,22 @@ object RecipeCatalog {
         Recipe(
             id = "turmeric_almonds",
             name = "Turmeric Spiced Almonds",
-            description = "Dry-roasted almonds coated in turmeric, black pepper, and a touch of sea salt. The black pepper activates curcumin absorption — turning a simple snack into an anti-inflammatory one.",
+            description = "Dry-roasted almonds coated in turmeric, black pepper, and a touch of sea salt. The black pepper activates curcumin absorption â€” turning a simple snack into an anti-inflammatory one.",
             mealType = "Snack",
             tags = listOf("Vegan"),
             collection = listOf("Anti-Inflammatory"),
             ingredients = listOf(
-                "¼ cup raw almonds",
-                "½ tsp turmeric",
-                "¼ tsp black pepper",
+                "Â¼ cup raw almonds",
+                "Â½ tsp turmeric",
+                "Â¼ tsp black pepper",
                 "Pinch of sea salt",
-                "½ tsp olive oil"
+                "Â½ tsp olive oil"
             ),
             calories = 220, proteinGrams = 8.0, carbGrams = 6.0, fatGrams = 18.0, fiberGrams = 3.0,
             prepMinutes = 2, cookMinutes = 8,
             instructions = listOf(
                 "Toss almonds with olive oil, turmeric, black pepper, and salt.",
-                "Dry-roast in a pan over medium heat 6–8 minutes, stirring often, until fragrant.",
+                "Dry-roast in a pan over medium heat 6â€“8 minutes, stirring often, until fragrant.",
                 "Cool completely before eating."
             ),
             storageNotes = "Keeps in an airtight jar for 2 weeks.",
@@ -2171,15 +2134,15 @@ object RecipeCatalog {
         Recipe(
             id = "green_detox_smoothie",
             name = "Anti-Inflammatory Green Smoothie",
-            description = "A clean, bright smoothie with spinach, cucumber, ginger, and lemon — the classic anti-inflammatory green combination with added protein for satiety.",
+            description = "A clean, bright smoothie with spinach, cucumber, ginger, and lemon â€” the classic anti-inflammatory green combination with added protein for satiety.",
             mealType = "Snack",
             tags = listOf("Vegan", "High Protein"),
             collection = listOf("Anti-Inflammatory"),
             ingredients = listOf(
                 "1 cup fresh spinach",
-                "½ cucumber (roughly chopped)",
+                "Â½ cucumber (roughly chopped)",
                 "1 tsp fresh ginger (grated)",
-                "Juice of ½ lemon",
+                "Juice of Â½ lemon",
                 "1 scoop vanilla protein powder",
                 "1 cup unsweetened almond milk",
                 "1 tbsp chia seeds",
@@ -2198,16 +2161,16 @@ object RecipeCatalog {
         Recipe(
             id = "berry_protein_parfait",
             name = "Mixed Berry Protein Parfait",
-            description = "Layered Greek yogurt, mixed berries, and crushed walnuts — anti-inflammatory antioxidants from the berries meet metabolic-reset protein from the yogurt in every bite.",
+            description = "Layered Greek yogurt, mixed berries, and crushed walnuts â€” anti-inflammatory antioxidants from the berries meet metabolic-reset protein from the yogurt in every bite.",
             mealType = "Snack",
             tags = listOf("Vegetarian", "High Protein"),
             collection = listOf("Metabolic Reset", "Anti-Inflammatory"),
             ingredients = listOf(
-                "¾ cup non-fat Greek yogurt",
-                "½ cup mixed berries (blueberry, raspberry, strawberry)",
+                "Â¾ cup non-fat Greek yogurt",
+                "Â½ cup mixed berries (blueberry, raspberry, strawberry)",
                 "2 tbsp walnuts (crushed)",
                 "1 tsp honey",
-                "¼ tsp cinnamon"
+                "Â¼ tsp cinnamon"
             ),
             calories = 290, proteinGrams = 20.0, carbGrams = 28.0, fatGrams = 10.0, fiberGrams = 4.0,
             prepMinutes = 5, cookMinutes = 0,
@@ -2217,20 +2180,19 @@ object RecipeCatalog {
                 "Repeat layers; drizzle honey and sprinkle cinnamon.",
                 "Serve immediately or refrigerate up to 2 hours."
             ),
-            metabolicResetScore = 8, antiInflammatoryScore = 8, isGlucoseConscious = true
         ),
 
         Recipe(
             id = "protein_shake",
             name = "Protein Shake",
-            description = "A quick 30-second protein hit — one scoop of protein powder blended with almond milk and ice. Simple, fast, and reliably 28g of protein with under 160 calories.",
+            description = "A quick 30-second protein hit â€” one scoop of protein powder blended with almond milk and ice. Simple, fast, and reliably 28g of protein with under 160 calories.",
             mealType = "Snack",
             tags = listOf("Vegetarian", "High Protein"),
             collection = emptyList(),
             ingredients = listOf(
                 "1 scoop vanilla or chocolate protein powder",
                 "1 cup unsweetened almond milk",
-                "3–4 ice cubes"
+                "3â€“4 ice cubes"
             ),
             calories = 160, proteinGrams = 28.0, carbGrams = 6.0, fatGrams = 3.0, fiberGrams = 1.0,
             prepMinutes = 2, cookMinutes = 0,
@@ -2250,7 +2212,7 @@ object RecipeCatalog {
             collection = listOf("Metabolic Reset"),
             ingredients = listOf(
                 "1 cup non-fat Greek yogurt (170g)",
-                "½ cup mixed berries (blueberries, strawberries, raspberries)",
+                "Â½ cup mixed berries (blueberries, strawberries, raspberries)",
                 "1 tsp honey (optional)"
             ),
             calories = 210, proteinGrams = 22.0, carbGrams = 24.0, fatGrams = 1.0, fiberGrams = 3.0,
@@ -2260,7 +2222,6 @@ object RecipeCatalog {
                 "Top with mixed berries.",
                 "Drizzle honey if desired. Serve immediately."
             ),
-            metabolicResetScore = 8, isGlucoseConscious = true
         ),
 
         Recipe(
@@ -2271,9 +2232,9 @@ object RecipeCatalog {
             tags = listOf("Vegetarian", "High Protein"),
             collection = listOf("Metabolic Reset"),
             ingredients = listOf(
-                "¾ cup low-fat cottage cheese (170g)",
-                "½ cup pineapple chunks (fresh or tinned in juice)",
-                "¼ tsp cinnamon",
+                "Â¾ cup low-fat cottage cheese (170g)",
+                "Â½ cup pineapple chunks (fresh or tinned in juice)",
+                "Â¼ tsp cinnamon",
                 "Pinch of black pepper (optional)"
             ),
             calories = 190, proteinGrams = 25.0, carbGrams = 18.0, fatGrams = 2.0, fiberGrams = 1.0,
@@ -2283,27 +2244,26 @@ object RecipeCatalog {
                 "Top with pineapple chunks.",
                 "Sprinkle cinnamon and a pinch of pepper if using."
             ),
-            metabolicResetScore = 7, isGlucoseConscious = true
         ),
 
         Recipe(
             id = "protein_oats_mini",
             name = "Protein Oats Mini Bowl",
-            description = "A half-portion of protein oatmeal — the perfect bridge snack between meals. 20g of protein from a half-scoop of powder stirred into warm oats, under 200 calories.",
+            description = "A half-portion of protein oatmeal â€” the perfect bridge snack between meals. 20g of protein from a half-scoop of powder stirred into warm oats, under 200 calories.",
             mealType = "Snack",
             tags = listOf("Vegetarian", "High Protein"),
             collection = emptyList(),
             ingredients = listOf(
-                "¼ cup rolled oats",
-                "½ scoop vanilla protein powder",
-                "½ cup unsweetened almond milk",
+                "Â¼ cup rolled oats",
+                "Â½ scoop vanilla protein powder",
+                "Â½ cup unsweetened almond milk",
                 "1 tsp honey",
-                "¼ tsp cinnamon"
+                "Â¼ tsp cinnamon"
             ),
             calories = 200, proteinGrams = 20.0, carbGrams = 26.0, fatGrams = 3.0, fiberGrams = 3.0,
             prepMinutes = 1, cookMinutes = 5,
             instructions = listOf(
-                "Cook oats with almond milk on stovetop or microwave 3–4 minutes.",
+                "Cook oats with almond milk on stovetop or microwave 3â€“4 minutes.",
                 "Stir in protein powder until smooth.",
                 "Top with honey and cinnamon. Serve warm."
             )
@@ -2320,8 +2280,8 @@ object RecipeCatalog {
                 "150g firm tofu (cubed)",
                 "1 tsp sesame oil",
                 "1 tsp soy sauce",
-                "½ tsp garlic powder",
-                "¼ tsp chilli flakes",
+                "Â½ tsp garlic powder",
+                "Â¼ tsp chilli flakes",
                 "1 tsp sesame seeds"
             ),
             calories = 200, proteinGrams = 22.0, carbGrams = 4.0, fatGrams = 11.0, fiberGrams = 1.0,
@@ -2329,7 +2289,7 @@ object RecipeCatalog {
             instructions = listOf(
                 "Press tofu dry with a kitchen towel; cube into bite-sized pieces.",
                 "Heat sesame oil in a non-stick pan over high heat.",
-                "Add tofu; fry 3–4 minutes per side until golden.",
+                "Add tofu; fry 3â€“4 minutes per side until golden.",
                 "Toss with soy sauce, garlic powder, and chilli flakes.",
                 "Finish with sesame seeds; serve warm."
             )
@@ -2345,8 +2305,8 @@ object RecipeCatalog {
             ingredients = listOf(
                 "150g tempeh (sliced)",
                 "1 tbsp tamari or soy sauce",
-                "½ tsp smoked paprika",
-                "½ tsp garlic powder",
+                "Â½ tsp smoked paprika",
+                "Â½ tsp garlic powder",
                 "1 tsp olive oil",
                 "1 tsp apple cider vinegar"
             ),
@@ -2356,7 +2316,7 @@ object RecipeCatalog {
                 "Mix tamari, smoked paprika, garlic powder, and apple cider vinegar.",
                 "Toss tempeh slices in marinade; rest 5 minutes.",
                 "Heat olive oil in a non-stick pan over medium-high heat.",
-                "Fry tempeh 4–5 minutes per side until crispy and golden.",
+                "Fry tempeh 4â€“5 minutes per side until crispy and golden.",
                 "Serve immediately."
             )
         ),
@@ -2371,10 +2331,10 @@ object RecipeCatalog {
             ingredients = listOf(
                 "50g soy chunks / textured soy protein (dry weight)",
                 "1 cup water or vegetable broth",
-                "½ tsp cumin",
-                "½ tsp coriander powder",
-                "¼ tsp turmeric",
-                "¼ tsp chilli powder",
+                "Â½ tsp cumin",
+                "Â½ tsp coriander powder",
+                "Â¼ tsp turmeric",
+                "Â¼ tsp chilli powder",
                 "Salt to taste",
                 "1 tsp lemon juice"
             ),
@@ -2383,7 +2343,7 @@ object RecipeCatalog {
             instructions = listOf(
                 "Boil soy chunks in broth 8 minutes until tender; drain and squeeze dry.",
                 "Return to pan; add cumin, coriander, turmeric, and chilli powder.",
-                "Cook on medium heat 3–4 minutes, stirring often.",
+                "Cook on medium heat 3â€“4 minutes, stirring often.",
                 "Finish with lemon juice and salt. Serve hot."
             )
         ),
@@ -2391,15 +2351,15 @@ object RecipeCatalog {
         Recipe(
             id = "paneer_protein_cup",
             name = "Chilli Lime Paneer Protein Cup",
-            description = "Fresh paneer cubes tossed with lime juice, chilli powder, and chaat masala — no cooking needed. 26g of protein in 200 calories; the fastest high-protein vegetarian snack.",
+            description = "Fresh paneer cubes tossed with lime juice, chilli powder, and chaat masala â€” no cooking needed. 26g of protein in 200 calories; the fastest high-protein vegetarian snack.",
             mealType = "Snack",
             tags = listOf("Vegetarian", "High Protein"),
             collection = emptyList(),
             ingredients = listOf(
                 "130g paneer (cubed)",
-                "Juice of ½ lime",
-                "¼ tsp chilli powder",
-                "½ tsp chaat masala",
+                "Juice of Â½ lime",
+                "Â¼ tsp chilli powder",
+                "Â½ tsp chaat masala",
                 "Salt to taste",
                 "Fresh coriander (optional)"
             ),
@@ -2409,7 +2369,7 @@ object RecipeCatalog {
                 "Cube paneer into bite-sized pieces.",
                 "Toss with lime juice, chilli powder, and chaat masala.",
                 "Season with salt; garnish with coriander if using.",
-                "Serve immediately — no cooking required."
+                "Serve immediately â€” no cooking required."
             )
         ),
 
@@ -2421,11 +2381,11 @@ object RecipeCatalog {
             tags = listOf("Vegetarian", "High Protein"),
             collection = listOf("Metabolic Reset"),
             ingredients = listOf(
-                "½ cup low-fat cottage cheese",
+                "Â½ cup low-fat cottage cheese",
                 "1 scoop vanilla protein powder",
-                "½ cup oat milk",
+                "Â½ cup oat milk",
                 "1 tsp honey",
-                "¼ tsp vanilla extract"
+                "Â¼ tsp vanilla extract"
             ),
             calories = 250, proteinGrams = 30.0, carbGrams = 26.0, fatGrams = 3.0, fiberGrams = 1.0,
             prepMinutes = 3, cookMinutes = 0,
@@ -2435,7 +2395,6 @@ object RecipeCatalog {
                 "Top with berries or cinnamon before serving."
             ),
             storageNotes = "Keeps refrigerated for 3 days.",
-            metabolicResetScore = 8, isGlucoseConscious = true
         ),
 
         Recipe(
@@ -2447,8 +2406,8 @@ object RecipeCatalog {
             collection = listOf("Metabolic Reset"),
             ingredients = listOf(
                 "1 cup non-fat Greek yogurt",
-                "¾ scoop vanilla protein powder",
-                "½ cup mixed berries",
+                "Â¾ scoop vanilla protein powder",
+                "Â½ cup mixed berries",
                 "1 tsp honey"
             ),
             calories = 250, proteinGrams = 32.0, carbGrams = 28.0, fatGrams = 2.0, fiberGrams = 3.0,
@@ -2458,7 +2417,6 @@ object RecipeCatalog {
                 "Top with berries and drizzle with honey.",
                 "Serve immediately or refrigerate up to 2 hours."
             ),
-            metabolicResetScore = 8, isGlucoseConscious = true
         ),
 
         Recipe(
@@ -2469,11 +2427,11 @@ object RecipeCatalog {
             tags = listOf("Vegan", "High Protein"),
             collection = listOf("Anti-Inflammatory"),
             ingredients = listOf(
-                "1½ cups shelled edamame (cooked)",
-                "½ tsp cumin",
-                "½ tsp chilli powder",
-                "¼ tsp garlic powder",
-                "½ tsp olive oil",
+                "1Â½ cups shelled edamame (cooked)",
+                "Â½ tsp cumin",
+                "Â½ tsp chilli powder",
+                "Â¼ tsp garlic powder",
+                "Â½ tsp olive oil",
                 "Pinch of sea salt",
                 "Squeeze of lime juice"
             ),
@@ -2481,7 +2439,7 @@ object RecipeCatalog {
             prepMinutes = 3, cookMinutes = 15,
             instructions = listOf(
                 "Pat edamame dry; toss with olive oil, cumin, chilli powder, garlic powder, and salt.",
-                "Spread on a baking sheet; roast at 200 °C for 12–15 minutes until slightly crispy.",
+                "Spread on a baking sheet; roast at 200 Â°C for 12â€“15 minutes until slightly crispy.",
                 "Squeeze lime juice over the top; serve warm or at room temperature."
             ),
             antiInflammatoryScore = 8
@@ -2490,17 +2448,17 @@ object RecipeCatalog {
         Recipe(
             id = "big_soy_chunk_snack",
             name = "Double Soy Chunk Protein Snack",
-            description = "65 g of dry soy chunks — the largest soy serving in the snack section — simmered in a bold spiced broth for 34 g of protein. At under 230 calories, it is the most protein-dense snack per calorie in the catalog.",
+            description = "65 g of dry soy chunks â€” the largest soy serving in the snack section â€” simmered in a bold spiced broth for 34 g of protein. At under 230 calories, it is the most protein-dense snack per calorie in the catalog.",
             mealType = "Snack",
             tags = listOf("Vegan", "High Protein"),
             collection = emptyList(),
             ingredients = listOf(
                 "65g soy chunks (dry weight)",
                 "1 cup vegetable broth",
-                "½ tsp cumin",
-                "½ tsp coriander powder",
-                "¼ tsp turmeric",
-                "¼ tsp chilli powder",
+                "Â½ tsp cumin",
+                "Â½ tsp coriander powder",
+                "Â¼ tsp turmeric",
+                "Â¼ tsp chilli powder",
                 "1 tsp lemon juice",
                 "Salt to taste"
             ),
@@ -2509,7 +2467,7 @@ object RecipeCatalog {
             instructions = listOf(
                 "Boil soy chunks in broth 8 minutes until tender; drain and squeeze dry.",
                 "Return to pan with cumin, coriander, turmeric, and chilli powder.",
-                "Cook on medium heat 3–4 minutes, stirring often.",
+                "Cook on medium heat 3â€“4 minutes, stirring often.",
                 "Finish with lemon juice and salt. Serve hot."
             )
         ),
@@ -2517,15 +2475,15 @@ object RecipeCatalog {
         Recipe(
             id = "protein_shake_plus",
             name = "High-Protein Shake Plus",
-            description = "One scoop of protein powder blended with Greek yogurt and oat milk — a creamy shake that delivers 35 g of protein in under 250 calories. The yogurt creates a thicker, creamier texture than almond milk alone.",
+            description = "One scoop of protein powder blended with Greek yogurt and oat milk â€” a creamy shake that delivers 35 g of protein in under 250 calories. The yogurt creates a thicker, creamier texture than almond milk alone.",
             mealType = "Snack",
             tags = listOf("Vegetarian", "High Protein"),
             collection = emptyList(),
             ingredients = listOf(
                 "1 scoop vanilla or chocolate protein powder",
-                "½ cup non-fat Greek yogurt",
-                "¾ cup oat milk",
-                "3–4 ice cubes"
+                "Â½ cup non-fat Greek yogurt",
+                "Â¾ cup oat milk",
+                "3â€“4 ice cubes"
             ),
             calories = 240, proteinGrams = 35.0, carbGrams = 22.0, fatGrams = 3.0, fiberGrams = 1.0,
             prepMinutes = 2, cookMinutes = 0,
@@ -2547,8 +2505,8 @@ object RecipeCatalog {
                 "170g tempeh (sliced)",
                 "1 tbsp tamari or soy sauce",
                 "1 tsp tandoori spice blend",
-                "½ tsp garlic powder",
-                "½ tsp smoked paprika",
+                "Â½ tsp garlic powder",
+                "Â½ tsp smoked paprika",
                 "1 tsp olive oil",
                 "Squeeze of lemon juice"
             ),
@@ -2558,7 +2516,7 @@ object RecipeCatalog {
                 "Mix tamari, tandoori spice, garlic powder, and smoked paprika; toss with tempeh.",
                 "Rest 5 minutes.",
                 "Heat olive oil in a non-stick pan over medium-high heat.",
-                "Fry tempeh 4–5 minutes per side until crispy and golden.",
+                "Fry tempeh 4â€“5 minutes per side until crispy and golden.",
                 "Finish with a squeeze of lemon. Serve immediately."
             )
         ),
@@ -2566,24 +2524,24 @@ object RecipeCatalog {
         Recipe(
             id = "soy_edamame_protein_bowl",
             name = "Soy Chunk & Edamame Protein Snack Bowl",
-            description = "Warm edamame paired with a small serving of spiced soy chunks for a filling 33 g protein snack. Two soy foods — one chewy, one soft — seasoned with sesame and chilli.",
+            description = "Warm edamame paired with a small serving of spiced soy chunks for a filling 33 g protein snack. Two soy foods â€” one chewy, one soft â€” seasoned with sesame and chilli.",
             mealType = "Snack",
             tags = listOf("Vegan", "High Protein"),
             collection = emptyList(),
             ingredients = listOf(
                 "1 cup shelled edamame (cooked)",
                 "30g soy chunks (dry weight)",
-                "½ tsp sesame oil",
+                "Â½ tsp sesame oil",
                 "1 tsp low-sodium soy sauce",
-                "¼ tsp chilli flakes",
-                "½ tsp garlic powder",
+                "Â¼ tsp chilli flakes",
+                "Â½ tsp garlic powder",
                 "1 tsp sesame seeds"
             ),
             calories = 280, proteinGrams = 33.0, carbGrams = 22.0, fatGrams = 10.0, fiberGrams = 10.0,
             prepMinutes = 10, cookMinutes = 8,
             instructions = listOf(
                 "Soak soy chunks in boiling water 8 minutes; drain and squeeze dry.",
-                "Heat sesame oil; toss soy chunks with soy sauce, chilli flakes, and garlic powder. Cook 3–4 minutes.",
+                "Heat sesame oil; toss soy chunks with soy sauce, chilli flakes, and garlic powder. Cook 3â€“4 minutes.",
                 "Warm edamame; combine with soy chunks.",
                 "Serve topped with sesame seeds."
             )
@@ -2592,15 +2550,15 @@ object RecipeCatalog {
         Recipe(
             id = "cinnamon_cottage_cheese_snack",
             name = "Cinnamon Cottage Cheese Snack Bowl",
-            description = "A sweet, satisfying snack bowl built on cottage cheese — one of the highest casein-protein foods available. A half-scoop of protein powder boosts it to 28 g without making it feel like a gym shake.",
+            description = "A sweet, satisfying snack bowl built on cottage cheese â€” one of the highest casein-protein foods available. A half-scoop of protein powder boosts it to 28 g without making it feel like a gym shake.",
             mealType = "Snack",
             tags = listOf("Vegetarian", "High Protein"),
             collection = listOf("Metabolic Reset"),
             ingredients = listOf(
-                "¾ cup low-fat cottage cheese",
-                "½ scoop vanilla protein powder",
+                "Â¾ cup low-fat cottage cheese",
+                "Â½ scoop vanilla protein powder",
                 "1 banana (sliced)",
-                "¼ tsp cinnamon",
+                "Â¼ tsp cinnamon",
                 "1 tsp honey"
             ),
             calories = 270, proteinGrams = 28.0, carbGrams = 32.0, fatGrams = 3.0, fiberGrams = 2.0,
@@ -2610,7 +2568,6 @@ object RecipeCatalog {
                 "Top with banana slices.",
                 "Drizzle honey and sprinkle cinnamon. Serve immediately."
             ),
-            metabolicResetScore = 7, isGlucoseConscious = true
         ),
 
         Recipe(
@@ -2621,10 +2578,10 @@ object RecipeCatalog {
             tags = listOf("Vegetarian", "High Protein"),
             collection = emptyList(),
             ingredients = listOf(
-                "¾ cup non-fat Greek yogurt",
-                "½ scoop vanilla protein powder",
-                "½ cup frozen mixed berries",
-                "½ cup oat milk",
+                "Â¾ cup non-fat Greek yogurt",
+                "Â½ scoop vanilla protein powder",
+                "Â½ cup frozen mixed berries",
+                "Â½ cup oat milk",
                 "1 tsp honey",
                 "3 ice cubes"
             ),

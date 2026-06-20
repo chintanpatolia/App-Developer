@@ -192,7 +192,7 @@ object MealPlanEngine {
                 goal.contains("metabolic") || goal.contains("prediabetes") ||
                 goal.contains("insulin") || goal.contains("blood sugar") || goal.contains("glucose") -> {
                     if ("Metabolic Reset" in r.collection) score += 20.0
-                    if (r.isGlucoseConscious) score += 8.0
+
                     if ((r.fiberGrams ?: 0.0) >= 8.0) score += 4.0
                     if (r.metabolicResetScore >= 7) score += 5.0
                 }
