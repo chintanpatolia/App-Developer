@@ -165,7 +165,7 @@ object MealPlanEngine {
     }
 
     private fun pickBooster(candidates: List<Recipe>, targetGrams: Double): Recipe? {
-        val boosters = candidates.filter { it.mealType == "Snack" && it.proteinGrams >= 25.0 }
+        val boosters = candidates.filter { it.mealType == "Protein Booster" }
         return boosters.minByOrNull { kotlin.math.abs(it.proteinGrams - targetGrams) }
     }
 
@@ -189,16 +189,26 @@ object MealPlanEngine {
                 score -= overBy * 0.005
             }
             when {
-                goal.contains("metabolic") || goal.contains("prediabetes") ||
-                goal.contains("insulin") || goal.contains("blood sugar") || goal.contains("glucose") -> {
+                goal.contains("metabolic") || goal.contains("blood sugar") || goal.contains("glucose") -> {
                     if ("Metabolic Reset" in r.collection) score += 20.0
-
-                    if ((r.fiberGrams ?: 0.0) >= 8.0) score += 4.0
                     if (r.metabolicResetScore >= 7) score += 5.0
+                    if ((r.fiberGrams ?: 0.0) >= 8.0) score += 4.0
+                    score += (10 - r.glucoseImpactScore) * 1.5
+                }
+                goal.contains("insulin") || goal.contains("prediabetes") -> {
+                    if ("Metabolic Reset" in r.collection) score += 15.0
+                    if (r.insulinResistanceScore >= 7) score += 8.0
+                    if ((r.fiberGrams ?: 0.0) >= 8.0) score += 4.0
+                    score += (10 - r.glucoseImpactScore) * 2.0
                 }
                 goal.contains("inflam") -> {
                     if ("Anti-Inflammatory" in r.collection) score += 20.0
                     if (r.antiInflammatoryScore >= 7) score += 8.0
+                }
+                goal.contains("women") || goal.contains("hormonal") || goal.contains("pcos") -> {
+                    if (r.womensHealthScore >= 7) score += 15.0
+                    if ("Anti-Inflammatory" in r.collection) score += 8.0
+                    if ((r.fiberGrams ?: 0.0) >= 8.0) score += 3.0
                 }
                 goal.contains("muscle") || goal.contains("gain") -> score += r.proteinGrams * 0.8
                 goal.contains("lose") || goal.contains("fat") || goal.contains("weight") -> {
@@ -223,13 +233,19 @@ object MealPlanEngine {
 
     private fun matchesDiet(recipe: Recipe, pref: String): Boolean {
         val tags = recipe.tags.map { it.lowercase() }
+        val isVegan = "vegan" in tags
+        val isVegetarian = "vegetarian" in tags || isVegan
         return when (pref.lowercase().trim()) {
-            "vegan" -> "vegan" in tags
-            "vegetarian", "high protein vegetarian", "lacto vegetarian", "ovo vegetarian" ->
-                "vegetarian" in tags || "vegan" in tags
-            "pescatarian" -> "vegetarian" in tags || "vegan" in tags || "pescatarian" in tags
-            "mediterranean" -> "vegetarian" in tags || "vegan" in tags || "mediterranean" in tags || "whole foods" in tags
-            else -> true // unknown pref → no filter
+            "vegan" -> isVegan
+            "vegetarian", "lacto vegetarian", "high protein vegetarian" -> isVegetarian
+            // Ovo vegetarian: eggs OK, dairy excluded — accept vegan or dairy-free vegetarian
+            "ovo vegetarian" -> isVegan || (isVegetarian && "Dairy Free" in recipe.restrictions)
+            // Pescatarian: fish OK — all our plant-based recipes qualify
+            "pescatarian" -> isVegetarian || "pescatarian" in tags
+            "mediterranean" -> isVegetarian || "whole foods" in tags || "mediterranean" in tags
+            // Meat-inclusive diets: our catalog is plant-based only; all recipes suit these
+            "omnivore", "meat & poultry", "chicken & fish", "poultry", "flexitarian" -> true
+            else -> true // Custom, unknown → no filter
         }
     }
 
@@ -239,32 +255,14 @@ object MealPlanEngine {
     }
 
     private fun violatesRestriction(recipe: Recipe, restriction: String): Boolean {
-        val text = (recipe.ingredients + recipe.name).joinToString(" ").lowercase()
-        return when (restriction.lowercase().trim()) {
-            "dairy free" -> {
-                val hasDairy = listOf("yogurt", "cheese", "paneer", "ghee", "butter", "cream", "whey")
-                    .any { text.contains(it) }
-                // "milk" alone is dairy; plant-based milks are not
-                val hasMilkAlone = text.contains("milk") &&
-                    listOf("plant milk", "oat milk", "almond milk", "soy milk", "coconut milk")
-                        .none { text.contains(it) }
-                hasDairy || hasMilkAlone
-            }
-            "gluten free" ->
-                listOf("bread", "wheat", "seitan", "roti", "barley", "rye", " flour")
-                    .any { text.contains(it) }
-            "nut free" ->
-                // ponytail: best-effort by ingredient text; TODO enrich Recipe with allergen metadata
-                listOf("almond", "walnut", "cashew", "pistachio", "peanut", "nut butter", "tahini")
-                    .any { text.contains(it) }
-            "soy free" ->
-                listOf("tofu", "tempeh", "edamame", "soy sauce", "miso", "soy milk", "soy chunk")
-                    .any { text.contains(it) }
-            "egg free" -> Regex("""\begg\b""").containsMatchIn(text)
-            "low sodium" ->
-                listOf("soy sauce", "miso", "salted ", "pickle", "canned broth")
-                    .any { text.contains(it) }
-            else -> false // Custom → can't auto-detect
-        }
+        val key = restriction.trim().lowercase()
+        // Only filter on restriction types explicitly tagged in recipe.restrictions.
+        // Unsupported types (e.g. "Low Sodium") pass through rather than blocking all recipes.
+        if (key !in SUPPORTED_RESTRICTIONS) return false
+        return recipe.restrictions.none { it.trim().lowercase() == key }
     }
+
+    private val SUPPORTED_RESTRICTIONS = setOf(
+        "dairy free", "gluten free", "nut free", "soy free", "egg free"
+    )
 }
