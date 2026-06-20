@@ -321,5 +321,348 @@ object SnackRecipes {
             womensHealthScore = 6,
             glucoseImpactScore = 2
         ),
+
+        Recipe(
+            id = "warm_miso_edamame",
+            name = "Warm Miso Edamame Cup",
+            description = "Shelled edamame tossed in a warm miso-ginger glaze — a five-minute anti-inflammatory snack with 18 g of complete soy protein and 7 g of fibre. White miso adds probiotic depth without overpowering the beans.",
+            mealType = "Snack",
+            tags = listOf("Vegan", "High Protein", "Whole Foods"),
+            proteinSource = "Soy",
+            restrictions = listOf("Dairy Free", "Gluten Free", "Nut Free", "Egg Free"),
+            collection = listOf("Anti-Inflammatory"),
+            ingredients = listOf(
+                "1 cup shelled edamame (cooked, 155g)",
+                "1 tsp white miso paste",
+                "½ tsp fresh ginger (grated)",
+                "½ tsp sesame oil",
+                "1 tsp tamari or coconut aminos",
+                "½ tsp sesame seeds",
+                "Pinch of chilli flakes"
+            ),
+            calories = 210, proteinGrams = 18.0, carbGrams = 16.0, fatGrams = 9.0, fiberGrams = 7.0,
+            prepMinutes = 3, cookMinutes = 3,
+            instructions = listOf(
+                "Warm edamame in a small pan over medium heat with 2 tbsp water for 2 minutes.",
+                "Dissolve miso in 1 tbsp warm water; add to pan along with ginger, sesame oil, and tamari.",
+                "Toss for 60 seconds until the glaze coats the beans evenly.",
+                "Transfer to a bowl, top with sesame seeds and chilli flakes."
+            ),
+            metabolicResetScore = 6,
+            antiInflammatoryScore = 9,
+            insulinResistanceScore = 8,
+            womensHealthScore = 8,
+            glucoseImpactScore = 2
+        ),
+
+        Recipe(
+            id = "paneer_cucumber_rolls",
+            name = "Paneer & Cucumber Mint Rolls",
+            description = "Cool cucumber rounds loaded with soft paneer seasoned with chaat masala and fresh mint. No cooking, 22 g of protein, and an insulinResistanceScore of 9 — the fastest high-protein snack in the plan.",
+            mealType = "Snack",
+            tags = listOf("Vegetarian", "High Protein"),
+            proteinSource = "Paneer",
+            restrictions = listOf("Gluten Free", "Nut Free", "Soy Free", "Egg Free"),
+            collection = listOf("Metabolic Reset"),
+            ingredients = listOf(
+                "120g paneer (crumbled or thinly sliced)",
+                "1 large cucumber (sliced into 10 rounds, ~150g)",
+                "2 tbsp green mint chutney",
+                "½ tsp chaat masala",
+                "1 tsp lemon juice",
+                "1 tbsp fresh coriander (chopped)",
+                "Black salt to taste"
+            ),
+            calories = 195, proteinGrams = 22.0, carbGrams = 8.0, fatGrams = 9.0, fiberGrams = 2.0,
+            prepMinutes = 8, cookMinutes = 0,
+            instructions = listOf(
+                "Crumble or dice paneer; season with chaat masala, lemon juice, and black salt.",
+                "Spread ½ tsp mint chutney on each cucumber round.",
+                "Top with seasoned paneer and garnish with fresh coriander.",
+                "Serve immediately; refrigerate paneer separately if prepping ahead."
+            ),
+            mealPrepNotes = "Season paneer up to 24 h ahead; assemble just before eating to keep cucumber crisp.",
+            metabolicResetScore = 8,
+            antiInflammatoryScore = 5,
+            insulinResistanceScore = 9,
+            womensHealthScore = 7,
+            glucoseImpactScore = 1
+        ),
+
+        Recipe(
+            id = "masala_moong_cup",
+            name = "Spiced Masala Moong Cup",
+            description = "A warm cup of cooked whole moong (green gram) tempered with cumin, turmeric, and lime — a deeply nourishing insulin-resistance snack rich in resistant starch, fibre, and plant protein.",
+            mealType = "Snack",
+            tags = listOf("Vegan", "Whole Foods"),
+            proteinSource = "Lentils",
+            restrictions = listOf("Dairy Free", "Gluten Free", "Nut Free", "Soy Free", "Egg Free"),
+            collection = listOf("Metabolic Reset"),
+            ingredients = listOf(
+                "1 cup whole green moong (cooked, ~200g)",
+                "½ tsp cumin seeds",
+                "¼ tsp turmeric",
+                "½ tsp coriander powder",
+                "1 tbsp lemon juice",
+                "½ tsp ghee or coconut oil",
+                "Salt to taste",
+                "2 tbsp fresh coriander (chopped)"
+            ),
+            calories = 190, proteinGrams = 16.0, carbGrams = 30.0, fatGrams = 3.0, fiberGrams = 8.0,
+            prepMinutes = 5, cookMinutes = 3,
+            instructions = listOf(
+                "Heat ghee or coconut oil in a small pan; add cumin seeds and let them splutter.",
+                "Add turmeric and coriander powder; stir 20 seconds.",
+                "Add cooked moong and salt; toss to coat with the tempering.",
+                "Remove from heat, squeeze lemon juice, and garnish with coriander."
+            ),
+            mealPrepNotes = "Cook a large batch of moong; store refrigerated 4 days. Temper fresh portions each time.",
+            metabolicResetScore = 9,
+            antiInflammatoryScore = 6,
+            insulinResistanceScore = 9,
+            womensHealthScore = 7,
+            glucoseImpactScore = 3
+        ),
+
+        Recipe(
+            id = "tempeh_chaat_bites",
+            name = "Tempeh Chaat Bowl",
+            description = "Cubed tempeh served chaat-style with diced tomato, onion, coriander, and tangy spices — 20 g of protein with a satisfying crunch and the probiotic benefit of fermented soy.",
+            mealType = "Snack",
+            tags = listOf("Vegan", "High Protein"),
+            proteinSource = "Soy",
+            restrictions = listOf("Dairy Free", "Gluten Free", "Nut Free", "Egg Free"),
+            collection = listOf("Anti-Inflammatory"),
+            ingredients = listOf(
+                "150g tempeh (cubed, raw weight)",
+                "¼ cup tomato (finely diced)",
+                "¼ cup red onion (finely diced)",
+                "1 tbsp lemon juice",
+                "½ tsp chaat masala",
+                "½ tsp cumin powder",
+                "¼ tsp chilli powder",
+                "2 tbsp fresh coriander (chopped)"
+            ),
+            calories = 215, proteinGrams = 20.0, carbGrams = 14.0, fatGrams = 10.0, fiberGrams = 4.0,
+            prepMinutes = 8, cookMinutes = 0,
+            instructions = listOf(
+                "Steam tempeh cubes 5 minutes to mellow the bitterness, then cool slightly.",
+                "Combine tomato, onion, lemon juice, chaat masala, cumin, and chilli in a bowl.",
+                "Add tempeh and toss to coat evenly.",
+                "Garnish with coriander; serve at room temperature."
+            ),
+            metabolicResetScore = 7,
+            antiInflammatoryScore = 8,
+            insulinResistanceScore = 8,
+            womensHealthScore = 8,
+            glucoseImpactScore = 2
+        ),
+
+        Recipe(
+            id = "tzatziki_protein_bowl",
+            name = "High-Protein Tzatziki Bowl",
+            description = "Thick Greek yogurt blended with grated cucumber, garlic, dill, and lemon — served as a scooping dip with crisp raw vegetables. At 24 g of protein and under 200 cal, it is one of the highest protein-to-calorie snacks in the plan.",
+            mealType = "Snack",
+            tags = listOf("Vegetarian", "High Protein"),
+            proteinSource = "Greek Yogurt",
+            restrictions = listOf("Gluten Free", "Nut Free", "Soy Free", "Egg Free"),
+            collection = listOf("Metabolic Reset"),
+            ingredients = listOf(
+                "¾ cup non-fat Greek yogurt (170g)",
+                "½ cup cucumber (grated and squeezed dry, ~80g)",
+                "1 clove garlic (minced)",
+                "1 tbsp fresh dill (or 1 tsp dried)",
+                "1 tsp lemon juice",
+                "½ tsp olive oil",
+                "Salt and pepper to taste",
+                "1 cup raw vegetables to serve (carrot, celery, capsicum)"
+            ),
+            calories = 190, proteinGrams = 24.0, carbGrams = 16.0, fatGrams = 4.0, fiberGrams = 3.0,
+            prepMinutes = 8, cookMinutes = 0,
+            instructions = listOf(
+                "Grate cucumber and squeeze firmly in a clean towel to remove excess water.",
+                "Combine yogurt, cucumber, garlic, dill, lemon juice, and olive oil; season with salt and pepper.",
+                "Rest in the fridge 10 minutes for flavours to meld.",
+                "Serve with raw vegetables for dipping."
+            ),
+            storageNotes = "Keeps refrigerated up to 3 days; stir before serving.",
+            metabolicResetScore = 9,
+            antiInflammatoryScore = 5,
+            insulinResistanceScore = 9,
+            womensHealthScore = 8,
+            glucoseImpactScore = 2
+        ),
+
+        Recipe(
+            id = "chickpea_paneer_cup",
+            name = "Crispy Chickpea & Paneer Cup",
+            description = "Pan-seared paneer cubes paired with oven-roasted chickpeas, both seasoned with smoked paprika and cumin — a textural snack with dual protein sources delivering 21 g from two complementary plant foods.",
+            mealType = "Snack",
+            tags = listOf("Vegetarian", "High Protein"),
+            proteinSource = "Paneer",
+            restrictions = listOf("Gluten Free", "Nut Free", "Soy Free", "Egg Free"),
+            collection = listOf("Metabolic Reset"),
+            ingredients = listOf(
+                "75g paneer (cubed)",
+                "50g canned chickpeas (drained, rinsed)",
+                "½ tsp smoked paprika",
+                "½ tsp cumin powder",
+                "¼ tsp garlic powder",
+                "½ tsp olive oil",
+                "Salt to taste",
+                "Fresh coriander to garnish"
+            ),
+            calories = 265, proteinGrams = 21.0, carbGrams = 17.0, fatGrams = 12.0, fiberGrams = 5.0,
+            prepMinutes = 5, cookMinutes = 10,
+            instructions = listOf(
+                "Pat chickpeas dry; toss with half the oil, paprika, cumin, and garlic powder.",
+                "Roast chickpeas in a 200°C oven for 8–10 minutes until crispy.",
+                "Meanwhile, pan-sear paneer cubes in remaining oil over medium-high heat 2–3 minutes each side.",
+                "Season paneer with remaining spices; combine with chickpeas and serve warm."
+            ),
+            metabolicResetScore = 7,
+            antiInflammatoryScore = 5,
+            insulinResistanceScore = 7,
+            womensHealthScore = 6,
+            glucoseImpactScore = 3
+        ),
+
+        Recipe(
+            id = "ginger_garlic_tofu_bites",
+            name = "Ginger Garlic Crispy Tofu Bites",
+            description = "Extra-firm tofu pan-fried in a fragrant ginger-garlic tamari glaze until golden on every side. 22 g of complete plant protein in a bold, satisfying snack that is ready in 12 minutes.",
+            mealType = "Snack",
+            tags = listOf("Vegan", "High Protein"),
+            proteinSource = "Tofu",
+            restrictions = listOf("Dairy Free", "Nut Free", "Egg Free"),
+            collection = listOf("Anti-Inflammatory"),
+            ingredients = listOf(
+                "180g extra-firm tofu (pressed and cubed)",
+                "1 tsp fresh ginger (grated)",
+                "2 cloves garlic (minced)",
+                "1 tbsp tamari or reduced-sodium soy sauce",
+                "1 tsp sesame oil",
+                "¼ tsp chilli flakes",
+                "1 tsp sesame seeds",
+                "1 tsp avocado or coconut oil for frying"
+            ),
+            calories = 200, proteinGrams = 22.0, carbGrams = 5.0, fatGrams = 11.0, fiberGrams = 1.0,
+            prepMinutes = 5, cookMinutes = 10,
+            instructions = listOf(
+                "Press tofu between paper towels for 5 minutes; cube into 2 cm pieces.",
+                "Heat oil in a non-stick pan over high heat; add tofu and fry 3–4 minutes per side until golden.",
+                "Reduce to medium; add ginger, garlic, tamari, sesame oil, and chilli flakes.",
+                "Toss 1–2 minutes until the glaze coats the tofu; top with sesame seeds and serve."
+            ),
+            metabolicResetScore = 7,
+            antiInflammatoryScore = 8,
+            insulinResistanceScore = 8,
+            womensHealthScore = 7,
+            glucoseImpactScore = 1
+        ),
+
+        Recipe(
+            id = "mini_moong_chilla_snack",
+            name = "Mini Moong Dal Chilla",
+            description = "Petite savoury pancakes made from blended yellow moong dal batter with grated zucchini and cumin — gluten-free, dairy-free, and a legitimate 18 g protein snack straight from Indian home kitchens.",
+            mealType = "Snack",
+            tags = listOf("Vegan", "Whole Foods"),
+            proteinSource = "Lentils",
+            restrictions = listOf("Dairy Free", "Gluten Free", "Nut Free", "Soy Free", "Egg Free"),
+            collection = listOf("Metabolic Reset"),
+            ingredients = listOf(
+                "½ cup yellow moong dal (soaked 4 h, blended with ¼ cup water)",
+                "¼ cup zucchini (grated)",
+                "½ tsp cumin seeds",
+                "¼ tsp turmeric",
+                "¼ tsp green chilli (minced, optional)",
+                "Salt to taste",
+                "Oil spray",
+                "2 tbsp green chutney to serve"
+            ),
+            calories = 220, proteinGrams = 18.0, carbGrams = 32.0, fatGrams = 3.0, fiberGrams = 6.0,
+            prepMinutes = 10, cookMinutes = 10,
+            instructions = listOf(
+                "Blend soaked moong dal with water to a smooth, slightly thick batter.",
+                "Fold in grated zucchini, cumin, turmeric, chilli, and salt.",
+                "Heat a non-stick pan over medium heat; spray with oil.",
+                "Pour small rounds (about 2 tbsp each), cook 2–3 minutes per side until set and lightly golden.",
+                "Serve hot with green chutney."
+            ),
+            mealPrepNotes = "Soak moong dal the night before; batter keeps refrigerated 24 h.",
+            metabolicResetScore = 8,
+            antiInflammatoryScore = 6,
+            insulinResistanceScore = 8,
+            womensHealthScore = 7,
+            glucoseImpactScore = 4
+        ),
+
+        Recipe(
+            id = "hemp_chia_protein_pudding",
+            name = "Hemp Seed & Chia Protein Pudding",
+            description = "A no-cook pudding set overnight with hemp hearts, chia seeds, and unsweetened almond milk — naturally creamy, high in omega-3 fatty acids, and delivering 15 g of plant protein with 9 g of fibre.",
+            mealType = "Snack",
+            tags = listOf("Vegan", "Whole Foods"),
+            proteinSource = "",
+            restrictions = listOf("Dairy Free", "Gluten Free", "Soy Free", "Egg Free"),
+            collection = listOf("Anti-Inflammatory"),
+            ingredients = listOf(
+                "3 tbsp hemp hearts (30g)",
+                "2 tbsp chia seeds (20g)",
+                "1 cup unsweetened almond milk (240ml)",
+                "½ tsp vanilla extract",
+                "1 tsp maple syrup",
+                "¼ tsp cinnamon",
+                "¼ cup mixed berries (topping)"
+            ),
+            calories = 290, proteinGrams = 15.0, carbGrams = 20.0, fatGrams = 18.0, fiberGrams = 9.0,
+            prepMinutes = 5, cookMinutes = 0,
+            instructions = listOf(
+                "Whisk hemp hearts, chia seeds, almond milk, vanilla, maple syrup, and cinnamon in a jar.",
+                "Stir again after 10 minutes to break up any chia clumps.",
+                "Cover and refrigerate overnight or at least 4 hours until set.",
+                "Top with berries before serving."
+            ),
+            storageNotes = "Keeps refrigerated up to 4 days; stir before eating.",
+            mealPrepNotes = "Make a 3-day batch in individual jars for an instant grab-and-go snack.",
+            metabolicResetScore = 7,
+            antiInflammatoryScore = 9,
+            insulinResistanceScore = 7,
+            womensHealthScore = 9,
+            glucoseImpactScore = 3
+        ),
+
+        Recipe(
+            id = "masala_cottage_capsicum",
+            name = "Masala Cottage Cheese Stuffed Capsicum",
+            description = "Halved bell peppers filled with spiced low-fat cottage cheese — no cooking, 22 g of protein, and a glucoseImpactScore of 2 making it one of the most blood-sugar-friendly snacks in the plan.",
+            mealType = "Snack",
+            tags = listOf("Vegetarian", "High Protein"),
+            proteinSource = "Cottage Cheese",
+            restrictions = listOf("Gluten Free", "Nut Free", "Soy Free", "Egg Free"),
+            collection = listOf("Metabolic Reset"),
+            ingredients = listOf(
+                "¾ cup low-fat cottage cheese (170g)",
+                "2 medium capsicums (halved, seeds removed)",
+                "½ tsp cumin powder",
+                "¼ tsp chilli flakes",
+                "¼ tsp black pepper",
+                "1 tsp lemon juice",
+                "1 tbsp fresh coriander (chopped)"
+            ),
+            calories = 185, proteinGrams = 22.0, carbGrams = 14.0, fatGrams = 4.0, fiberGrams = 3.0,
+            prepMinutes = 5, cookMinutes = 0,
+            instructions = listOf(
+                "Season cottage cheese with cumin, chilli flakes, black pepper, and lemon juice; stir to combine.",
+                "Fill each capsicum half generously with seasoned cottage cheese.",
+                "Garnish with fresh coriander.",
+                "Serve immediately or refrigerate up to 2 hours before eating."
+            ),
+            metabolicResetScore = 9,
+            antiInflammatoryScore = 5,
+            insulinResistanceScore = 9,
+            womensHealthScore = 7,
+            glucoseImpactScore = 2
+        ),
     )
 }
