@@ -951,8 +951,8 @@ private fun planFutureDay(
         val d = try { LocalDate.parse(w.date) } catch (e: Exception) { return@count false }
         d >= weekStart && d < day && WorkoutStatus.fromStorageValue(w.status) != WorkoutStatus.SKIPPED
     }
-    val isConservative = workoutGoals.any { it in listOf("Physical Therapy / Rehab", "Postpartum Recovery", "Beginner / Low Impact", "Recovery Focus") }
-    val isAggressive = workoutGoals.any { it in listOf("Strength Training", "Muscle Gain", "Fat Loss", "Metabolic Reset", "Insulin Resistance / Prediabetes") }
+    val isConservative = workoutGoals.any { it in listOf("Physical Therapy", "Postpartum", "Low Impact", "Recovery Focus") }
+    val isAggressive = workoutGoals.any { it in listOf("Strength Training", "Muscle Gain", "Fat Loss", "Metabolic Reset", "Insulin Resistance") }
     val targetSessions = when {
         isConservative -> 2
         isAggressive -> 4

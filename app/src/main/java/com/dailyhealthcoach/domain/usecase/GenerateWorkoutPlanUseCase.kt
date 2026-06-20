@@ -22,15 +22,15 @@ class GenerateWorkoutPlanUseCase {
         val goals = workoutGoals.ifEmpty { listOf("General Fitness") }
 
         // Safety-first: conservative goals override everything else
-        val isConservative = goals.any { it == "Physical Therapy / Rehab" || it == "Postpartum Recovery" }
+        val isConservative = goals.any { it == "Physical Therapy" || it == "Postpartum" }
         if (isConservative) {
-            val label = goals.first { it == "Physical Therapy / Rehab" || it == "Postpartum Recovery" }
+            val label = goals.first { it == "Physical Therapy" || it == "Postpartum" }
             return conservativePlan(label)
         }
 
-        val hasMobility = goals.contains("Mobility & Flexibility")
+        val hasMobility = goals.contains("Mobility & Flex")
         val hasRecoveryFocus = goals.contains("Recovery Focus")
-        val hasBeginner = goals.contains("Beginner / Low Impact")
+        val hasBeginner = goals.contains("Low Impact")
         val hasStrength = goals.any { it == "Strength Training" || it == "Muscle Gain" }
 
         // Recovery Focus overrides any strength recommendation
@@ -204,13 +204,13 @@ class GenerateWorkoutPlanUseCase {
         }
         if (focus == "Full Body") reasons += "Most major groups trained recently — keeping it balanced"
         val hasStrengthAndMuscle = workoutGoals.contains("Strength Training") && workoutGoals.contains("Muscle Gain")
-        val hasMetabolic = workoutGoals.any { it == "Metabolic Reset" || it == "Insulin Resistance / Prediabetes" || it == "Fat Loss" }
+        val hasMetabolic = workoutGoals.any { it == "Metabolic Reset" || it == "Insulin Resistance" || it == "Fat Loss" }
         when {
             hasStrengthAndMuscle -> reasons += "Goals: strength + hypertrophy — compound lifts with progressive overload"
             workoutGoals.contains("Strength Training") -> reasons += "Goal: build maximal strength — prioritising heavier compound lifts"
             workoutGoals.contains("Muscle Gain") -> reasons += "Goal: hypertrophy — higher volume with controlled tempo"
             hasMetabolic -> reasons += "Goals include metabolic health — compound movements maximise insulin sensitivity"
-            workoutGoals.contains("Beginner / Low Impact") -> reasons += "Goal: build base fitness — lighter load, focus on form"
+            workoutGoals.contains("Low Impact") -> reasons += "Goal: build base fitness — lighter load, focus on form"
         }
         return reasons.take(3)
     }
@@ -249,7 +249,7 @@ class GenerateWorkoutPlanUseCase {
         if (eq.contains("bodyweight")) return "Bodyweight" to ""
         if (eq.contains("cardio") || pattern.contains("cardio")) return "" to ""
 
-        val isConservative = workoutGoals.any { it == "Physical Therapy / Rehab" || it == "Postpartum Recovery" }
+        val isConservative = workoutGoals.any { it == "Physical Therapy" || it == "Postpartum" }
         val isMuscleGain = workoutGoals.contains("Muscle Gain")
         val isStrengthFocus = workoutGoals.contains("Strength Training")
         val isDumbbell = eq.contains("dumbbell") || eq.contains("kettlebell")
@@ -432,13 +432,13 @@ class GenerateWorkoutPlanUseCase {
     }
 
     private fun postWorkoutRecsFor(workoutGoals: List<String>): List<String> {
-        val isPT = workoutGoals.contains("Physical Therapy / Rehab")
-        val isPostpartum = workoutGoals.contains("Postpartum Recovery")
-        val hasMetabolic = workoutGoals.any { it == "Metabolic Reset" || it == "Insulin Resistance / Prediabetes" || it == "Fat Loss" }
+        val isPT = workoutGoals.contains("Physical Therapy")
+        val isPostpartum = workoutGoals.contains("Postpartum")
+        val hasMetabolic = workoutGoals.any { it == "Metabolic Reset" || it == "Insulin Resistance" || it == "Fat Loss" }
         val isMuscleGain = workoutGoals.contains("Muscle Gain")
         val isStrength = workoutGoals.contains("Strength Training")
         val hasRecovery = workoutGoals.contains("Recovery Focus")
-        val isBeginner = workoutGoals.contains("Beginner / Low Impact")
+        val isBeginner = workoutGoals.contains("Low Impact")
         return when {
             isPT -> listOf("Gentle stretching as clinically prescribed", "Ice or heat if directed by clinician", "Rest and elevate if needed")
             isPostpartum -> listOf("10 min gentle walk", "Pelvic floor recovery exercises", "Hydrate and rest")

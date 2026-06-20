@@ -351,7 +351,7 @@ fun ProfileScreen(
             ProfileCard(title = "Nutrition Targets") {
                 val nutritionGoalOptions = listOf(
                     "Fat Loss", "Maintain", "Muscle Gain", "Metabolic Reset",
-                    "Anti-Inflammatory", "General Health", "Insulin Resistance / Prediabetes"
+                    "Anti-Inflammatory", "General Health", "Insulin Resistance"
                 )
                 val activityLevelOptions = listOf(
                     "Sedentary", "Lightly Active", "Moderately Active", "Very Active", "Extra Active"
@@ -365,7 +365,7 @@ fun ProfileScreen(
                                 FilterChip(
                                     selected = uiState.nutritionGoal == option,
                                     onClick = { onUpdate { it.copy(nutritionGoal = option) } },
-                                    label = { Text(option, maxLines = 2, style = MaterialTheme.typography.labelSmall) },
+                                    label = { Text(option, maxLines = 1, style = MaterialTheme.typography.labelSmall) },
                                     colors = FilterChipDefaults.filterChipColors(
                                         selectedContainerColor = AccentBlue,
                                         selectedLabelColor = PrimaryText,
@@ -525,13 +525,15 @@ fun ProfileScreen(
                 )
                 var showLimitWarning by remember { mutableStateOf(false) }
                 val workoutGoalOptions = listOf(
-                    "General Fitness", "Strength Training", "Fat Loss", "Muscle Gain",
-                    "Metabolic Reset", "Insulin Resistance / Prediabetes",
-                    "Mobility & Flexibility", "Recovery Focus", "Beginner / Low Impact",
-                    "Physical Therapy / Rehab", "Postpartum Recovery"
+                    "General Fitness", "Strength Training",
+                    "Fat Loss", "Muscle Gain",
+                    "Metabolic Reset", "Insulin Resistance",
+                    "Mobility & Flex", "Recovery Focus",
+                    "Low Impact", "Physical Therapy",
+                    "Postpartum"
                 )
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    workoutGoalOptions.chunked(3).forEach { rowOptions ->
+                    workoutGoalOptions.chunked(2).forEach { rowOptions ->
                         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             rowOptions.forEach { option ->
                                 val isSelected = option in uiState.workoutGoals
@@ -547,7 +549,7 @@ fun ProfileScreen(
                                             showLimitWarning = true
                                         }
                                     },
-                                    label = { Text(option, maxLines = 2, style = MaterialTheme.typography.labelSmall) },
+                                    label = { Text(option, maxLines = 1, style = MaterialTheme.typography.labelSmall) },
                                     colors = FilterChipDefaults.filterChipColors(
                                         selectedContainerColor = AccentBlue,
                                         selectedLabelColor = PrimaryText,
@@ -556,7 +558,7 @@ fun ProfileScreen(
                                     modifier = Modifier.weight(1f)
                                 )
                             }
-                            repeat(3 - rowOptions.size) {
+                            repeat(2 - rowOptions.size) {
                                 Spacer(modifier = Modifier.weight(1f))
                             }
                         }
@@ -586,11 +588,15 @@ fun ProfileScreen(
                 )
                 var showDietLimitWarning by remember { mutableStateOf(false) }
                 val dietOptions = listOf(
-                    "Vegetarian", "High Protein Vegetarian", "Vegan", "Lacto Vegetarian",
-                    "Ovo Vegetarian", "Pescatarian", "Mediterranean", "Balanced", "Custom"
+                    "High Protein Vegetarian", "Ovo Vegetarian",
+                    "Pescatarian", "Mediterranean",
+                    "Custom", "Omnivore",
+                    "High Protein", "Chicken/Fish",
+                    "Poultry", "Meat/Poultry",
+                    "Flexitarian"
                 )
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    dietOptions.chunked(3).forEach { rowOptions ->
+                    dietOptions.chunked(2).forEach { rowOptions ->
                         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             rowOptions.forEach { option ->
                                 val isSelected = option in uiState.dietPreferences
@@ -606,7 +612,7 @@ fun ProfileScreen(
                                             showDietLimitWarning = true
                                         }
                                     },
-                                    label = { Text(option, maxLines = 2, style = MaterialTheme.typography.labelSmall) },
+                                    label = { Text(option, maxLines = 1, style = MaterialTheme.typography.labelSmall) },
                                     colors = FilterChipDefaults.filterChipColors(
                                         selectedContainerColor = AccentBlue,
                                         selectedLabelColor = PrimaryText,
@@ -615,7 +621,7 @@ fun ProfileScreen(
                                     modifier = Modifier.weight(1f)
                                 )
                             }
-                            repeat(3 - rowOptions.size) { Spacer(modifier = Modifier.weight(1f)) }
+                            repeat(2 - rowOptions.size) { Spacer(modifier = Modifier.weight(1f)) }
                         }
                     }
                 }
@@ -648,7 +654,7 @@ fun ProfileScreen(
                                             onUpdate { it.copy(foodRestrictions = it.foodRestrictions + option) }
                                         }
                                     },
-                                    label = { Text(option, maxLines = 2, style = MaterialTheme.typography.labelSmall) },
+                                    label = { Text(option, maxLines = 1, style = MaterialTheme.typography.labelSmall) },
                                     colors = FilterChipDefaults.filterChipColors(
                                         selectedContainerColor = AccentBlue,
                                         selectedLabelColor = PrimaryText,
