@@ -23,7 +23,7 @@ data class ProfileUiState(
     val sleepTarget: String = "7",
     val strengthTarget: String = "3",
     val nutritionGoal: String = "Maintain",
-    val dietPreferences: List<String> = listOf("Vegetarian"),
+    val dietPreferences: List<String> = emptyList(),
     val foodRestrictions: List<String> = emptyList(),
     val workoutGoals: List<String> = listOf("General Fitness"),
     val activityLevel: String = "Moderately Active",

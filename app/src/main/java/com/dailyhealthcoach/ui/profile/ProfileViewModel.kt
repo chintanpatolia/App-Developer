@@ -67,7 +67,7 @@ class ProfileViewModel(
                 sleepTarget = profile?.sleepTargetHours?.cleanString() ?: "7",
                 strengthTarget = profile?.strengthTrainingDaysPerWeek?.toString() ?: "3",
                 nutritionGoal = profile?.nutritionGoal ?: "Maintain",
-                dietPreferences = profile?.dietPreferences?.takeIf { it.isNotEmpty() } ?: listOf("Vegetarian"),
+                dietPreferences = profile?.dietPreferences ?: emptyList(),
                 foodRestrictions = profile?.foodRestrictions ?: emptyList(),
                 workoutGoals = profile?.workoutGoals?.takeIf { it.isNotEmpty() } ?: listOf("General Fitness"),
                 activityLevel = profile?.activityLevel ?: "Moderately Active",
