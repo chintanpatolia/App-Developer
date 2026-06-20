@@ -18,6 +18,7 @@ class DatabaseSeeder(
     }
 
     private suspend fun seedUserProfile() {
+        if (database.userProfileDao().getProfile() != null) return
         val now = Instant.now().toString()
         database.userProfileDao().upsert(
             UserProfileEntity(
