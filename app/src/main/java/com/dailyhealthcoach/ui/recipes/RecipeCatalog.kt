@@ -5,6 +5,7 @@ import com.dailyhealthcoach.ui.recipes.catalog.BreakfastRecipes
 import com.dailyhealthcoach.ui.recipes.catalog.BreakfastRecipes2
 import com.dailyhealthcoach.ui.recipes.catalog.DinnerRecipes
 import com.dailyhealthcoach.ui.recipes.catalog.LunchRecipes
+import com.dailyhealthcoach.ui.recipes.catalog.LunchRecipes2
 import com.dailyhealthcoach.ui.recipes.catalog.SnackRecipes
 
 object RecipeCatalog {
@@ -13,6 +14,7 @@ object RecipeCatalog {
         BreakfastRecipes.ALL +
         BreakfastRecipes2.ALL +
         LunchRecipes.ALL +
+        LunchRecipes2.ALL +
         DinnerRecipes.ALL +
         SnackRecipes.ALL +
         BoosterRecipes.ALL
