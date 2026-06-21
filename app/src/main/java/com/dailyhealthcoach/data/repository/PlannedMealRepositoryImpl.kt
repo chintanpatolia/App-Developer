@@ -14,6 +14,9 @@ class PlannedMealRepositoryImpl(
     override fun observeForDate(date: String): Flow<List<PlannedMeal>> =
         dao.observeForDate(date).map { list -> list.map { it.toDomain() } }
 
+    override fun observeForDates(dates: List<String>): Flow<List<PlannedMeal>> =
+        dao.observeForDates(dates).map { list -> list.map { it.toDomain() } }
+
     override suspend fun replaceForDates(dates: List<String>, meals: List<PlannedMeal>) {
         dao.deleteForDates(dates)
         dao.insertAll(meals.map { it.toEntity() })

@@ -12,6 +12,9 @@ interface PlannedMealDao {
     @Query("SELECT * FROM planned_meals WHERE date = :date ORDER BY id ASC")
     fun observeForDate(date: String): Flow<List<PlannedMealEntity>>
 
+    @Query("SELECT * FROM planned_meals WHERE date IN (:dates) ORDER BY date ASC, id ASC")
+    fun observeForDates(dates: List<String>): Flow<List<PlannedMealEntity>>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(meals: List<PlannedMealEntity>)
 

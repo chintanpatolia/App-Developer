@@ -20,10 +20,14 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import java.time.format.TextStyle
+import java.util.Locale
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -99,49 +103,80 @@ class RecipesViewModel(
         DraftPlanUiState(weekLabel = weekLabel, days = draft.days, mealPlanMode = draft.mealPlanMode)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
-    val mealCalendarUiState: StateFlow<MealCalendarUiState> = calendarInternal.map { cal ->
-        val currentPlan = cal.plans[cal.weekOffset] ?: emptyList()
-        val weekLabel = when (cal.weekOffset) {
-            0 -> "This Week"; 1 -> "Next Week"; -1 -> "Last Week"
-            else -> if (cal.weekOffset > 0) "+${cal.weekOffset} Weeks" else "${-cal.weekOffset} Weeks Ago"
-        }
-        val todayDay = cal.plans[0]?.find { it.date == today }
-        val todayMeals = todayDay?.meals?.values?.filterNotNull() ?: emptyList()
-        MealCalendarUiState(
-            weekOffset = cal.weekOffset,
-            weekLabel = weekLabel,
-            days = currentPlan,
-            isGenerated = currentPlan.isNotEmpty(),
-            selectedSlot = cal.selectedSlot,
-            weekGroceryListOpen = cal.weekGroceryListOpen,
-            weekGroceryItems = if (cal.weekGroceryListOpen) {
-                val slots = currentPlan.flatMap { day ->
-                    listOf("Breakfast", "Lunch", "Dinner", "Snack", "Protein Booster 1", "Protein Booster 2").mapNotNull { mealType ->
-                        if ("${day.date}::$mealType" in cal.selectedGrocerySlots) {
-                            val recipe = day.meals[mealType] ?: return@mapNotNull null
-                            MealSlotContext(day.dayLabel, mealType, recipe)
-                        } else null
-                    }
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val mealCalendarUiState: StateFlow<MealCalendarUiState> = calendarInternal
+        .flatMapLatest { cal ->
+            val weekDates = computeWeekDates(cal.weekOffset)
+            combine(
+                plannedMealRepository.observeForDates(weekDates),
+                plannedMealRepository.observeForDate(today)
+            ) { dbWeekMeals, dbTodayMeals ->
+                val currentPlan = cal.plans[cal.weekOffset] ?: emptyList()
+                val effectiveDays = currentPlan.ifEmpty { rebuildDaysFromDb(weekDates, dbWeekMeals) }
+                val weekLabel = when (cal.weekOffset) {
+                    0 -> "This Week"; 1 -> "Next Week"; -1 -> "Last Week"
+                    else -> if (cal.weekOffset > 0) "+${cal.weekOffset} Weeks" else "${-cal.weekOffset} Weeks Ago"
                 }
-                buildGroceryItemsFromSlots(slots)
-            } else emptyList(),
-            weekGroceryCheckedKeys = cal.weekGroceryCheckedKeys,
-            mealPlanMode = cal.mealPlanMode,
-            replacementCandidates = cal.replacementCandidates,
-            inlineReplaceSlot = cal.inlineReplaceSlot,
-            selectedGrocerySlots = cal.selectedGrocerySlots,
-            todayHasPlan = todayMeals.isNotEmpty(),
-            todayPlannedCalories = todayMeals.sumOf { it.calories },
-            todayPlannedProtein = todayMeals.sumOf { it.proteinGrams },
-            todayPlannedCarbs = todayMeals.sumOf { it.carbGrams },
-            todayPlannedFat = todayMeals.sumOf { it.fatGrams },
-            todayPlannedFiber = todayMeals.sumOf { it.fiberGrams ?: 0.0 }
+                MealCalendarUiState(
+                    weekOffset = cal.weekOffset,
+                    weekLabel = weekLabel,
+                    days = effectiveDays,
+                    isGenerated = effectiveDays.isNotEmpty(),
+                    selectedSlot = cal.selectedSlot,
+                    weekGroceryListOpen = cal.weekGroceryListOpen,
+                    weekGroceryItems = if (cal.weekGroceryListOpen) {
+                        val slots = effectiveDays.flatMap { day ->
+                            listOf("Breakfast", "Lunch", "Dinner", "Snack", "Protein Booster 1", "Protein Booster 2").mapNotNull { mealType ->
+                                if ("${day.date}::$mealType" in cal.selectedGrocerySlots) {
+                                    val recipe = day.meals[mealType] ?: return@mapNotNull null
+                                    MealSlotContext(day.dayLabel, mealType, recipe)
+                                } else null
+                            }
+                        }
+                        buildGroceryItemsFromSlots(slots)
+                    } else emptyList(),
+                    weekGroceryCheckedKeys = cal.weekGroceryCheckedKeys,
+                    mealPlanMode = cal.mealPlanMode,
+                    replacementCandidates = cal.replacementCandidates,
+                    inlineReplaceSlot = cal.inlineReplaceSlot,
+                    selectedGrocerySlots = cal.selectedGrocerySlots,
+                    todayHasPlan = dbTodayMeals.isNotEmpty(),
+                    todayPlannedCalories = dbTodayMeals.sumOf { it.calories },
+                    todayPlannedProtein = dbTodayMeals.sumOf { it.proteinGrams },
+                    todayPlannedCarbs = dbTodayMeals.sumOf { it.carbGrams },
+                    todayPlannedFat = dbTodayMeals.sumOf { it.fatGrams },
+                    todayPlannedFiber = dbTodayMeals.sumOf { it.fiberGrams }
+                )
+            }
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = MealCalendarUiState()
         )
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5_000),
-        initialValue = MealCalendarUiState()
-    )
+
+    private fun computeWeekDates(weekOffset: Int): List<String> {
+        val weekStart = todayDate.plusWeeks(weekOffset.toLong())
+            .with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+        return (0..6).map { weekStart.plusDays(it.toLong()).toString() }
+    }
+
+    private fun rebuildDaysFromDb(weekDates: List<String>, dbMeals: List<PlannedMeal>): List<DayMealPlanUiState> {
+        val byDate = dbMeals.groupBy { it.date }
+        return weekDates.mapNotNull { dateStr ->
+            val mealsForDay = byDate[dateStr] ?: return@mapNotNull null
+            val date = LocalDate.parse(dateStr)
+            val mealMap: Map<String, Recipe?> = mealsForDay.associate { pm ->
+                PlannedMealSlotKey.toDisplayLabel(pm.slotKey) to RecipeCatalog.ALL.find { it.id == pm.recipeId }
+            }
+            DayMealPlanUiState(
+                date = dateStr,
+                dayLabel = date.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.getDefault()),
+                dateNumber = date.dayOfMonth,
+                meals = mealMap
+            )
+        }
+    }
 
     fun navigateCalendarWeek(delta: Int) {
         calendarInternal.update { it.copy(weekOffset = it.weekOffset + delta) }
