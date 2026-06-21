@@ -4,8 +4,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.dailyhealthcoach.domain.model.FoodEntryInput
+import com.dailyhealthcoach.domain.model.PlannedMeal
+import com.dailyhealthcoach.domain.model.PlannedMealSlotKey
 import com.dailyhealthcoach.domain.repository.MacroTargetRepository
 import com.dailyhealthcoach.domain.repository.NutritionRepository
+import com.dailyhealthcoach.domain.repository.PlannedMealRepository
 import com.dailyhealthcoach.domain.repository.UserProfileRepository
 import com.dailyhealthcoach.domain.usecase.HabitAutoUpdateUseCase
 import java.time.LocalDate
@@ -48,7 +51,8 @@ class RecipesViewModel(
     private val nutritionRepository: NutritionRepository,
     private val macroTargetRepository: MacroTargetRepository,
     userProfileRepository: UserProfileRepository,
-    private val habitAutoUpdateUseCase: HabitAutoUpdateUseCase
+    private val habitAutoUpdateUseCase: HabitAutoUpdateUseCase,
+    private val plannedMealRepository: PlannedMealRepository
 ) : ViewModel() {
 
     private val todayDate: LocalDate = LocalDate.now()
@@ -185,6 +189,27 @@ class RecipesViewModel(
         val draft = draftPlanInternal.value ?: return
         calendarInternal.update { state ->
             state.copy(plans = state.plans + (draft.weekOffset to draft.days))
+        }
+        val dates = draft.days.map { it.date }
+        val meals = draft.days.flatMap { day ->
+            day.meals.entries.mapNotNull { (label, recipe) ->
+                recipe?.let {
+                    PlannedMeal(
+                        date = day.date,
+                        slotKey = PlannedMealSlotKey.fromDisplayLabel(label),
+                        recipeId = it.id,
+                        recipeName = it.name,
+                        calories = it.calories,
+                        proteinGrams = it.proteinGrams,
+                        carbGrams = it.carbGrams,
+                        fatGrams = it.fatGrams,
+                        fiberGrams = it.fiberGrams ?: 0.0
+                    )
+                }
+            }
+        }
+        viewModelScope.launch {
+            plannedMealRepository.replaceForDates(dates, meals)
         }
         draftPlanInternal.value = null
     }
@@ -798,7 +823,8 @@ class RecipesViewModelFactory(
     private val nutritionRepository: NutritionRepository,
     private val macroTargetRepository: MacroTargetRepository,
     private val userProfileRepository: UserProfileRepository,
-    private val habitAutoUpdateUseCase: HabitAutoUpdateUseCase
+    private val habitAutoUpdateUseCase: HabitAutoUpdateUseCase,
+    private val plannedMealRepository: PlannedMealRepository
 ) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -807,7 +833,8 @@ class RecipesViewModelFactory(
                 nutritionRepository = nutritionRepository,
                 macroTargetRepository = macroTargetRepository,
                 userProfileRepository = userProfileRepository,
-                habitAutoUpdateUseCase = habitAutoUpdateUseCase
+                habitAutoUpdateUseCase = habitAutoUpdateUseCase,
+                plannedMealRepository = plannedMealRepository
             ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")

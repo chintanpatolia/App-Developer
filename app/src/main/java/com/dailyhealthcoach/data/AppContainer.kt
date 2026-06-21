@@ -35,7 +35,9 @@ import com.dailyhealthcoach.domain.usecase.GetTodayHabitsUseCase
 import com.dailyhealthcoach.domain.usecase.HabitAutoUpdateUseCase
 import com.dailyhealthcoach.domain.usecase.SetHabitStatusForTodayUseCase
 import com.dailyhealthcoach.data.repository.AuthRepositoryImpl
+import com.dailyhealthcoach.data.repository.PlannedMealRepositoryImpl
 import com.dailyhealthcoach.domain.repository.AuthRepository
+import com.dailyhealthcoach.domain.repository.PlannedMealRepository
 
 class AppContainer(context: Context) {
     private val database = AppDatabaseProvider.getDatabase(context)
@@ -80,6 +82,10 @@ class AppContainer(context: Context) {
 
     val recoveryActivityRepository: RecoveryActivityRepository = RecoveryActivityRepositoryImpl(
         dao = database.recoveryActivityDao()
+    )
+
+    val plannedMealRepository: PlannedMealRepository = PlannedMealRepositoryImpl(
+        dao = database.plannedMealDao()
     )
 
     val getDashboardSummaryUseCase = GetDashboardSummaryUseCase(

@@ -339,7 +339,8 @@ private fun MainShellContent(
                         userProfileRepository = appContainer.userProfileRepository,
                         foodLookupService = appContainer.foodLookupService,
                         aiFoodLoggingService = appContainer.aiFoodLoggingService,
-                        habitAutoUpdateUseCase = appContainer.habitAutoUpdateUseCase
+                        habitAutoUpdateUseCase = appContainer.habitAutoUpdateUseCase,
+                        plannedMealRepository = appContainer.plannedMealRepository
                     )
                 )
                 NutritionRoute(viewModel = nutritionViewModel)
@@ -351,7 +352,8 @@ private fun MainShellContent(
                         nutritionRepository = appContainer.nutritionRepository,
                         macroTargetRepository = appContainer.macroTargetRepository,
                         userProfileRepository = appContainer.userProfileRepository,
-                        habitAutoUpdateUseCase = appContainer.habitAutoUpdateUseCase
+                        habitAutoUpdateUseCase = appContainer.habitAutoUpdateUseCase,
+                        plannedMealRepository = appContainer.plannedMealRepository
                     )
                 )
                 RecipesRoute(viewModel = recipesViewModel)

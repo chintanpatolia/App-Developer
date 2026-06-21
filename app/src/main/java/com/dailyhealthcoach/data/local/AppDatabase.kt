@@ -11,6 +11,7 @@ import com.dailyhealthcoach.data.local.dao.HabitDefinitionDao
 import com.dailyhealthcoach.data.local.dao.MacroTargetDao
 import com.dailyhealthcoach.data.local.dao.RecoveryScoreDao
 import com.dailyhealthcoach.data.local.dao.UserProfileDao
+import com.dailyhealthcoach.data.local.dao.PlannedMealDao
 import com.dailyhealthcoach.data.local.dao.RecoveryActivityDao
 import com.dailyhealthcoach.data.local.dao.WorkoutDao
 import com.dailyhealthcoach.data.local.dao.WorkoutExerciseDao
@@ -21,6 +22,7 @@ import com.dailyhealthcoach.data.local.entity.ExerciseEntity
 import com.dailyhealthcoach.data.local.entity.FoodEntryEntity
 import com.dailyhealthcoach.data.local.entity.HabitDefinitionEntity
 import com.dailyhealthcoach.data.local.entity.MacroTargetEntity
+import com.dailyhealthcoach.data.local.entity.PlannedMealEntity
 import com.dailyhealthcoach.data.local.entity.RecoveryActivityEntity
 import com.dailyhealthcoach.data.local.entity.RecoveryScoreEntity
 import com.dailyhealthcoach.data.local.entity.UserProfileEntity
@@ -40,9 +42,10 @@ import com.dailyhealthcoach.data.local.entity.WorkoutExerciseEntity
         MacroTargetEntity::class,
         RecoveryScoreEntity::class,
         DailyRecommendationEntity::class,
-        RecoveryActivityEntity::class
+        RecoveryActivityEntity::class,
+        PlannedMealEntity::class
     ],
-    version = 14,
+    version = 15,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -58,4 +61,5 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun recoveryScoreDao(): RecoveryScoreDao
     abstract fun dailyRecommendationDao(): DailyRecommendationDao
     abstract fun recoveryActivityDao(): RecoveryActivityDao
+    abstract fun plannedMealDao(): PlannedMealDao
 }

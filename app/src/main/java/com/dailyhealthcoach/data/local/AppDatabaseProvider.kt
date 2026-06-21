@@ -16,10 +16,32 @@ object AppDatabaseProvider {
                 AppDatabase::class.java,
                 "daily_health_coach.db"
             )
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15)
                 .fallbackToDestructiveMigrationOnDowngrade()
                 .build()
                 .also { database = it }
+        }
+    }
+
+    private val MIGRATION_14_15 = object : Migration(14, 15) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                """CREATE TABLE IF NOT EXISTS planned_meals (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                    date TEXT NOT NULL,
+                    slot_key TEXT NOT NULL,
+                    recipe_id TEXT NOT NULL,
+                    recipe_name TEXT NOT NULL,
+                    calories INTEGER NOT NULL,
+                    protein_grams REAL NOT NULL,
+                    carb_grams REAL NOT NULL,
+                    fat_grams REAL NOT NULL,
+                    fiber_grams REAL NOT NULL
+                )""".trimIndent()
+            )
+            db.execSQL(
+                "CREATE UNIQUE INDEX IF NOT EXISTS index_planned_meals_date_slot_key ON planned_meals (date, slot_key)"
+            )
         }
     }
 

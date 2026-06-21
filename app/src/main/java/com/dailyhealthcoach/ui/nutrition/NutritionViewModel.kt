@@ -9,8 +9,11 @@ import com.dailyhealthcoach.barcode.NutritionLabelOcrParser
 import com.dailyhealthcoach.domain.model.FoodEntry
 import com.dailyhealthcoach.domain.model.FoodEntryInput
 import com.dailyhealthcoach.domain.model.MacroTarget
+import com.dailyhealthcoach.domain.model.PlannedMeal
+import com.dailyhealthcoach.domain.model.PlannedMealSlotKey
 import com.dailyhealthcoach.domain.repository.MacroTargetRepository
 import com.dailyhealthcoach.domain.repository.NutritionRepository
+import com.dailyhealthcoach.domain.repository.PlannedMealRepository
 import com.dailyhealthcoach.domain.repository.UserProfileRepository
 import com.dailyhealthcoach.domain.usecase.HabitAutoUpdateUseCase
 import java.time.LocalDate
@@ -32,7 +35,8 @@ class NutritionViewModel(
     private val userProfileRepository: UserProfileRepository,
     private val foodLookupService: FoodLookupService,
     private val aiFoodLoggingService: AiFoodLoggingService,
-    private val habitAutoUpdateUseCase: HabitAutoUpdateUseCase
+    private val habitAutoUpdateUseCase: HabitAutoUpdateUseCase,
+    private val plannedMealRepository: PlannedMealRepository
 ) : ViewModel() {
     private val today = LocalDate.now().toString()
     private val formState = MutableStateFlow(FormVisibilityState())
@@ -44,8 +48,9 @@ class NutritionViewModel(
         nutritionRepository.observeFoodEntriesForDate(today),
         macroTargetRepository.observeActiveTarget(),
         formState,
-        nutritionRepository.observeAll()
-    ) { entries, macroTarget, form, allEntries ->
+        nutritionRepository.observeAll(),
+        plannedMealRepository.observeForDate(today)
+    ) { entries, macroTarget, form, allEntries, plannedMeals ->
         entries.toUiState(
             proteinGoalMin = macroTarget?.proteinMinGrams ?: 170,
             proteinGoalMax = macroTarget?.proteinMaxGrams ?: 200,
@@ -54,7 +59,8 @@ class NutritionViewModel(
             dietPreference = userProfileState.value?.dietPreferences?.firstOrNull(),
             form = form,
             allEntries = allEntries,
-            hour = LocalTime.now().hour
+            hour = LocalTime.now().hour,
+            plannedMeals = plannedMeals
         )
     }
     .flowOn(Dispatchers.Default)
@@ -533,7 +539,8 @@ private fun List<FoodEntry>.toUiState(
     dietPreference: String?,
     form: FormVisibilityState,
     allEntries: List<FoodEntry>,
-    hour: Int
+    hour: Int,
+    plannedMeals: List<PlannedMeal> = emptyList()
 ): NutritionUiState {
     val uiEntries = map { it.toUiState() }
     val meals = listOf("Breakfast", "Lunch", "Dinner", "Snack")
@@ -550,15 +557,39 @@ private fun List<FoodEntry>.toUiState(
         .sortedByDescending { it.id }
         .distinctBy { it.foodName.lowercase() + "|" + (it.brandName?.lowercase() ?: "") }
         .map { it.toQuickAddUiState() }
-    val suggestions = RecipeSuggestionEngine.suggest(
-        savedFoods = savedFoods,
-        recentFoods = recentFoods,
-        consumedCalories = uiEntries.sumOf { it.calories },
-        consumedProtein = uiEntries.sumOf { it.proteinGrams },
-        macroTarget = macroTarget,
-        goal = goal,
-        dietPreference = dietPreference
-    )
+    val suggestions = if (plannedMeals.isNotEmpty()) {
+        plannedMeals.map { meal ->
+            RecipeSuggestionUiState(
+                mealName = PlannedMealSlotKey.toDisplayLabel(meal.slotKey),
+                food = QuickAddFoodUiState(
+                    sourceEntryId = 0L,
+                    foodName = meal.recipeName,
+                    brandName = null,
+                    servingDescription = "1 serving",
+                    calories = meal.calories,
+                    proteinGrams = meal.proteinGrams,
+                    carbGrams = meal.carbGrams,
+                    fatGrams = meal.fatGrams,
+                    fiberGrams = meal.fiberGrams,
+                    defaultMealName = PlannedMealSlotKey.toDisplayLabel(meal.slotKey),
+                    isSaved = false,
+                    isWholeFoodBased = false,
+                    isProcessed = false,
+                    isFermented = false
+                )
+            )
+        }
+    } else {
+        RecipeSuggestionEngine.suggest(
+            savedFoods = savedFoods,
+            recentFoods = recentFoods,
+            consumedCalories = uiEntries.sumOf { it.calories },
+            consumedProtein = uiEntries.sumOf { it.proteinGrams },
+            macroTarget = macroTarget,
+            goal = goal,
+            dietPreference = dietPreference
+        )
+    }
     return NutritionUiState(
         calories = uiEntries.sumOf { it.calories },
         proteinGrams = uiEntries.sumOf { it.proteinGrams },
@@ -750,7 +781,8 @@ class NutritionViewModelFactory(
     private val userProfileRepository: UserProfileRepository,
     private val foodLookupService: FoodLookupService,
     private val aiFoodLoggingService: AiFoodLoggingService,
-    private val habitAutoUpdateUseCase: HabitAutoUpdateUseCase
+    private val habitAutoUpdateUseCase: HabitAutoUpdateUseCase,
+    private val plannedMealRepository: PlannedMealRepository
 ) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -761,7 +793,8 @@ class NutritionViewModelFactory(
                 userProfileRepository = userProfileRepository,
                 foodLookupService = foodLookupService,
                 aiFoodLoggingService = aiFoodLoggingService,
-                habitAutoUpdateUseCase = habitAutoUpdateUseCase
+                habitAutoUpdateUseCase = habitAutoUpdateUseCase,
+                plannedMealRepository = plannedMealRepository
             ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
