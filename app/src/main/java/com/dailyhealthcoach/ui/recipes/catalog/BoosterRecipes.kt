@@ -745,5 +745,328 @@ object BoosterRecipes {
             womensHealthScore = 7,
             glucoseImpactScore = 3
         ),
+
+        Recipe(
+            id = "greek_yogurt_hemp_booster",
+            name = "Greek Yogurt Hemp Protein Booster",
+            description = "Thick Greek yogurt blended with hemp protein powder, flaxseeds, and cinnamon — 28 g protein, rich in omega-3s and complete amino acids.",
+            mealType = "Protein Booster",
+            tags = listOf("Vegetarian", "High Protein"),
+            proteinSource = "Dairy",
+            restrictions = listOf("Gluten Free", "Soy Free", "Egg Free"),
+            collection = listOf("Metabolic Reset", "Anti-Inflammatory"),
+            ingredients = listOf(
+                "¾ cup plain Greek yogurt (0%)",
+                "2 tbsp hemp protein powder",
+                "1 tbsp ground flaxseeds",
+                "½ tsp cinnamon",
+                "Stevia to taste",
+                "¼ cup blueberries"
+            ),
+            calories = 265, proteinGrams = 28.0, carbGrams = 16.0, fatGrams = 7.0, fiberGrams = 4.0,
+            prepMinutes = 5, cookMinutes = 0,
+            instructions = listOf(
+                "Stir hemp protein, flaxseeds, cinnamon, and stevia into Greek yogurt.",
+                "Mix until smooth.",
+                "Top with blueberries and serve."
+            ),
+            metabolicResetScore = 9,
+            antiInflammatoryScore = 9,
+            insulinResistanceScore = 9,
+            womensHealthScore = 9,
+            glucoseImpactScore = 2
+        ),
+
+        Recipe(
+            id = "lentil_protein_shake_booster",
+            name = "Red Lentil Protein Shake",
+            description = "Cooked red lentils blended smooth with banana, soy milk, and vanilla protein — an unconventional 30 g plant-protein shake that is naturally thick and IR-friendly.",
+            mealType = "Protein Booster",
+            tags = listOf("Vegan", "High Protein"),
+            proteinSource = "Lentils",
+            restrictions = listOf("Dairy Free", "Gluten Free", "Nut Free", "Egg Free"),
+            collection = listOf("Metabolic Reset"),
+            ingredients = listOf(
+                "¼ cup cooked red lentils (cooled)",
+                "1 scoop vanilla pea or soy protein powder",
+                "1 cup unsweetened soy milk",
+                "½ small frozen banana",
+                "½ tsp cinnamon",
+                "Ice cubes"
+            ),
+            calories = 320, proteinGrams = 30.0, carbGrams = 30.0, fatGrams = 5.0, fiberGrams = 6.0,
+            prepMinutes = 5, cookMinutes = 0,
+            instructions = listOf(
+                "Add all ingredients to a blender.",
+                "Blend on high until completely smooth.",
+                "Serve over ice."
+            ),
+            metabolicResetScore = 8,
+            antiInflammatoryScore = 7,
+            insulinResistanceScore = 8,
+            womensHealthScore = 7,
+            glucoseImpactScore = 3
+        ),
+
+        Recipe(
+            id = "tuna_cottage_power_bowl",
+            name = "Tuna & Cottage Cheese Power Bowl",
+            description = "Canned tuna mixed with low-fat cottage cheese, diced vegetables, and Dijon — no cooking, 35 g protein, and extremely low carb.",
+            mealType = "Protein Booster",
+            tags = listOf("High Protein", "Low Carb"),
+            proteinSource = "Fish",
+            restrictions = listOf("Gluten Free", "Nut Free", "Soy Free", "Egg Free"),
+            collection = listOf("Metabolic Reset"),
+            ingredients = listOf(
+                "1 can (120 g) tuna in water, drained",
+                "½ cup low-fat cottage cheese",
+                "¼ cup cucumber, diced",
+                "¼ cup cherry tomatoes, halved",
+                "1 tsp Dijon mustard",
+                "1 tsp lemon juice",
+                "Fresh parsley, salt, and pepper"
+            ),
+            calories = 275, proteinGrams = 35.0, carbGrams = 8.0, fatGrams = 5.0, fiberGrams = 1.0,
+            prepMinutes = 5, cookMinutes = 0,
+            instructions = listOf(
+                "Mix tuna and cottage cheese until combined.",
+                "Fold in cucumber, tomatoes, mustard, and lemon juice.",
+                "Season and garnish with parsley."
+            ),
+            metabolicResetScore = 9,
+            antiInflammatoryScore = 8,
+            insulinResistanceScore = 9,
+            womensHealthScore = 8,
+            glucoseImpactScore = 1
+        ),
+
+        Recipe(
+            id = "tofu_scramble_protein_cup",
+            name = "High-Protein Tofu Scramble Cup",
+            description = "Firm tofu scrambled with nutritional yeast, turmeric, and veggies — vegan egg-free alternative delivering 28 g protein and anti-inflammatory compounds.",
+            mealType = "Protein Booster",
+            tags = listOf("Vegan", "High Protein"),
+            proteinSource = "Tofu",
+            restrictions = listOf("Dairy Free", "Gluten Free", "Nut Free", "Egg Free"),
+            collection = listOf("Metabolic Reset", "Anti-Inflammatory"),
+            ingredients = listOf(
+                "200 g firm tofu, pressed and crumbled",
+                "2 tbsp nutritional yeast",
+                "½ tsp turmeric",
+                "½ tsp garlic powder",
+                "¼ cup baby spinach",
+                "¼ cup capsicum, diced",
+                "1 tsp olive oil",
+                "Salt and pepper"
+            ),
+            calories = 250, proteinGrams = 28.0, carbGrams = 10.0, fatGrams = 10.0, fiberGrams = 3.0,
+            prepMinutes = 5, cookMinutes = 10,
+            instructions = listOf(
+                "Heat oil in a pan over medium heat.",
+                "Add capsicum and cook 2 min.",
+                "Add crumbled tofu, turmeric, garlic powder, and nutritional yeast.",
+                "Cook 5–6 min, stirring often. Add spinach, season, and serve."
+            ),
+            metabolicResetScore = 9,
+            antiInflammatoryScore = 9,
+            insulinResistanceScore = 9,
+            womensHealthScore = 9,
+            glucoseImpactScore = 1
+        ),
+
+        Recipe(
+            id = "egg_paneer_protein_bowl",
+            name = "Egg & Paneer Protein Bowl",
+            description = "Scrambled eggs combined with cubed paneer and sautéed spinach — a dual protein source booster with 30 g protein and minimal carbs.",
+            mealType = "Protein Booster",
+            tags = listOf("Vegetarian", "High Protein", "Low Carb"),
+            proteinSource = "Eggs",
+            restrictions = listOf("Gluten Free", "Nut Free", "Soy Free"),
+            collection = listOf("Metabolic Reset"),
+            ingredients = listOf(
+                "3 large eggs",
+                "60 g low-fat paneer, cubed",
+                "1 cup baby spinach",
+                "¼ tsp turmeric",
+                "¼ tsp black pepper",
+                "½ tsp olive oil",
+                "Salt"
+            ),
+            calories = 310, proteinGrams = 30.0, carbGrams = 5.0, fatGrams = 17.0, fiberGrams = 1.0,
+            prepMinutes = 5, cookMinutes = 8,
+            instructions = listOf(
+                "Whisk eggs with turmeric, salt, and pepper.",
+                "Heat oil in pan; sauté paneer until lightly golden.",
+                "Add spinach and wilt for 1 min.",
+                "Pour in eggs and scramble to desired consistency."
+            ),
+            metabolicResetScore = 8,
+            antiInflammatoryScore = 7,
+            insulinResistanceScore = 9,
+            womensHealthScore = 8,
+            glucoseImpactScore = 1
+        ),
+
+        Recipe(
+            id = "black_soybean_protein_bowl",
+            name = "Black Soybean Protein Bowl",
+            description = "Canned black soybeans tossed with avocado, tomato, and lime — one of the highest-protein legumes at 32 g per serve, naturally low-carb.",
+            mealType = "Protein Booster",
+            tags = listOf("Vegan", "High Protein", "Low Carb"),
+            proteinSource = "Soy",
+            restrictions = listOf("Dairy Free", "Gluten Free", "Nut Free", "Egg Free"),
+            collection = listOf("Metabolic Reset", "Anti-Inflammatory"),
+            ingredients = listOf(
+                "1 cup canned black soybeans, drained",
+                "¼ avocado, diced",
+                "¼ cup cherry tomatoes, halved",
+                "1 tbsp lime juice",
+                "1 tbsp fresh coriander",
+                "Salt, cumin, chilli flakes"
+            ),
+            calories = 295, proteinGrams = 32.0, carbGrams = 12.0, fatGrams = 11.0, fiberGrams = 8.0,
+            prepMinutes = 5, cookMinutes = 0,
+            instructions = listOf(
+                "Combine black soybeans, avocado, and tomatoes.",
+                "Dress with lime juice, cumin, salt, and chilli.",
+                "Toss gently, top with coriander."
+            ),
+            metabolicResetScore = 10,
+            antiInflammatoryScore = 9,
+            insulinResistanceScore = 10,
+            womensHealthScore = 9,
+            glucoseImpactScore = 1
+        ),
+
+        Recipe(
+            id = "sardine_white_bean_smash",
+            name = "Sardine & White Bean Protein Smash",
+            description = "Canned sardines mashed with white beans, herbs, and lemon — Mediterranean protein powerhouse at 30 g protein, omega-3-rich, and blood-sugar stable.",
+            mealType = "Protein Booster",
+            tags = listOf("High Protein"),
+            proteinSource = "Fish",
+            restrictions = listOf("Dairy Free", "Gluten Free", "Nut Free", "Soy Free", "Egg Free"),
+            collection = listOf("Metabolic Reset", "Anti-Inflammatory"),
+            ingredients = listOf(
+                "1 can (120 g) sardines in water, drained",
+                "½ cup canned white beans, drained",
+                "1 tbsp lemon juice",
+                "1 tsp olive oil",
+                "1 tbsp fresh parsley",
+                "½ tsp dried oregano",
+                "Salt and pepper"
+            ),
+            calories = 285, proteinGrams = 30.0, carbGrams = 18.0, fatGrams = 7.0, fiberGrams = 5.0,
+            prepMinutes = 5, cookMinutes = 0,
+            instructions = listOf(
+                "Mash white beans coarsely with a fork.",
+                "Flake sardines and fold into beans.",
+                "Stir in lemon juice, olive oil, parsley, and oregano.",
+                "Season and serve."
+            ),
+            metabolicResetScore = 10,
+            antiInflammatoryScore = 10,
+            insulinResistanceScore = 9,
+            womensHealthScore = 9,
+            glucoseImpactScore = 2
+        ),
+
+        Recipe(
+            id = "whey_oat_protein_porridge",
+            name = "Whey-Boosted Oat Protein Porridge",
+            description = "Steel-cut oats cooked and stirred through with whey protein and cinnamon — 28 g protein, beta-glucan fibre for glucose management, ideal post-workout booster.",
+            mealType = "Protein Booster",
+            tags = listOf("Vegetarian", "High Protein"),
+            proteinSource = "Dairy",
+            restrictions = listOf("Gluten Free", "Nut Free", "Soy Free", "Egg Free"),
+            collection = listOf("Metabolic Reset"),
+            ingredients = listOf(
+                "½ cup steel-cut oats",
+                "1 scoop unflavoured whey protein",
+                "1 cup water",
+                "¼ tsp cinnamon",
+                "Stevia to taste",
+                "¼ cup mixed berries"
+            ),
+            calories = 310, proteinGrams = 28.0, carbGrams = 32.0, fatGrams = 4.0, fiberGrams = 5.0,
+            prepMinutes = 2, cookMinutes = 12,
+            instructions = listOf(
+                "Cook oats in water for 10–12 min.",
+                "Remove from heat and stir in whey protein until dissolved.",
+                "Add cinnamon and stevia; top with berries."
+            ),
+            metabolicResetScore = 8,
+            antiInflammatoryScore = 7,
+            insulinResistanceScore = 8,
+            womensHealthScore = 7,
+            glucoseImpactScore = 3
+        ),
+
+        Recipe(
+            id = "pea_protein_green_smoothie_booster",
+            name = "Pea Protein Green Smoothie Booster",
+            description = "Spinach, cucumber, and pea protein blended with lemon — a dairy-free 27 g protein green booster that is anti-inflammatory and insulin-resistance friendly.",
+            mealType = "Protein Booster",
+            tags = listOf("Vegan", "High Protein"),
+            proteinSource = "Pea Protein",
+            restrictions = listOf("Dairy Free", "Gluten Free", "Nut Free", "Soy Free", "Egg Free"),
+            collection = listOf("Metabolic Reset", "Anti-Inflammatory"),
+            ingredients = listOf(
+                "2 scoops pea protein powder (unflavoured)",
+                "1 cup baby spinach",
+                "½ cup cucumber, chopped",
+                "1 tsp lemon juice",
+                "½ tsp spirulina (optional)",
+                "1 cup cold water",
+                "Ice cubes"
+            ),
+            calories = 220, proteinGrams = 27.0, carbGrams = 8.0, fatGrams = 3.0, fiberGrams = 2.0,
+            prepMinutes = 5, cookMinutes = 0,
+            instructions = listOf(
+                "Add all ingredients to blender.",
+                "Blend until smooth.",
+                "Serve over ice immediately."
+            ),
+            metabolicResetScore = 9,
+            antiInflammatoryScore = 9,
+            insulinResistanceScore = 9,
+            womensHealthScore = 9,
+            glucoseImpactScore = 1
+        ),
+
+        Recipe(
+            id = "chickpea_tempeh_masala_booster",
+            name = "Chickpea & Tempeh Masala Booster",
+            description = "Tempeh and chickpeas simmered in a quick tomato-spice base — dual plant protein sources delivering 29 g protein with prebiotic fibre and anti-inflammatory spices.",
+            mealType = "Protein Booster",
+            tags = listOf("Vegan", "High Protein"),
+            proteinSource = "Tempeh",
+            restrictions = listOf("Dairy Free", "Gluten Free", "Nut Free", "Egg Free"),
+            collection = listOf("Metabolic Reset", "Anti-Inflammatory"),
+            ingredients = listOf(
+                "100 g tempeh, cubed",
+                "½ cup canned chickpeas, drained",
+                "½ cup tomato, diced",
+                "½ tsp cumin",
+                "½ tsp coriander",
+                "¼ tsp turmeric",
+                "¼ tsp garam masala",
+                "1 tsp olive oil",
+                "Salt"
+            ),
+            calories = 305, proteinGrams = 29.0, carbGrams = 22.0, fatGrams = 10.0, fiberGrams = 7.0,
+            prepMinutes = 5, cookMinutes = 12,
+            instructions = listOf(
+                "Heat oil; brown tempeh cubes 3–4 min.",
+                "Add tomato and spices; cook 3 min.",
+                "Add chickpeas and ¼ cup water; simmer 5 min.",
+                "Adjust salt and serve."
+            ),
+            metabolicResetScore = 10,
+            antiInflammatoryScore = 10,
+            insulinResistanceScore = 9,
+            womensHealthScore = 9,
+            glucoseImpactScore = 2
+        ),
     )
 }

@@ -1109,6 +1109,13 @@ private fun WeeklyMealCalendarSection(
                 style = MaterialTheme.typography.bodySmall
             )
         }
+        if (calState.todayHasPlan) {
+            Text(
+                "✓ Today's plan is active — view it on the Nutrition screen",
+                color = PositiveAccent,
+                style = MaterialTheme.typography.labelSmall
+            )
+        }
 
         if (!calState.isGenerated) {
             // Empty state — prompt to generate
