@@ -43,7 +43,7 @@ object BreakfastRecipes {
             description = "Creamy overnight oats with protein powder, topped with anti-inflammatory berries and warming cinnamon. Make the night before for a stress-free morning.",
             mealType = "Breakfast",
             tags = listOf("Vegetarian", "High Protein"),
-            proteinSource = "",
+            proteinSource = "Protein Powder",
             restrictions = listOf("Dairy Free", "Soy Free", "Egg Free"),
             collection = listOf("Anti-Inflammatory"),
             ingredients = listOf(
@@ -181,7 +181,7 @@ object BreakfastRecipes {
             description = "Overnight oats infused with turmeric and ginger — two of the most potent anti-inflammatory compounds in the kitchen. Creamy, warming, and ready in the morning.",
             mealType = "Breakfast",
             tags = listOf("Vegan", "High Protein"),
-            proteinSource = "",
+            proteinSource = "Protein Powder",
             restrictions = listOf("Dairy Free", "Soy Free", "Egg Free"),
             collection = listOf("Anti-Inflammatory"),
             ingredients = listOf(
@@ -216,7 +216,7 @@ object BreakfastRecipes {
             description = "A vibrant green smoothie powered by spinach, ginger, and protein powder. Anti-inflammatory ginger and leafy greens pair with banana for natural sweetness.",
             mealType = "Breakfast",
             tags = listOf("Vegan", "High Protein"),
-            proteinSource = "",
+            proteinSource = "Protein Powder",
             restrictions = listOf("Dairy Free", "Soy Free", "Egg Free"),
             collection = listOf("Anti-Inflammatory"),
             ingredients = listOf(
@@ -396,7 +396,7 @@ object BreakfastRecipes {
             description = "Warm cooked quinoa — a complete plant protein — topped with berries, crushed walnuts, and a drizzle of honey. Sustained energy from morning to midday.",
             mealType = "Breakfast",
             tags = listOf("Vegan", "High Protein", "Whole Foods"),
-            proteinSource = "",
+            proteinSource = "Protein Powder",
             restrictions = listOf("Dairy Free", "Gluten Free", "Soy Free", "Egg Free"),
             collection = listOf("Metabolic Reset", "Anti-Inflammatory"),
             ingredients = listOf(
@@ -430,7 +430,7 @@ object BreakfastRecipes {
             description = "A thick overnight chia pudding loaded with omega-3 fats, topped with blueberries and walnuts — two of the most well-researched anti-inflammatory foods.",
             mealType = "Breakfast",
             tags = listOf("Vegan", "High Protein"),
-            proteinSource = "",
+            proteinSource = "Protein Powder",
             restrictions = listOf("Dairy Free", "Gluten Free", "Soy Free", "Egg Free"),
             collection = listOf("Anti-Inflammatory"),
             ingredients = listOf(

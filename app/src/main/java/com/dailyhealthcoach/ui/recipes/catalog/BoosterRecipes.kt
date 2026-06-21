@@ -11,7 +11,7 @@ object BoosterRecipes {
             description = "A thick-blended protein shake poured into a bowl and topped with crunchy granola, chia seeds, and mixed berries. Thick enough to eat with a spoon.",
             mealType = "Protein Booster",
             tags = listOf("Vegetarian", "High Protein"),
-            proteinSource = "",
+            proteinSource = "Protein Powder",
             restrictions = listOf("Dairy Free", "Soy Free", "Egg Free"),
             collection = listOf("Metabolic Reset"),
             ingredients = listOf(
@@ -42,7 +42,7 @@ object BoosterRecipes {
             description = "Silky overnight chia pudding with protein powder and a honey-vanilla finish. Chia seeds provide 5g of omega-3 ALA per serving — a natural anti-inflammatory.",
             mealType = "Protein Booster",
             tags = listOf("Vegan", "High Protein"),
-            proteinSource = "",
+            proteinSource = "Protein Powder",
             restrictions = listOf("Dairy Free", "Gluten Free", "Soy Free", "Egg Free"),
             collection = listOf("Anti-Inflammatory"),
             ingredients = listOf(
@@ -74,7 +74,7 @@ object BoosterRecipes {
             description = "A clean, bright smoothie with spinach, cucumber, ginger, and lemon — the classic anti-inflammatory green combination with added protein for satiety.",
             mealType = "Protein Booster",
             tags = listOf("Vegan", "High Protein"),
-            proteinSource = "",
+            proteinSource = "Protein Powder",
             restrictions = listOf("Dairy Free", "Gluten Free", "Soy Free", "Egg Free"),
             collection = listOf("Anti-Inflammatory"),
             ingredients = listOf(
@@ -107,7 +107,7 @@ object BoosterRecipes {
             description = "A quick 30-second protein hit — one scoop of protein powder blended with almond milk and ice. Simple, fast, and reliably 28g of protein with under 160 calories.",
             mealType = "Protein Booster",
             tags = listOf("Vegetarian", "High Protein"),
-            proteinSource = "",
+            proteinSource = "Protein Powder",
             restrictions = listOf("Dairy Free", "Gluten Free", "Soy Free", "Egg Free"),
             collection = emptyList(),
             ingredients = listOf(

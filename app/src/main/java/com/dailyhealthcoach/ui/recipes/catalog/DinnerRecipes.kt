@@ -197,7 +197,7 @@ object DinnerRecipes {
             description = "Caramelised roasted broccoli over fluffy quinoa with a lemon-tahini dressing and hemp seeds. Broccoli's sulforaphane is one of the most potent anti-inflammatory phytonutrients.",
             mealType = "Dinner",
             tags = listOf("Vegan", "High Protein", "Whole Foods"),
-            proteinSource = "",
+            proteinSource = "Seeds",
             restrictions = listOf("Dairy Free", "Gluten Free", "Nut Free", "Soy Free", "Egg Free"),
             collection = listOf("Anti-Inflammatory"),
             ingredients = listOf(
@@ -270,7 +270,7 @@ object DinnerRecipes {
             description = "Meaty portobello mushrooms and crunchy walnuts over brown rice in a tamari-thyme sauce. Walnuts are the richest nut source of anti-inflammatory omega-3 ALA.",
             mealType = "Dinner",
             tags = listOf("Vegan", "High Protein"),
-            proteinSource = "",
+            proteinSource = "Nuts",
             restrictions = listOf("Dairy Free", "Gluten Free", "Egg Free"),
             collection = listOf("Anti-Inflammatory"),
             ingredients = listOf(

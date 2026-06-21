@@ -141,7 +141,7 @@ object SnackRecipes {
             description = "No-bake energy balls made with walnuts, Medjool dates, chia seeds, and raw cacao. Walnuts top the nut charts for anti-inflammatory ALA omega-3; dates provide natural fibre and minerals.",
             mealType = "Snack",
             tags = listOf("Vegan"),
-            proteinSource = "",
+            proteinSource = "Nuts",
             restrictions = listOf("Dairy Free", "Gluten Free", "Soy Free", "Egg Free"),
             collection = listOf("Anti-Inflammatory"),
             ingredients = listOf(
@@ -175,7 +175,7 @@ object SnackRecipes {
             description = "Dry-roasted almonds coated in turmeric, black pepper, and a touch of sea salt. The black pepper activates curcumin absorption — turning a simple snack into an anti-inflammatory one.",
             mealType = "Snack",
             tags = listOf("Vegan"),
-            proteinSource = "",
+            proteinSource = "Nuts",
             restrictions = listOf("Dairy Free", "Gluten Free", "Soy Free", "Egg Free"),
             collection = listOf("Anti-Inflammatory"),
             ingredients = listOf(
@@ -265,7 +265,7 @@ object SnackRecipes {
             description = "A half-portion of protein oatmeal — the perfect bridge snack between meals. 20g of protein from a half-scoop of powder stirred into warm oats, under 200 calories.",
             mealType = "Snack",
             tags = listOf("Vegetarian", "High Protein"),
-            proteinSource = "",
+            proteinSource = "Protein Powder",
             restrictions = listOf("Dairy Free", "Soy Free", "Egg Free"),
             collection = emptyList(),
             ingredients = listOf(
@@ -603,7 +603,7 @@ object SnackRecipes {
             description = "A no-cook pudding set overnight with hemp hearts, chia seeds, and unsweetened almond milk — naturally creamy, high in omega-3 fatty acids, and delivering 15 g of plant protein with 9 g of fibre.",
             mealType = "Snack",
             tags = listOf("Vegan", "Whole Foods"),
-            proteinSource = "",
+            proteinSource = "Seeds",
             restrictions = listOf("Dairy Free", "Gluten Free", "Soy Free", "Egg Free"),
             collection = listOf("Anti-Inflammatory"),
             ingredients = listOf(
