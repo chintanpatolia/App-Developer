@@ -2216,6 +2216,13 @@ fun NutritionPlanScreen(
                         }
                     }
                 }
+                if (uiState.todayPlanMeals.isNotEmpty()) {
+                    RecipeSuggestionsSection(
+                        title = "Today's Meal Plan",
+                        suggestions = uiState.todayPlanMeals,
+                        onAdd = onQuickAddFood
+                    )
+                }
                 UsualMealsSection(
                     meals = uiState.usualMeals,
                     onLog = onLogUsualMeal
@@ -2234,6 +2241,13 @@ fun NutritionPlanScreen(
                         foods = uiState.recentFoods,
                         onAdd = onQuickAddFood,
                         onToggleSaved = { food -> onToggleSaved(food.sourceEntryId, !food.isSaved) }
+                    )
+                }
+                if (uiState.suggestions.isNotEmpty()) {
+                    RecipeSuggestionsSection(
+                        title = "Suggested Meals",
+                        suggestions = uiState.suggestions,
+                        onAdd = onQuickAddFood
                     )
                 }
                 uiState.mealSections.forEach { section ->
@@ -2696,11 +2710,12 @@ private fun UsualMealRow(
 @Composable
 private fun RecipeSuggestionsSection(
     suggestions: List<RecipeSuggestionUiState>,
-    onAdd: (QuickAddFoodUiState) -> Unit
+    onAdd: (QuickAddFoodUiState) -> Unit,
+    title: String = "Recipe Suggestions"
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
-            text = "Recipe Suggestions",
+            text = title,
             color = PrimaryText,
             fontWeight = FontWeight.Bold
         )

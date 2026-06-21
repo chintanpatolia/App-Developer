@@ -557,39 +557,36 @@ private fun List<FoodEntry>.toUiState(
         .sortedByDescending { it.id }
         .distinctBy { it.foodName.lowercase() + "|" + (it.brandName?.lowercase() ?: "") }
         .map { it.toQuickAddUiState() }
-    val suggestions = if (plannedMeals.isNotEmpty()) {
-        plannedMeals.map { meal ->
-            RecipeSuggestionUiState(
-                mealName = PlannedMealSlotKey.toDisplayLabel(meal.slotKey),
-                food = QuickAddFoodUiState(
-                    sourceEntryId = 0L,
-                    foodName = meal.recipeName,
-                    brandName = null,
-                    servingDescription = "1 serving",
-                    calories = meal.calories,
-                    proteinGrams = meal.proteinGrams,
-                    carbGrams = meal.carbGrams,
-                    fatGrams = meal.fatGrams,
-                    fiberGrams = meal.fiberGrams,
-                    defaultMealName = PlannedMealSlotKey.toDisplayLabel(meal.slotKey),
-                    isSaved = false,
-                    isWholeFoodBased = false,
-                    isProcessed = false,
-                    isFermented = false
-                )
+    val todayPlanMeals = plannedMeals.map { meal ->
+        RecipeSuggestionUiState(
+            mealName = PlannedMealSlotKey.toDisplayLabel(meal.slotKey),
+            food = QuickAddFoodUiState(
+                sourceEntryId = 0L,
+                foodName = meal.recipeName,
+                brandName = null,
+                servingDescription = "1 serving",
+                calories = meal.calories,
+                proteinGrams = meal.proteinGrams,
+                carbGrams = meal.carbGrams,
+                fatGrams = meal.fatGrams,
+                fiberGrams = meal.fiberGrams,
+                defaultMealName = PlannedMealSlotKey.toDisplayLabel(meal.slotKey),
+                isSaved = false,
+                isWholeFoodBased = false,
+                isProcessed = false,
+                isFermented = false
             )
-        }
-    } else {
-        RecipeSuggestionEngine.suggest(
-            savedFoods = savedFoods,
-            recentFoods = recentFoods,
-            consumedCalories = uiEntries.sumOf { it.calories },
-            consumedProtein = uiEntries.sumOf { it.proteinGrams },
-            macroTarget = macroTarget,
-            goal = goal,
-            dietPreference = dietPreference
         )
     }
+    val suggestions = RecipeSuggestionEngine.suggest(
+        savedFoods = savedFoods,
+        recentFoods = recentFoods,
+        consumedCalories = uiEntries.sumOf { it.calories },
+        consumedProtein = uiEntries.sumOf { it.proteinGrams },
+        macroTarget = macroTarget,
+        goal = goal,
+        dietPreference = dietPreference
+    )
     return NutritionUiState(
         calories = uiEntries.sumOf { it.calories },
         proteinGrams = uiEntries.sumOf { it.proteinGrams },
@@ -627,7 +624,8 @@ private fun List<FoodEntry>.toUiState(
         quickAddMealName = form.quickAddMealName,
         quickAddQuantity = form.quickAddQuantity,
         quickAddTime = form.quickAddTime,
-        suggestions = suggestions
+        suggestions = suggestions,
+        todayPlanMeals = todayPlanMeals
     )
 }
 
