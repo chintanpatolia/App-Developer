@@ -539,5 +539,211 @@ object BoosterRecipes {
             womensHealthScore = 6,
             glucoseImpactScore = 4
         ),
+
+        Recipe(
+            id = "egg_white_spinach_booster",
+            name = "Egg White & Spinach Scramble Booster",
+            description = "Six egg whites and one whole egg scrambled with baby spinach and a pinch of turmeric deliver 28 g of fast-digesting complete protein in under 200 calories — the highest protein-to-calorie ratio booster in the plan.",
+            mealType = "Protein Booster",
+            tags = listOf("Vegetarian", "High Protein"),
+            proteinSource = "Eggs",
+            restrictions = listOf("Dairy Free", "Gluten Free", "Nut Free", "Soy Free"),
+            collection = listOf("Metabolic Reset"),
+            ingredients = listOf(
+                "6 egg whites (180g)",
+                "1 whole egg",
+                "1 cup baby spinach (30g)",
+                "¼ tsp turmeric",
+                "¼ tsp black pepper",
+                "Salt to taste",
+                "½ tsp olive oil or cooking spray"
+            ),
+            calories = 195, proteinGrams = 28.0, carbGrams = 3.0, fatGrams = 7.0, fiberGrams = 1.0,
+            prepMinutes = 3, cookMinutes = 5,
+            instructions = listOf(
+                "Whisk egg whites and whole egg with turmeric, pepper, and salt.",
+                "Heat oil in a non-stick pan over medium heat; add spinach and wilt 1 minute.",
+                "Pour egg mixture over spinach; fold gently until just set, about 3–4 minutes.",
+                "Serve immediately — eggs continue cooking off the heat."
+            ),
+            metabolicResetScore = 9,
+            antiInflammatoryScore = 6,
+            insulinResistanceScore = 9,
+            womensHealthScore = 7,
+            glucoseImpactScore = 1
+        ),
+
+        Recipe(
+            id = "sesame_tofu_booster",
+            name = "Sesame Tofu Protein Booster Bowl",
+            description = "300 g of extra-firm tofu pan-seared in sesame oil with tamari and garlic — maximising the protein density of soy while keeping total fat reasonable. A reliable 27 g booster with minimal carbs.",
+            mealType = "Protein Booster",
+            tags = listOf("Vegan", "High Protein"),
+            proteinSource = "Tofu",
+            restrictions = listOf("Dairy Free", "Nut Free", "Egg Free"),
+            collection = listOf("Anti-Inflammatory"),
+            ingredients = listOf(
+                "300g extra-firm tofu (pressed)",
+                "1 tbsp tamari",
+                "1 tsp sesame oil",
+                "2 cloves garlic (minced)",
+                "½ tsp ginger (grated)",
+                "¼ tsp chilli flakes",
+                "1 tsp sesame seeds",
+                "1 tsp avocado oil for frying"
+            ),
+            calories = 250, proteinGrams = 27.0, carbGrams = 6.0, fatGrams = 14.0, fiberGrams = 1.0,
+            prepMinutes = 5, cookMinutes = 10,
+            instructions = listOf(
+                "Slice pressed tofu into 1 cm slabs; pat very dry.",
+                "Heat avocado oil in a cast-iron or non-stick pan over high heat.",
+                "Sear tofu 4–5 minutes per side until deep golden.",
+                "Reduce heat to medium; add garlic, ginger, tamari, sesame oil, and chilli flakes.",
+                "Toss 1 minute; top with sesame seeds and serve."
+            ),
+            metabolicResetScore = 7,
+            antiInflammatoryScore = 8,
+            insulinResistanceScore = 8,
+            womensHealthScore = 7,
+            glucoseImpactScore = 1
+        ),
+
+        Recipe(
+            id = "skyr_protein_power_bowl",
+            name = "High-Protein Skyr Power Bowl",
+            description = "Thick Icelandic-style skyr (or strained Greek yogurt) layered with a half-scoop of unflavoured protein powder, topped with crushed flaxseed and cinnamon. The result is a cold, creamy booster with 32 g of slow-digesting protein.",
+            mealType = "Protein Booster",
+            tags = listOf("Vegetarian", "High Protein"),
+            proteinSource = "Greek Yogurt",
+            restrictions = listOf("Gluten Free", "Nut Free", "Soy Free", "Egg Free"),
+            collection = listOf("Metabolic Reset"),
+            ingredients = listOf(
+                "200g non-fat skyr or thick strained Greek yogurt",
+                "½ scoop unflavoured whey or pea protein powder (15g, ~12g protein)",
+                "1 tbsp ground flaxseed",
+                "¼ tsp cinnamon",
+                "1 tsp honey (optional)",
+                "½ cup blueberries"
+            ),
+            calories = 255, proteinGrams = 32.0, carbGrams = 22.0, fatGrams = 3.0, fiberGrams = 3.0,
+            prepMinutes = 4, cookMinutes = 0,
+            instructions = listOf(
+                "Whisk protein powder into skyr until fully dissolved and lump-free.",
+                "Stir in ground flaxseed and cinnamon.",
+                "Top with blueberries; drizzle honey if using.",
+                "Serve immediately or refrigerate up to 4 hours."
+            ),
+            storageNotes = "Do not mix blueberries in if storing — add just before eating.",
+            metabolicResetScore = 8,
+            antiInflammatoryScore = 6,
+            insulinResistanceScore = 8,
+            womensHealthScore = 8,
+            glucoseImpactScore = 3
+        ),
+
+        Recipe(
+            id = "paneer_tikka_bites_booster",
+            name = "Paneer Tikka Protein Bites",
+            description = "140 g of paneer marinated in a bold tandoori spice blend and grilled until charred at the edges — a straightforward booster delivering 26 g of slow-digesting casein protein with near-zero carbs.",
+            mealType = "Protein Booster",
+            tags = listOf("Vegetarian", "High Protein"),
+            proteinSource = "Paneer",
+            restrictions = listOf("Gluten Free", "Nut Free", "Soy Free", "Egg Free"),
+            collection = listOf("Metabolic Reset"),
+            ingredients = listOf(
+                "140g paneer (cubed, 2 cm pieces)",
+                "3 tbsp low-fat yogurt",
+                "1 tsp tandoori masala",
+                "½ tsp cumin",
+                "½ tsp smoked paprika",
+                "¼ tsp turmeric",
+                "1 tsp lemon juice",
+                "Salt to taste"
+            ),
+            calories = 290, proteinGrams = 26.0, carbGrams = 5.0, fatGrams = 18.0, fiberGrams = 0.5,
+            prepMinutes = 10, cookMinutes = 10,
+            instructions = listOf(
+                "Mix yogurt, tandoori masala, cumin, paprika, turmeric, lemon juice, and salt.",
+                "Coat paneer cubes thoroughly; marinate at least 15 minutes (or overnight).",
+                "Grill or pan-sear on high heat 3–4 minutes per side until charred and fragrant.",
+                "Serve hot; no accompaniment needed."
+            ),
+            mealPrepNotes = "Marinate paneer the night before; grill fresh for best texture.",
+            metabolicResetScore = 9,
+            antiInflammatoryScore = 4,
+            insulinResistanceScore = 9,
+            womensHealthScore = 7,
+            glucoseImpactScore = 1
+        ),
+
+        Recipe(
+            id = "herbed_cottage_veggie_booster",
+            name = "Herbed Cottage Cheese Veggie Bowl",
+            description = "A full cup of low-fat cottage cheese seasoned with fresh herbs and black pepper, served alongside raw crunchy vegetables. Simple, filling, and delivering 28 g of slow-digesting casein protein with minimal prep.",
+            mealType = "Protein Booster",
+            tags = listOf("Vegetarian", "High Protein"),
+            proteinSource = "Cottage Cheese",
+            restrictions = listOf("Gluten Free", "Nut Free", "Soy Free", "Egg Free"),
+            collection = listOf("Metabolic Reset"),
+            ingredients = listOf(
+                "1 cup low-fat cottage cheese (226g)",
+                "1 tbsp fresh chives or spring onion (chopped)",
+                "1 tbsp fresh dill or coriander",
+                "½ tsp black pepper",
+                "¼ tsp garlic powder",
+                "1 tsp lemon juice",
+                "1 cup raw vegetables (cucumber, carrot, celery, capsicum)"
+            ),
+            calories = 230, proteinGrams = 28.0, carbGrams = 14.0, fatGrams = 4.0, fiberGrams = 3.0,
+            prepMinutes = 5, cookMinutes = 0,
+            instructions = listOf(
+                "Combine cottage cheese with chives, dill, black pepper, garlic powder, and lemon juice.",
+                "Stir until herbs are evenly distributed.",
+                "Serve in a bowl alongside raw vegetables for dipping.",
+                "Refrigerate any leftovers; consume within 24 hours."
+            ),
+            storageNotes = "Season fresh each time; the herb mixture can be pre-mixed into cottage cheese and stored 2 days.",
+            metabolicResetScore = 9,
+            antiInflammatoryScore = 4,
+            insulinResistanceScore = 9,
+            womensHealthScore = 7,
+            glucoseImpactScore = 2
+        ),
+
+        Recipe(
+            id = "soy_paneer_fusion_booster",
+            name = "Soy Chunk & Paneer Protein Fusion",
+            description = "Rehydrated soy chunks stir-fried with diced paneer in a quick masala base — two complementary protein sources in one bowl delivering an exceptional 34 g of combined protein with a rich, satisfying texture.",
+            mealType = "Protein Booster",
+            tags = listOf("Vegetarian", "High Protein"),
+            proteinSource = "Soy",
+            restrictions = listOf("Gluten Free", "Nut Free", "Egg Free"),
+            collection = listOf("Metabolic Reset"),
+            ingredients = listOf(
+                "50g dry soy chunks (rehydrated in hot water 10 min, ~150g wet)",
+                "50g paneer (diced small)",
+                "½ tsp cumin seeds",
+                "1 small tomato (chopped)",
+                "½ tsp coriander powder",
+                "¼ tsp turmeric",
+                "¼ tsp garam masala",
+                "Salt to taste",
+                "½ tsp oil"
+            ),
+            calories = 280, proteinGrams = 34.0, carbGrams = 16.0, fatGrams = 9.0, fiberGrams = 3.0,
+            prepMinutes = 12, cookMinutes = 8,
+            instructions = listOf(
+                "Soak soy chunks in boiling water 10 minutes; drain and squeeze dry.",
+                "Heat oil in a pan; add cumin seeds and let them crackle.",
+                "Add tomato and cook 2 minutes until soft; add coriander, turmeric, and salt.",
+                "Add soy chunks and paneer; stir-fry on high heat 4–5 minutes until lightly browned.",
+                "Finish with garam masala; serve hot."
+            ),
+            metabolicResetScore = 9,
+            antiInflammatoryScore = 5,
+            insulinResistanceScore = 8,
+            womensHealthScore = 7,
+            glucoseImpactScore = 3
+        ),
     )
 }
