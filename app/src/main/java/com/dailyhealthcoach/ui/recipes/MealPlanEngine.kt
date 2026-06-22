@@ -16,12 +16,13 @@ object MealPlanEngine {
         calorieTarget: Int = 0
     ): List<DayMealPlanUiState> {
         val filtered = applyFilters(allRecipes, dietPreferences, foodRestrictions)
+        val preferredSources = preferredSourcesFor(dietPreferences)
         val nonSnackTypes = listOf("Breakfast", "Lunch", "Dinner")
         val pools: Map<String, ArrayDeque<Recipe>> = nonSnackTypes.associateWith { mealType ->
-            buildPool(filtered.filter { it.mealType == mealType }, nutritionGoal, proteinTargetGrams, calorieTarget)
+            buildPool(filtered.filter { it.mealType == mealType }, nutritionGoal, proteinTargetGrams, calorieTarget, preferredSources)
         }
         val rankedSnacks = rankRecipes(filtered.filter { it.mealType == "Snack" }, nutritionGoal, proteinTargetGrams, calorieTarget)
-        val snackPool = buildPool(filtered.filter { it.mealType == "Snack" }, nutritionGoal, proteinTargetGrams, calorieTarget)
+        val snackPool = buildPool(filtered.filter { it.mealType == "Snack" }, nutritionGoal, proteinTargetGrams, calorieTarget, preferredSources)
 
         return (0..6).map { offset ->
             val day = weekStart.plusDays(offset.toLong())
@@ -64,9 +65,11 @@ object MealPlanEngine {
         calorieTarget: Int = 0
     ): List<DayMealPlanUiState> {
         val filtered = applyFilters(allRecipes, dietPreferences, foodRestrictions)
+        val preferredSources = preferredSourcesFor(dietPreferences)
         val nonSnackTypes = listOf("Breakfast", "Lunch", "Dinner")
         val chosenNonSnacks: Map<String, Recipe?> = nonSnackTypes.associateWith { mealType ->
-            rankRecipes(filtered.filter { it.mealType == mealType }, nutritionGoal, proteinTargetGrams, calorieTarget).firstOrNull()
+            val ranked = rankRecipes(filtered.filter { it.mealType == mealType }, nutritionGoal, proteinTargetGrams, calorieTarget)
+            ranked.firstOrNull { it.proteinSource in preferredSources } ?: ranked.firstOrNull()
         }
         val rankedSnacks = rankRecipes(filtered.filter { it.mealType == "Snack" }, nutritionGoal, proteinTargetGrams, calorieTarget)
         val chosenSnack: Recipe? = if (proteinTargetGrams > 0 && rankedSnacks.isNotEmpty()) {
@@ -74,7 +77,7 @@ object MealPlanEngine {
             val gap = (proteinTargetGrams - proteinSoFar).coerceAtLeast(0.0)
             pickSnackForGap(rankedSnacks, gap)
         } else {
-            rankedSnacks.firstOrNull()
+            rankedSnacks.firstOrNull { it.proteinSource in preferredSources } ?: rankedSnacks.firstOrNull()
         }
         val totalProtein = nonSnackTypes.sumOf { chosenNonSnacks[it]?.proteinGrams ?: 0.0 } +
                            (chosenSnack?.proteinGrams ?: 0.0)
@@ -116,7 +119,9 @@ object MealPlanEngine {
         if (mealType == "Snack" && remainingProteinGap > 0.0) {
             return pool.minByOrNull { kotlin.math.abs(it.proteinGrams - remainingProteinGap) }
         }
-        return rankRecipes(pool, nutritionGoal, proteinTargetGrams, calorieTarget).firstOrNull()
+        val preferredSources = preferredSourcesFor(dietPreferences)
+        val ranked = rankRecipes(pool, nutritionGoal, proteinTargetGrams, calorieTarget)
+        return ranked.firstOrNull { it.proteinSource in preferredSources } ?: ranked.firstOrNull()
     }
 
     fun applyFoodRestrictions(recipes: List<Recipe>, foodRestrictions: List<String>): List<Recipe> =
@@ -134,14 +139,50 @@ object MealPlanEngine {
         candidates: List<Recipe>,
         nutritionGoal: String?,
         proteinTargetGrams: Int,
-        calorieTarget: Int = 0
+        calorieTarget: Int = 0,
+        preferredSources: Set<String> = emptySet()
     ): ArrayDeque<Recipe> {
         val pool = ArrayDeque<Recipe>()
         if (candidates.isEmpty()) return pool
         val ranked = rankRecipes(candidates, nutritionGoal, proteinTargetGrams, calorieTarget)
-        // ponytail: random shift 0–2 preserves variety on Regenerate; all 7 slots from top-ranked slice
-        val shift = (0 until minOf(3, ranked.size)).random()
-        repeat(7) { i -> pool.add(ranked[(i + shift) % ranked.size]) }
+        if (preferredSources.isEmpty()) {
+            // ponytail: random shift 0–2 preserves variety on Regenerate; all 7 slots from top-ranked slice
+            val shift = (0 until minOf(3, ranked.size)).random()
+            repeat(7) { i -> pool.add(ranked[(i + shift) % ranked.size]) }
+            return pool
+        }
+        val preferred = ranked.filter { it.proteinSource in preferredSources }
+        val others = ranked.filter { it.proteinSource !in preferredSources }
+        val quota = minOf(preferred.size, 3)
+        if (quota == 0) {
+            val shift = (0 until minOf(3, ranked.size)).random()
+            repeat(7) { i -> pool.add(ranked[(i + shift) % ranked.size]) }
+            return pool
+        }
+        // Build preferred slice (top quota items) and others slice (remaining 7 - quota slots)
+        val prefSlice = (0 until quota).map { i -> preferred[i % preferred.size] }
+        val othersSource = if (others.isEmpty()) ranked else others
+        val shift = (0 until minOf(3, othersSource.size)).random()
+        val otherSlice = (0 until (7 - quota)).map { i -> othersSource[(i + shift) % othersSource.size] }
+        // Interleave: space preferred recipes evenly across the 7-day week
+        val result = ArrayList<Recipe>(7)
+        val prefDeque = ArrayDeque(prefSlice)
+        val othDeque = ArrayDeque(otherSlice)
+        val interval = (7.0 / quota).toInt().coerceAtLeast(1)
+        var prefInserted = 0
+        for (i in 0 until 7) {
+            if (prefDeque.isNotEmpty() && prefInserted < quota && i % interval == 0) {
+                result.add(prefDeque.removeFirst())
+                prefInserted++
+            } else if (othDeque.isNotEmpty()) {
+                result.add(othDeque.removeFirst())
+            } else if (prefDeque.isNotEmpty()) {
+                result.add(prefDeque.removeFirst())
+                prefInserted++
+            }
+        }
+        while (result.size < 7) result.add(ranked[result.size % ranked.size])
+        pool.addAll(result)
         return pool
     }
 
@@ -271,4 +312,16 @@ object MealPlanEngine {
     private val SUPPORTED_RESTRICTIONS = setOf(
         "dairy free", "gluten free", "nut free", "soy free", "egg free"
     )
+
+    private fun preferredSourcesFor(dietPreferences: List<String>): Set<String> {
+        val prefs = dietPreferences.map { it.lowercase().trim() }
+        return when {
+            "pescatarian" in prefs -> setOf("Fish")
+            prefs.any { it == "chicken & fish" || it == "chicken/fish" } -> setOf("Fish", "Chicken")
+            prefs.any { it == "meat & poultry" || it == "meat/poultry" } -> setOf("Chicken", "Turkey", "Beef", "Lamb", "Pork")
+            "poultry" in prefs -> setOf("Chicken", "Turkey", "Duck")
+            prefs.any { it == "omnivore" || it == "flexitarian" } -> setOf("Fish", "Chicken", "Turkey", "Beef", "Eggs")
+            else -> emptySet()
+        }
+    }
 }
