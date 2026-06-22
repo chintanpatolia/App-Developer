@@ -132,7 +132,7 @@ object BoosterRecipes {
         Recipe(
             id = "cottage_cheese_bowl",
             name = "Cottage Cheese Protein Bowl",
-            description = "Low-fat cottage cheese topped with pineapple chunks and cinnamon. 25g of slow-digesting casein protein keeps you full between meals without excess calories.",
+            description = "Low-fat cottage cheese topped with mixed berries, turmeric, and pumpkin seeds. Berries replace pineapple to reduce glucose impact; turmeric adds curcumin; pumpkin seeds provide zinc and magnesium for women's hormone health.",
             mealType = "Protein Booster",
             tags = listOf("Vegetarian", "High Protein"),
             proteinSource = "Cottage Cheese",
@@ -140,54 +140,60 @@ object BoosterRecipes {
             collection = listOf("Metabolic Reset"),
             ingredients = listOf(
                 "¾ cup low-fat cottage cheese (170g)",
-                "½ cup pineapple chunks (fresh or tinned in juice)",
+                "½ cup mixed berries (blueberries and raspberries)",
+                "1 tbsp pumpkin seeds",
+                "¼ tsp turmeric",
                 "¼ tsp cinnamon",
-                "Pinch of black pepper (optional)"
+                "Pinch of black pepper"
             ),
-            calories = 190, proteinGrams = 25.0, carbGrams = 18.0, fatGrams = 2.0, fiberGrams = 1.0,
+            calories = 220, proteinGrams = 28.0, carbGrams = 14.0, fatGrams = 6.0, fiberGrams = 4.0,
             prepMinutes = 3, cookMinutes = 0,
             instructions = listOf(
                 "Spoon cottage cheese into a bowl.",
-                "Top with pineapple chunks.",
-                "Sprinkle cinnamon and a pinch of pepper if using."
+                "Top with berries and pumpkin seeds.",
+                "Sprinkle turmeric, cinnamon, and black pepper; stir lightly."
             ),
-            metabolicResetScore = 7,
-            antiInflammatoryScore = 4,
-            insulinResistanceScore = 6,
-            womensHealthScore = 6,
-            glucoseImpactScore = 5
+            metabolicResetScore = 8,
+            antiInflammatoryScore = 7,
+            insulinResistanceScore = 8,
+            womensHealthScore = 8,
+            glucoseImpactScore = 3
         ),
 
         Recipe(
             id = "tempeh_bites_snack",
             name = "Crispy Marinated Tempeh Bites",
-            description = "Tempeh sliced thin, marinated in tamari and smoked paprika, then pan-crisped. At 28g protein per serving it is the highest-protein fully vegan snack that needs no protein powder.",
+            description = "Tempeh sliced thin, marinated in tamari, ginger, and turmeric, then pan-crisped and served on wilted spinach. Ginger and turmeric elevate the anti-inflammatory profile; spinach adds folate and iron for women's health.",
             mealType = "Protein Booster",
             tags = listOf("Vegan", "High Protein"),
             proteinSource = "Soy",
             restrictions = listOf("Dairy Free", "Gluten Free", "Egg Free"),
-            collection = emptyList(),
+            collection = listOf("Anti-Inflammatory", "Metabolic Reset"),
             ingredients = listOf(
                 "150g tempeh (sliced)",
                 "1 tbsp tamari",
+                "1 tsp fresh ginger (grated)",
+                "¼ tsp turmeric",
                 "½ tsp smoked paprika",
                 "½ tsp garlic powder",
                 "1 tsp olive oil",
-                "1 tsp apple cider vinegar"
+                "1 tsp apple cider vinegar",
+                "1 cup baby spinach (to serve)"
             ),
-            calories = 220, proteinGrams = 28.0, carbGrams = 8.0, fatGrams = 10.0, fiberGrams = 3.0,
+            calories = 235, proteinGrams = 29.0, carbGrams = 9.0, fatGrams = 10.0, fiberGrams = 4.0,
             prepMinutes = 5, cookMinutes = 10,
             instructions = listOf(
-                "Mix tamari, smoked paprika, garlic powder, and apple cider vinegar.",
+                "Mix tamari, ginger, turmeric, smoked paprika, garlic powder, and apple cider vinegar.",
                 "Toss tempeh slices in marinade; rest 5 minutes.",
                 "Heat olive oil in a non-stick pan over medium-high heat.",
                 "Fry tempeh 4–5 minutes per side until crispy and golden.",
-                "Serve immediately."
+                "Wilt spinach in the residual pan heat for 30 seconds.",
+                "Serve tempeh on a bed of spinach."
             ),
-            metabolicResetScore = 5,
-            antiInflammatoryScore = 6,
+            metabolicResetScore = 7,
+            antiInflammatoryScore = 8,
             insulinResistanceScore = 7,
-            womensHealthScore = 6,
+            womensHealthScore = 8,
             glucoseImpactScore = 2
         ),
 
@@ -415,34 +421,38 @@ object BoosterRecipes {
         Recipe(
             id = "tempeh_tikka_snack",
             name = "Tandoori Tempeh Protein Bites",
-            description = "Tempeh sliced thin, marinated in a quick tandoori spice blend, and pan-crisped for 32g of protein in a snack under 280 calories. A spicier, higher-protein vegan alternative to the Tandoori Paneer Bites.",
+            description = "Tempeh marinated in tandoori spices with ginger and turmeric, pan-crisped and served on wilted baby spinach. Ginger and turmeric amplify the anti-inflammatory compound density; spinach supplies folate and iron.",
             mealType = "Protein Booster",
             tags = listOf("Vegan", "High Protein"),
             proteinSource = "Soy",
             restrictions = listOf("Dairy Free", "Gluten Free", "Egg Free"),
-            collection = emptyList(),
+            collection = listOf("Anti-Inflammatory", "Metabolic Reset"),
             ingredients = listOf(
                 "170g tempeh (sliced)",
                 "1 tbsp tamari",
                 "1 tsp tandoori spice blend",
+                "1 tsp fresh ginger (grated)",
+                "¼ tsp turmeric",
                 "½ tsp garlic powder",
                 "½ tsp smoked paprika",
                 "1 tsp olive oil",
-                "Squeeze of lemon juice"
+                "Squeeze of lemon juice",
+                "1 cup baby spinach (to serve)"
             ),
-            calories = 270, proteinGrams = 32.0, carbGrams = 10.0, fatGrams = 12.0, fiberGrams = 3.0,
+            calories = 285, proteinGrams = 33.0, carbGrams = 11.0, fatGrams = 12.0, fiberGrams = 4.0,
             prepMinutes = 5, cookMinutes = 10,
             instructions = listOf(
-                "Mix tamari, tandoori spice, garlic powder, and smoked paprika; toss with tempeh.",
+                "Mix tamari, tandoori spice, ginger, turmeric, garlic powder, and smoked paprika; toss with tempeh.",
                 "Rest 5 minutes.",
                 "Heat olive oil in a non-stick pan over medium-high heat.",
                 "Fry tempeh 4–5 minutes per side until crispy and golden.",
-                "Finish with a squeeze of lemon. Serve immediately."
+                "Wilt spinach in residual pan heat for 30 seconds.",
+                "Finish with a squeeze of lemon. Serve tempeh on spinach."
             ),
-            metabolicResetScore = 5,
-            antiInflammatoryScore = 6,
+            metabolicResetScore = 7,
+            antiInflammatoryScore = 8,
             insulinResistanceScore = 7,
-            womensHealthScore = 6,
+            womensHealthScore = 8,
             glucoseImpactScore = 2
         ),
 
@@ -482,7 +492,7 @@ object BoosterRecipes {
         Recipe(
             id = "cinnamon_cottage_cheese_snack",
             name = "Cinnamon Cottage Cheese Snack Bowl",
-            description = "A sweet, satisfying snack bowl built on cottage cheese — one of the highest casein-protein foods available. A half-scoop of protein powder boosts it to 28g without making it feel like a gym shake.",
+            description = "Cottage cheese boosted with protein powder, mixed berries, turmeric, and pumpkin seeds. Berries replace banana to stabilise blood sugar; turmeric adds curcumin; pumpkin seeds supply zinc and magnesium for women's hormone health.",
             mealType = "Protein Booster",
             tags = listOf("Vegetarian", "High Protein"),
             proteinSource = "Cottage Cheese",
@@ -491,22 +501,24 @@ object BoosterRecipes {
             ingredients = listOf(
                 "¾ cup low-fat cottage cheese",
                 "½ scoop vanilla protein powder",
-                "1 banana (sliced)",
+                "½ cup mixed berries",
+                "1 tbsp pumpkin seeds",
+                "¼ tsp turmeric",
                 "¼ tsp cinnamon",
                 "1 tsp honey"
             ),
-            calories = 270, proteinGrams = 28.0, carbGrams = 32.0, fatGrams = 3.0, fiberGrams = 2.0,
+            calories = 215, proteinGrams = 31.0, carbGrams = 20.0, fatGrams = 7.0, fiberGrams = 4.0,
             prepMinutes = 3, cookMinutes = 0,
             instructions = listOf(
-                "Stir protein powder into cottage cheese until smooth.",
-                "Top with banana slices.",
+                "Stir protein powder and turmeric into cottage cheese until smooth.",
+                "Top with berries and pumpkin seeds.",
                 "Drizzle honey and sprinkle cinnamon. Serve immediately."
             ),
-            metabolicResetScore = 7,
-            antiInflammatoryScore = 4,
-            insulinResistanceScore = 6,
-            womensHealthScore = 6,
-            glucoseImpactScore = 5
+            metabolicResetScore = 8,
+            antiInflammatoryScore = 7,
+            insulinResistanceScore = 8,
+            womensHealthScore = 8,
+            glucoseImpactScore = 3
         ),
 
         Recipe(

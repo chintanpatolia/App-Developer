@@ -40,7 +40,7 @@ object BreakfastRecipes {
         Recipe(
             id = "protein_oats",
             name = "Protein Overnight Oats with Berries",
-            description = "Creamy overnight oats with protein powder, topped with anti-inflammatory berries and warming cinnamon. Make the night before for a stress-free morning.",
+            description = "Creamy overnight oats with protein powder, ground flaxseed, and ginger — topped with blueberries and almond butter. Flaxseed adds lignans for hormone balance; ginger reduces inflammation; removing banana dramatically improves blood-sugar stability.",
             mealType = "Breakfast",
             tags = listOf("Vegetarian", "High Protein"),
             proteinSource = "Protein Powder",
@@ -50,24 +50,25 @@ object BreakfastRecipes {
                 "½ cup rolled oats",
                 "1 scoop protein powder",
                 "1 cup plant milk",
-                "1 banana (sliced)",
+                "1 tbsp ground flaxseed",
+                "¼ tsp ground ginger",
                 "½ cup blueberries",
                 "1 tbsp almond butter",
                 "½ tsp cinnamon"
             ),
-            calories = 440, proteinGrams = 32.0, carbGrams = 58.0, fatGrams = 9.0, fiberGrams = 6.0,
+            calories = 390, proteinGrams = 33.0, carbGrams = 36.0, fatGrams = 12.0, fiberGrams = 9.0,
             prepMinutes = 5, cookMinutes = 0,
             instructions = listOf(
-                "Mix oats, protein powder, and plant milk in a jar.",
+                "Mix oats, protein powder, flaxseed, ginger, and plant milk in a jar.",
                 "Stir well, cover, and refrigerate overnight.",
-                "In the morning, top with banana, blueberries, almond butter, and cinnamon."
+                "In the morning, top with blueberries, almond butter, and cinnamon."
             ),
             mealPrepNotes = "Prepare 4 jars on Sunday for the whole week.",
-            metabolicResetScore = 5,
-            antiInflammatoryScore = 7,
-            insulinResistanceScore = 5,
-            womensHealthScore = 6,
-            glucoseImpactScore = 5
+            metabolicResetScore = 8,
+            antiInflammatoryScore = 8,
+            insulinResistanceScore = 8,
+            womensHealthScore = 8,
+            glucoseImpactScore = 3
         ),
 
         Recipe(
@@ -188,6 +189,7 @@ object BreakfastRecipes {
                 "½ cup rolled oats",
                 "1 scoop vanilla protein powder",
                 "1 cup unsweetened almond milk",
+                "1 tbsp ground flaxseed",
                 "½ tsp turmeric",
                 "¼ tsp ground ginger",
                 "¼ tsp cinnamon",
@@ -195,19 +197,19 @@ object BreakfastRecipes {
                 "1 tbsp chia seeds",
                 "1 tsp maple syrup"
             ),
-            calories = 390, proteinGrams = 28.0, carbGrams = 50.0, fatGrams = 8.0, fiberGrams = 7.0,
+            calories = 430, proteinGrams = 29.0, carbGrams = 52.0, fatGrams = 11.0, fiberGrams = 10.0,
             prepMinutes = 5, cookMinutes = 0,
             instructions = listOf(
                 "Combine all ingredients in a jar and stir well.",
                 "Refrigerate overnight (at least 6 hours).",
-                "Stir before eating; top with sliced mango or banana if desired."
+                "Stir before eating; top with mixed berries if desired."
             ),
             mealPrepNotes = "Make a batch of 5 jars for the whole work week.",
-            metabolicResetScore = 6,
+            metabolicResetScore = 8,
             antiInflammatoryScore = 9,
-            insulinResistanceScore = 6,
-            womensHealthScore = 7,
-            glucoseImpactScore = 4
+            insulinResistanceScore = 7,
+            womensHealthScore = 8,
+            glucoseImpactScore = 3
         ),
 
         Recipe(
@@ -221,14 +223,14 @@ object BreakfastRecipes {
             collection = listOf("Anti-Inflammatory"),
             ingredients = listOf(
                 "1 cup fresh spinach",
-                "1 frozen banana",
+                "½ frozen banana",
                 "1 tsp fresh ginger (grated)",
                 "1 scoop vanilla protein powder",
                 "1 cup unsweetened almond milk",
                 "1 tbsp chia seeds",
-                "½ cup frozen pineapple chunks"
+                "½ cup frozen mixed berries"
             ),
-            calories = 340, proteinGrams = 30.0, carbGrams = 38.0, fatGrams = 7.0, fiberGrams = 6.0,
+            calories = 290, proteinGrams = 30.0, carbGrams = 24.0, fatGrams = 7.0, fiberGrams = 7.0,
             prepMinutes = 5, cookMinutes = 0,
             instructions = listOf(
                 "Add all ingredients to a blender.",
@@ -236,11 +238,11 @@ object BreakfastRecipes {
                 "Taste and adjust ginger or sweetness as preferred.",
                 "Pour and serve immediately."
             ),
-            metabolicResetScore = 5,
+            metabolicResetScore = 7,
             antiInflammatoryScore = 8,
-            insulinResistanceScore = 5,
-            womensHealthScore = 7,
-            glucoseImpactScore = 5
+            insulinResistanceScore = 7,
+            womensHealthScore = 8,
+            glucoseImpactScore = 3
         ),
 
         Recipe(
@@ -624,7 +626,7 @@ object BreakfastRecipes {
         Recipe(
             id = "mango_lassi_protein_smoothie",
             name = "High-Protein Mango Lassi Smoothie",
-            description = "The classic Indian lassi elevated with a full scoop of protein powder. Frozen mango and Greek yogurt create a creamy, naturally sweet drink with 40g of protein.",
+            description = "The classic Indian lassi elevated with protein powder, flaxseed, and berries. Half the mango is replaced with mixed berries to reduce glucose spike; flaxseed adds lignans for hormone balance and omega-3 for anti-inflammatory support.",
             mealType = "Breakfast",
             tags = listOf("Vegetarian", "High Protein"),
             proteinSource = "Greek Yogurt",
@@ -633,24 +635,26 @@ object BreakfastRecipes {
             ingredients = listOf(
                 "1 cup non-fat Greek yogurt",
                 "1 scoop vanilla protein powder",
-                "1 cup frozen mango chunks",
+                "½ cup frozen mango chunks",
+                "½ cup frozen mixed berries",
+                "1 tbsp ground flaxseed",
                 "½ cup oat milk",
                 "¼ tsp cardamom",
                 "Pinch of saffron (optional)",
                 "1 tsp honey"
             ),
-            calories = 370, proteinGrams = 40.0, carbGrams = 48.0, fatGrams = 3.0, fiberGrams = 3.0,
+            calories = 380, proteinGrams = 41.0, carbGrams = 42.0, fatGrams = 6.0, fiberGrams = 6.0,
             prepMinutes = 5, cookMinutes = 0,
             instructions = listOf(
                 "Add all ingredients to a blender.",
                 "Blend on high 45 seconds until smooth and creamy.",
                 "Taste; add honey if needed. Serve cold."
             ),
-            metabolicResetScore = 7,
-            antiInflammatoryScore = 4,
-            insulinResistanceScore = 5,
-            womensHealthScore = 7,
-            glucoseImpactScore = 6
+            metabolicResetScore = 8,
+            antiInflammatoryScore = 7,
+            insulinResistanceScore = 7,
+            womensHealthScore = 9,
+            glucoseImpactScore = 4
         ),
 
         Recipe(

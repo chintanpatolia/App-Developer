@@ -138,7 +138,7 @@ object SnackRecipes {
         Recipe(
             id = "walnut_energy_balls",
             name = "Walnut & Date Energy Balls",
-            description = "No-bake energy balls made with walnuts, Medjool dates, chia seeds, and raw cacao. Walnuts top the nut charts for anti-inflammatory ALA omega-3; dates provide natural fibre and minerals.",
+            description = "No-bake energy balls with walnuts, hemp hearts, chia, and raw cacao. Reduced dates keep blood sugar stable; hemp hearts add complete protein, GLA, and zinc for women's hormone health; walnuts deliver anti-inflammatory ALA omega-3.",
             mealType = "Snack",
             tags = listOf("Vegan"),
             proteinSource = "Nuts",
@@ -146,27 +146,28 @@ object SnackRecipes {
             collection = listOf("Anti-Inflammatory"),
             ingredients = listOf(
                 "½ cup walnuts",
-                "4 Medjool dates (pitted)",
+                "2 Medjool dates (pitted)",
+                "2 tbsp hemp hearts",
                 "1 tbsp chia seeds",
                 "1 tbsp raw cacao powder",
                 "Pinch of sea salt",
-                "Shredded coconut for rolling (optional)"
+                "1 tbsp pumpkin seeds (for rolling, optional)"
             ),
-            calories = 240, proteinGrams = 6.0, carbGrams = 28.0, fatGrams = 14.0, fiberGrams = 4.0,
+            calories = 220, proteinGrams = 8.0, carbGrams = 16.0, fatGrams = 16.0, fiberGrams = 6.0,
             prepMinutes = 10, cookMinutes = 0,
             instructions = listOf(
                 "Pulse walnuts in a food processor until coarsely ground.",
-                "Add dates, chia seeds, cacao, and salt; process until the mixture sticks together.",
-                "Roll into 6 balls; coat in shredded coconut if using.",
+                "Add dates, hemp hearts, chia seeds, cacao, and salt; process until the mixture sticks together.",
+                "Roll into 6 balls; coat in pumpkin seeds if using.",
                 "Refrigerate 20 minutes before eating."
             ),
             storageNotes = "Keeps refrigerated for 1 week; freezes for 1 month.",
             mealPrepNotes = "Make a double batch and freeze half.",
-            metabolicResetScore = 3,
+            metabolicResetScore = 7,
             antiInflammatoryScore = 9,
-            insulinResistanceScore = 4,
-            womensHealthScore = 6,
-            glucoseImpactScore = 6
+            insulinResistanceScore = 7,
+            womensHealthScore = 8,
+            glucoseImpactScore = 3
         ),
 
         Recipe(
@@ -262,63 +263,69 @@ object SnackRecipes {
         Recipe(
             id = "protein_oats_mini",
             name = "Protein Oats Mini Bowl",
-            description = "A half-portion of protein oatmeal — the perfect bridge snack between meals. 20g of protein from a half-scoop of powder stirred into warm oats, under 200 calories.",
+            description = "A half-portion of protein oatmeal with ground flaxseed and ginger — the perfect bridge snack between meals. Flaxseed adds lignans and omega-3 for hormone balance; ginger reduces inflammation at the cellular level.",
             mealType = "Snack",
             tags = listOf("Vegetarian", "High Protein"),
             proteinSource = "Protein Powder",
             restrictions = listOf("Dairy Free", "Soy Free", "Egg Free"),
-            collection = emptyList(),
+            collection = listOf("Anti-Inflammatory", "Metabolic Reset"),
             ingredients = listOf(
                 "¼ cup rolled oats",
                 "½ scoop vanilla protein powder",
                 "½ cup unsweetened almond milk",
-                "1 tsp honey",
-                "¼ tsp cinnamon"
+                "1 tbsp ground flaxseed",
+                "¼ tsp ground ginger",
+                "¼ tsp cinnamon",
+                "1 tsp honey"
             ),
-            calories = 200, proteinGrams = 20.0, carbGrams = 26.0, fatGrams = 3.0, fiberGrams = 3.0,
+            calories = 235, proteinGrams = 21.0, carbGrams = 28.0, fatGrams = 6.0, fiberGrams = 6.0,
             prepMinutes = 1, cookMinutes = 5,
             instructions = listOf(
                 "Cook oats with almond milk on stovetop or microwave 3–4 minutes.",
-                "Stir in protein powder until smooth.",
+                "Stir in protein powder, flaxseed, and ginger until smooth.",
                 "Top with honey and cinnamon. Serve warm."
             ),
-            metabolicResetScore = 5,
-            antiInflammatoryScore = 4,
-            insulinResistanceScore = 5,
-            womensHealthScore = 5,
+            metabolicResetScore = 6,
+            antiInflammatoryScore = 7,
+            insulinResistanceScore = 6,
+            womensHealthScore = 7,
             glucoseImpactScore = 4
         ),
 
         Recipe(
             id = "tofu_snack_bowl",
             name = "Quick Sesame Tofu Bowl",
-            description = "Firm tofu cubed and pan-fried in sesame oil with soy sauce and chilli. Ready in 10 minutes with 22g of complete plant protein and under 200 calories.",
+            description = "Firm tofu pan-fried with sesame oil, ginger, and turmeric, served on wilted spinach. Ginger and turmeric add potent anti-inflammatory compounds; spinach supplies folate and iron for women's health.",
             mealType = "Snack",
             tags = listOf("Vegan", "High Protein"),
             proteinSource = "Tofu",
             restrictions = listOf("Dairy Free", "Egg Free"),
-            collection = emptyList(),
+            collection = listOf("Anti-Inflammatory", "Metabolic Reset"),
             ingredients = listOf(
                 "150g firm tofu (cubed)",
                 "1 tsp sesame oil",
                 "1 tsp soy sauce",
+                "1 tsp fresh ginger (grated)",
+                "½ tsp turmeric",
                 "½ tsp garlic powder",
                 "¼ tsp chilli flakes",
+                "1 cup baby spinach",
                 "1 tsp sesame seeds"
             ),
-            calories = 200, proteinGrams = 22.0, carbGrams = 4.0, fatGrams = 11.0, fiberGrams = 1.0,
-            prepMinutes = 3, cookMinutes = 7,
+            calories = 215, proteinGrams = 23.0, carbGrams = 5.0, fatGrams = 11.0, fiberGrams = 2.0,
+            prepMinutes = 3, cookMinutes = 8,
             instructions = listOf(
                 "Press tofu dry with a kitchen towel; cube into bite-sized pieces.",
                 "Heat sesame oil in a non-stick pan over high heat.",
                 "Add tofu; fry 3–4 minutes per side until golden.",
-                "Toss with soy sauce, garlic powder, and chilli flakes.",
+                "Toss with soy sauce, ginger, turmeric, garlic powder, and chilli flakes.",
+                "Add spinach; toss until wilted, about 1 minute.",
                 "Finish with sesame seeds; serve warm."
             ),
-            metabolicResetScore = 4,
-            antiInflammatoryScore = 6,
+            metabolicResetScore = 7,
+            antiInflammatoryScore = 8,
             insulinResistanceScore = 7,
-            womensHealthScore = 6,
+            womensHealthScore = 8,
             glucoseImpactScore = 2
         ),
 
