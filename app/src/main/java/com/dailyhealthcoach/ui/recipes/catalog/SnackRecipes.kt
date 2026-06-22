@@ -411,14 +411,14 @@ object SnackRecipes {
                 "¼ tsp turmeric",
                 "½ tsp coriander powder",
                 "1 tbsp lemon juice",
-                "½ tsp ghee or coconut oil",
+                "½ tsp coconut oil",
                 "Salt to taste",
                 "2 tbsp fresh coriander (chopped)"
             ),
             calories = 190, proteinGrams = 16.0, carbGrams = 30.0, fatGrams = 3.0, fiberGrams = 8.0,
             prepMinutes = 5, cookMinutes = 3,
             instructions = listOf(
-                "Heat ghee or coconut oil in a small pan; add cumin seeds and let them splutter.",
+                "Heat coconut oil in a small pan; add cumin seeds and let them splutter.",
                 "Add turmeric and coriander powder; stir 20 seconds.",
                 "Add cooked moong and salt; toss to coat with the tempering.",
                 "Remove from heat, squeeze lemon juice, and garnish with coriander."

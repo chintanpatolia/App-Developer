@@ -513,8 +513,9 @@ class RecipesViewModel(
         val remainProtein = protTarget - consumedProtein
         val goal = userProfileState.value?.nutritionGoal
         val dietPref = userProfileState.value?.dietPreferences?.firstOrNull()
+        val foodRestrictions = userProfileState.value?.foodRestrictions ?: emptyList()
 
-        val filtered = filterByDiet(RecipeCatalog.ALL, dietPref)
+        val filtered = MealPlanEngine.applyFoodRestrictions(filterByDiet(RecipeCatalog.ALL, dietPref), foodRestrictions)
         val ranked = rankRecipes(filtered, remainCal, remainProtein, goal)
 
         val recommendedRecipes = if (sel.recommendedOverrides.size == 3) {
@@ -594,9 +595,10 @@ class RecipesViewModel(
 
         val currentRecipe = RecipeCatalog.ALL.find { it.id == recipeId } ?: return
         val dietPref = userProfileState.value?.dietPreferences?.firstOrNull()
+        val foodRestrictions = userProfileState.value?.foodRestrictions ?: emptyList()
         val goal = userProfileState.value?.nutritionGoal
         val curr = uiState.value
-        val filtered = filterByDiet(RecipeCatalog.ALL, dietPref)
+        val filtered = MealPlanEngine.applyFoodRestrictions(filterByDiet(RecipeCatalog.ALL, dietPref), foodRestrictions)
 
         val alternatives = rankRecipes(
             filtered.filter { it.mealType == currentRecipe.mealType && it.id !in currentIds },

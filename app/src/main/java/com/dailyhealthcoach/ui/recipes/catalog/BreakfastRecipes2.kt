@@ -349,7 +349,7 @@ object BreakfastRecipes2 {
                 "2 cups water",
                 "¼ tsp cumin seeds",
                 "¼ tsp turmeric",
-                "1 tsp ghee or coconut oil",
+                "1 tsp coconut oil",
                 "Salt to taste",
                 "1 tbsp fresh coriander (chopped)"
             ),
@@ -359,7 +359,7 @@ object BreakfastRecipes2 {
                 "Cook soaked moong dal in 1½ cups water on medium heat until soft, about 12 minutes.",
                 "Whisk ragi flour with ½ cup cold water until lump-free; add to the cooked dal.",
                 "Stir continuously over low heat 6–8 minutes until thick and cooked through.",
-                "In a small pan heat ghee; add cumin and let it splutter; pour over porridge.",
+                "In a small pan heat coconut oil; add cumin and let it splutter; pour over porridge.",
                 "Season with salt; garnish with coriander. Serve warm."
             ),
             metabolicResetScore = 9,

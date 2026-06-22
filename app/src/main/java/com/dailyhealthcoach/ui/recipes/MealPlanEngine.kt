@@ -119,6 +119,9 @@ object MealPlanEngine {
         return rankRecipes(pool, nutritionGoal, proteinTargetGrams, calorieTarget).firstOrNull()
     }
 
+    fun applyFoodRestrictions(recipes: List<Recipe>, foodRestrictions: List<String>): List<Recipe> =
+        filterByRestrictions(recipes, foodRestrictions)
+
     // ── Private helpers ──────────────────────────────────────────────────────
 
     private fun applyFilters(
@@ -244,7 +247,10 @@ object MealPlanEngine {
             "pescatarian" -> isVegetarian || "pescatarian" in tags
             "mediterranean" -> isVegetarian || "whole foods" in tags || "mediterranean" in tags
             // Meat-inclusive diets: our catalog is plant-based only; all recipes suit these
-            "omnivore", "meat & poultry", "chicken & fish", "poultry", "flexitarian" -> true
+            "omnivore",
+            "meat & poultry", "meat/poultry",
+            "chicken & fish", "chicken/fish",
+            "poultry", "flexitarian" -> true
             else -> true // Custom, unknown → no filter
         }
     }

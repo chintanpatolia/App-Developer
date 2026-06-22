@@ -6,8 +6,8 @@ object DinnerRecipes2 {
     val ALL: List<Recipe> = listOf(
 
         Recipe(
-            id = "paneer_tikka_masala",
-            name = "Paneer Tikka Masala",
+            id = "paneer_tikka_masala_classic",
+            name = "Paneer Tikka Masala (Classic)",
             description = "The definitive Indian restaurant classic — grilled paneer tikka simmered in a rich, spiced tomato-cream gravy — made lighter with fat-free yogurt and a moderate amount of cream. A 40 g protein dinner with complex, layered flavours that genuinely rewards the effort.",
             mealType = "Dinner",
             tags = listOf("Vegetarian", "High Protein"),
@@ -449,7 +449,7 @@ object DinnerRecipes2 {
             mealType = "Dinner",
             tags = listOf("Vegetarian", "High Protein"),
             proteinSource = "Eggs",
-            restrictions = listOf("Dairy Free", "Gluten Free", "Nut Free", "Soy Free"),
+            restrictions = listOf("Gluten Free", "Nut Free", "Soy Free"),
             collection = listOf("Metabolic Reset"),
             ingredients = listOf(
                 "3 whole eggs",
