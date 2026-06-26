@@ -2,8 +2,17 @@ package com.dailyhealthcoach.ui.workout
 
 import com.dailyhealthcoach.domain.model.WorkoutStatus
 
+enum class TimerPhase { IDLE, RUNNING, PAUSED }
+
+data class TimerState(
+    val activityIndex: Int,
+    val remainingSeconds: Int,
+    val phase: TimerPhase
+)
+
 data class WorkoutUiState(
     val isWorkoutStarted: Boolean = false,
+    val isNonStrengthSessionStarted: Boolean = false,
     val workoutName: String = "Strength Session",
     val durationMinutes: String = "",
     val overallRpe: String = "",
@@ -21,7 +30,12 @@ data class WorkoutUiState(
     val weeklyLoads: List<WeeklyLoadUiState> = emptyList(),
     val calendarDays: List<CalendarDayUiState> = emptyList(),
     val selectedWeekOffset: Int = 0,
-    val calendarWeekLabel: String = "This Week"
+    val calendarWeekLabel: String = "This Week",
+    val warmUpDrafts: List<ActivityDraft> = emptyList(),
+    val coolDownDrafts: List<ActivityDraft> = emptyList(),
+    val nonStrengthDrafts: List<ActivityDraft> = emptyList(),
+    val nonStrengthOverallNotes: String = "",
+    val activeTimer: TimerState? = null
 )
 
 data class CalendarDayUiState(
@@ -149,7 +163,9 @@ data class ActivityDraft(
     val status: WorkoutStatus = WorkoutStatus.COMPLETED,
     val durationInput: String = "",
     val rpeInput: String = "",
-    val notesInput: String = ""
+    val notesInput: String = "",
+    val isTimedActivity: Boolean = false,
+    val durationSeconds: Int? = null
 )
 
 data class RecoveryActivityDetailUiState(

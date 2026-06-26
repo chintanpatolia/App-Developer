@@ -5,7 +5,7 @@ data class RecoveryActivity(
     val workoutId: Long,
     val name: String,
     val status: String,
-    val durationMinutes: Int?,
+    val durationSeconds: Int?,
     val rpe: Int?,
     val notes: String?
 )

@@ -312,7 +312,7 @@ private fun WorkoutStatusSelector(
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text("Workout status", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            WorkoutStatus.entries.forEach { status ->
+            WorkoutStatus.entries.filter { it != WorkoutStatus.NOT_STARTED }.forEach { status ->
                 FilterChip(
                     selected = selectedStatus == status,
                     onClick = { onStatusSelected(status) },
@@ -569,6 +569,7 @@ private fun RecentWorkoutHistory(workouts: List<WorkoutHistoryUiState>) {
 
 private fun WorkoutStatus.statusColor(): Color {
     return when (this) {
+        WorkoutStatus.NOT_STARTED -> Color(0xFFEDEDED)
         WorkoutStatus.COMPLETED -> Color(0xFFE8F5EC)
         WorkoutStatus.PARTIAL -> Color(0xFFFFF3D6)
         WorkoutStatus.SKIPPED -> Color(0xFFEDEDED)

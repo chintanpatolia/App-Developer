@@ -45,7 +45,7 @@ import com.dailyhealthcoach.data.local.entity.WorkoutExerciseEntity
         RecoveryActivityEntity::class,
         PlannedMealEntity::class
     ],
-    version = 15,
+    version = 16,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

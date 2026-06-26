@@ -238,6 +238,7 @@ class DataExportService(private val db: AppDatabase) {
                     put("workoutId", a.workoutId)
                     put("activityName", a.activityName)
                     put("status", a.status)
+                    put("durationSeconds", a.durationSeconds ?: JSONObject.NULL)
                     put("durationMinutes", a.durationMinutes ?: JSONObject.NULL)
                     put("rpe", a.rpe ?: JSONObject.NULL)
                     put("notes", a.notes ?: JSONObject.NULL)

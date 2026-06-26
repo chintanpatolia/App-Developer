@@ -11,6 +11,7 @@ data class RecoveryActivityEntity(
     @ColumnInfo(name = "activity_name") val activityName: String,
     val status: String = "COMPLETED",
     @ColumnInfo(name = "duration_minutes") val durationMinutes: Int? = null,
+    @ColumnInfo(name = "duration_seconds") val durationSeconds: Int? = null,
     val rpe: Int? = null,
     val notes: String? = null
 )

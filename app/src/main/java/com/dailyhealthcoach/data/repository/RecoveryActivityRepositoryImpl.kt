@@ -20,7 +20,7 @@ class RecoveryActivityRepositoryImpl(
                 workoutId = workoutId,
                 activityName = activity.name,
                 status = activity.status,
-                durationMinutes = activity.durationMinutes,
+                durationSeconds = activity.durationSeconds,
                 rpe = activity.rpe,
                 notes = activity.notes
             )
@@ -33,7 +33,7 @@ private fun RecoveryActivityEntity.toDomain() = RecoveryActivity(
     workoutId = workoutId,
     name = activityName,
     status = status,
-    durationMinutes = durationMinutes,
+    durationSeconds = durationSeconds ?: durationMinutes?.let { it * 60 },
     rpe = rpe,
     notes = notes
 )

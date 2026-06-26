@@ -297,6 +297,7 @@ class DataRestoreService(private val db: AppDatabase) {
                     workoutId = a.optLong("workoutId"),
                     activityName = a.optString("activityName"),
                     status = a.optString("status", "COMPLETED"),
+                    durationSeconds = a.nullableInt("durationSeconds") ?: a.nullableInt("durationMinutes")?.let { it * 60 },
                     durationMinutes = a.nullableInt("durationMinutes"),
                     rpe = a.nullableInt("rpe"),
                     notes = a.nullableString("notes")

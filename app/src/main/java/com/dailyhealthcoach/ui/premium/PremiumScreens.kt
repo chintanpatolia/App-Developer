@@ -70,6 +70,8 @@ import com.dailyhealthcoach.ui.workout.WeeklyLoadUiState
 import com.dailyhealthcoach.ui.workout.WorkoutDetailUiState
 import com.dailyhealthcoach.ui.workout.WorkoutHistoryUiState
 import com.dailyhealthcoach.ui.workout.SuggestedExerciseUiState
+import com.dailyhealthcoach.ui.workout.TimerPhase
+import com.dailyhealthcoach.ui.workout.TimerState
 import com.dailyhealthcoach.ui.workout.WorkoutPlanUiState
 import com.dailyhealthcoach.ui.workout.WorkoutUiState
 import com.dailyhealthcoach.ui.workout.WorkoutViewModel
@@ -141,33 +143,31 @@ fun NutritionRoute(viewModel: NutritionViewModel) {
 @Composable
 fun PremiumWorkoutRoute(viewModel: WorkoutViewModel) {
     val uiState by viewModel.uiState.collectAsState()
-    var showActiveWorkout by remember { mutableStateOf(false) }
-    var showNonStrengthSession by remember { mutableStateOf(false) }
 
     PremiumWorkoutScreen(
         uiState = uiState,
-        showActiveWorkout = showActiveWorkout,
-        showNonStrengthSession = showNonStrengthSession,
         onStartWorkout = {
             val plan = uiState.workoutPlan
-            if (plan != null && !plan.isStrengthDay) {
-                viewModel.updateWorkoutName(plan.focus)
-                showNonStrengthSession = true
-            } else {
-                viewModel.startWorkout()
-                showActiveWorkout = true
+            when {
+                plan != null && !plan.isStrengthDay -> viewModel.startNonStrengthSession(plan.focus, plan.nonStrengthActivities)
+                plan != null && plan.isStrengthDay -> viewModel.startWorkoutWithPlan(
+                    suggestedExercises = plan.suggestedExercises,
+                    warmUpNames = plan.warmUp,
+                    coolDownNames = plan.coolDown
+                )
+                else -> viewModel.startWorkout()
             }
         },
         onStartWorkoutWithPlan = { _ ->
-            uiState.workoutPlan?.let { viewModel.updateWorkoutName(it.focus) }
-            viewModel.startWorkoutWithPlan(uiState.workoutPlan?.suggestedExercises ?: emptyList())
-            showActiveWorkout = true
+            uiState.workoutPlan?.let { plan ->
+                viewModel.startWorkoutWithPlan(
+                    suggestedExercises = plan.suggestedExercises,
+                    warmUpNames = plan.warmUp,
+                    coolDownNames = plan.coolDown
+                )
+            }
         },
-        onBackToPlan = {
-            viewModel.closeActiveWorkout()
-            showActiveWorkout = false
-            showNonStrengthSession = false
-        },
+        onBackToPlan = viewModel::closeActiveWorkout,
         onWorkoutSelected = viewModel::selectWorkout,
         onClearWorkout = viewModel::clearSelectedWorkout,
         onWorkoutNameChange = viewModel::updateWorkoutName,
@@ -187,24 +187,25 @@ fun PremiumWorkoutRoute(viewModel: WorkoutViewModel) {
         onSetInlineRepsChange = viewModel::updateSetFieldReps,
         onSetInlineWeightChange = viewModel::updateSetFieldWeight,
         onSetInlineRpeChange = viewModel::updateSetFieldRpe,
-        onSaveWorkout = { warmUp, coolDown ->
-            viewModel.saveWorkout(warmUp, coolDown)
-            showActiveWorkout = false
-        },
-        onSaveRecoverySession = { drafts, notes ->
-            viewModel.saveRecoverySession(drafts, notes)
-            showNonStrengthSession = false
-        },
+        onSaveWorkout = viewModel::saveWorkout,
+        onSaveRecoverySession = viewModel::saveRecoverySession,
         onDismissPr = viewModel::dismissPrCelebration,
-        onNavigateCalendarWeek = viewModel::navigateCalendarWeek
+        onNavigateCalendarWeek = viewModel::navigateCalendarWeek,
+        onWarmUpDraftChange = viewModel::updateWarmUpDraft,
+        onCoolDownDraftChange = viewModel::updateCoolDownDraft,
+        onNonStrengthDraftChange = viewModel::updateNonStrengthDraft,
+        onNonStrengthNotesChange = viewModel::updateNonStrengthNotes,
+        onTimerStart = viewModel::startTimer,
+        onTimerPause = viewModel::pauseTimer,
+        onTimerResume = viewModel::resumeTimer,
+        onTimerSkip = viewModel::skipTimer,
+        onStartWorkoutAnyway = { viewModel.startWorkout() }
     )
 }
 
 @Composable
 private fun PremiumWorkoutScreen(
     uiState: WorkoutUiState,
-    showActiveWorkout: Boolean,
-    showNonStrengthSession: Boolean,
     onStartWorkout: () -> Unit,
     onStartWorkoutWithPlan: (List<Long>) -> Unit,
     onBackToPlan: () -> Unit,
@@ -227,14 +228,23 @@ private fun PremiumWorkoutScreen(
     onSetInlineRepsChange: (Long, Int, String) -> Unit,
     onSetInlineWeightChange: (Long, Int, String) -> Unit,
     onSetInlineRpeChange: (Long, Int, String) -> Unit,
-    onSaveWorkout: (List<ActivityDraft>, List<ActivityDraft>) -> Unit,
-    onSaveRecoverySession: (List<ActivityDraft>, String) -> Unit,
+    onSaveWorkout: () -> Unit,
+    onSaveRecoverySession: () -> Unit,
     onDismissPr: () -> Unit,
-    onNavigateCalendarWeek: (Int) -> Unit = {}
+    onNavigateCalendarWeek: (Int) -> Unit = {},
+    onWarmUpDraftChange: (Int, ActivityDraft) -> Unit = { _, _ -> },
+    onCoolDownDraftChange: (Int, ActivityDraft) -> Unit = { _, _ -> },
+    onNonStrengthDraftChange: (Int, ActivityDraft) -> Unit = { _, _ -> },
+    onNonStrengthNotesChange: (String) -> Unit = {},
+    onTimerStart: (Int) -> Unit = {},
+    onTimerPause: () -> Unit = {},
+    onTimerResume: () -> Unit = {},
+    onTimerSkip: () -> Unit = {},
+    onStartWorkoutAnyway: () -> Unit = {}
 ) {
     Column(modifier = Modifier.padding(bottom = 40.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
         when {
-            showActiveWorkout -> ActiveWorkoutScreen(
+            uiState.isWorkoutStarted -> ActiveWorkoutScreen(
                 uiState = uiState,
                 onBackToPlan = onBackToPlan,
                 onWorkoutNameChange = onWorkoutNameChange,
@@ -254,12 +264,24 @@ private fun PremiumWorkoutScreen(
                 onSetInlineRepsChange = onSetInlineRepsChange,
                 onSetInlineWeightChange = onSetInlineWeightChange,
                 onSetInlineRpeChange = onSetInlineRpeChange,
-                onSaveWorkout = onSaveWorkout
+                onSaveWorkout = onSaveWorkout,
+                onWarmUpDraftChange = onWarmUpDraftChange,
+                onCoolDownDraftChange = onCoolDownDraftChange,
+                onTimerStart = onTimerStart,
+                onTimerPause = onTimerPause,
+                onTimerResume = onTimerResume,
+                onTimerSkip = onTimerSkip
             )
-            showNonStrengthSession -> PlanSessionScreen(
-                workoutPlan = uiState.workoutPlan,
+            uiState.isNonStrengthSessionStarted -> PlanSessionScreen(
+                uiState = uiState,
                 onBack = onBackToPlan,
-                onSaveSession = onSaveRecoverySession
+                onSaveSession = onSaveRecoverySession,
+                onActivityDraftChange = onNonStrengthDraftChange,
+                onNotesChange = onNonStrengthNotesChange,
+                onTimerStart = onTimerStart,
+                onTimerPause = onTimerPause,
+                onTimerResume = onTimerResume,
+                onTimerSkip = onTimerSkip
             )
             uiState.selectedWorkoutDetail != null -> WorkoutDetailView(
                 detail = uiState.selectedWorkoutDetail,
@@ -287,7 +309,8 @@ private fun PremiumWorkoutScreen(
                     workoutPlan = uiState.workoutPlan,
                     hasWorkoutTodayCompleted = uiState.hasWorkoutTodayCompleted,
                     onStartWorkout = onStartWorkout,
-                    onStartWorkoutWithPlan = onStartWorkoutWithPlan
+                    onStartWorkoutWithPlan = onStartWorkoutWithPlan,
+                    onStartWorkoutAnyway = onStartWorkoutAnyway
                 )
                 WorkoutHistoryCard(workouts = uiState.recentWorkouts, onWorkoutSelected = onWorkoutSelected)
                 if (uiState.personalRecords.isNotEmpty()) {
@@ -306,7 +329,8 @@ private fun PremiumWorkoutPlanCard(
     workoutPlan: WorkoutPlanUiState?,
     hasWorkoutTodayCompleted: Boolean,
     onStartWorkout: () -> Unit,
-    onStartWorkoutWithPlan: (List<Long>) -> Unit
+    onStartWorkoutWithPlan: (List<Long>) -> Unit,
+    onStartWorkoutAnyway: () -> Unit = {}
 ) {
     Box(modifier = Modifier.fillMaxWidth()) {
         MainFeatureCard(modifier = Modifier.padding(top = 22.dp)) {
@@ -517,13 +541,23 @@ private fun PremiumWorkoutPlanCard(
                                 Text(text = "· $activity", color = MutedText, style = MaterialTheme.typography.bodySmall)
                             }
                         }
-                        val nonStrengthLabel = when (workoutPlan.focus) {
-                            "Active Recovery" -> "Start Recovery"
-                            "Walking & Mobility" -> "Start Mobility"
-                            "Rest Day" -> "Log Rest Day"
-                            else -> "Start Workout"
+                        if (workoutPlan.focus == "Rest Day") {
+                            PrimaryBlueButton(text = "Log Rest Day", onClick = onStartWorkout, modifier = Modifier.fillMaxWidth())
+                            OutlinedButton(
+                                onClick = onStartWorkoutAnyway,
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(999.dp)
+                            ) {
+                                Text("Start Workout Anyway", color = CyanAccent)
+                            }
+                        } else {
+                            val nonStrengthLabel = when (workoutPlan.focus) {
+                                "Active Recovery" -> "Start Recovery"
+                                "Walking & Mobility" -> "Start Mobility"
+                                else -> "Start Workout"
+                            }
+                            PrimaryBlueButton(text = nonStrengthLabel, onClick = onStartWorkout, modifier = Modifier.fillMaxWidth())
                         }
-                        PrimaryBlueButton(text = nonStrengthLabel, onClick = onStartWorkout, modifier = Modifier.fillMaxWidth())
                     }
                 }
             }
@@ -553,18 +587,16 @@ private fun ActiveWorkoutScreen(
     onSetInlineRepsChange: (Long, Int, String) -> Unit,
     onSetInlineWeightChange: (Long, Int, String) -> Unit,
     onSetInlineRpeChange: (Long, Int, String) -> Unit,
-    onSaveWorkout: (List<ActivityDraft>, List<ActivityDraft>) -> Unit
+    onSaveWorkout: () -> Unit,
+    onWarmUpDraftChange: (Int, ActivityDraft) -> Unit,
+    onCoolDownDraftChange: (Int, ActivityDraft) -> Unit,
+    onTimerStart: (Int) -> Unit,
+    onTimerPause: () -> Unit,
+    onTimerResume: () -> Unit,
+    onTimerSkip: () -> Unit
 ) {
-    var warmUpDrafts by remember(uiState.workoutPlan) {
-        mutableStateOf(
-            uiState.workoutPlan?.warmUp?.map { ActivityDraft(name = it, status = WorkoutStatus.SKIPPED) } ?: emptyList<ActivityDraft>()
-        )
-    }
-    var coolDownDrafts by remember(uiState.workoutPlan) {
-        mutableStateOf(
-            uiState.workoutPlan?.coolDown?.map { ActivityDraft(name = it, status = WorkoutStatus.SKIPPED) } ?: emptyList<ActivityDraft>()
-        )
-    }
+    val warmUpDrafts = uiState.warmUpDrafts
+    val coolDownDrafts = uiState.coolDownDrafts
     Box(modifier = Modifier.fillMaxWidth()) {
         MainFeatureCard(modifier = Modifier.padding(top = 22.dp)) {
             Column(
@@ -615,18 +647,16 @@ private fun ActiveWorkoutScreen(
                 warmUpDrafts.forEachIndexed { index, draft ->
                     ActivityDraftCard(
                         draft = draft,
-                        onStatusSelected = { status ->
-                            warmUpDrafts = warmUpDrafts.toMutableList().also { it[index] = draft.copy(status = status) }
-                        },
-                        onDurationChange = { value ->
-                            warmUpDrafts = warmUpDrafts.toMutableList().also { it[index] = draft.copy(durationInput = value.filter { c -> c.isDigit() }) }
-                        },
-                        onRpeChange = { value ->
-                            warmUpDrafts = warmUpDrafts.toMutableList().also { it[index] = draft.copy(rpeInput = value.filter { c -> c.isDigit() }.take(2)) }
-                        },
-                        onNotesChange = { value ->
-                            warmUpDrafts = warmUpDrafts.toMutableList().also { it[index] = draft.copy(notesInput = value) }
-                        }
+                        cardIndex = index,
+                        activeTimer = uiState.activeTimer,
+                        onStatusSelected = { status -> onWarmUpDraftChange(index, draft.copy(status = status)) },
+                        onDurationChange = { value -> onWarmUpDraftChange(index, draft.copy(durationInput = value.filter { c -> c.isDigit() })) },
+                        onRpeChange = { value -> onWarmUpDraftChange(index, draft.copy(rpeInput = value.filter { c -> c.isDigit() }.take(2))) },
+                        onNotesChange = { value -> onWarmUpDraftChange(index, draft.copy(notesInput = value)) },
+                        onTimerStart = { onTimerStart(index) },
+                        onTimerPause = onTimerPause,
+                        onTimerResume = onTimerResume,
+                        onTimerSkip = onTimerSkip
                     )
                 }
             }
@@ -649,20 +679,19 @@ private fun ActiveWorkoutScreen(
             if (coolDownDrafts.isNotEmpty()) {
                 Text("Cool-down", color = PositiveAccent, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
                 coolDownDrafts.forEachIndexed { index, draft ->
+                    val globalIndex = warmUpDrafts.size + uiState.selectedExercises.size + index
                     ActivityDraftCard(
                         draft = draft,
-                        onStatusSelected = { status ->
-                            coolDownDrafts = coolDownDrafts.toMutableList().also { it[index] = draft.copy(status = status) }
-                        },
-                        onDurationChange = { value ->
-                            coolDownDrafts = coolDownDrafts.toMutableList().also { it[index] = draft.copy(durationInput = value.filter { c -> c.isDigit() }) }
-                        },
-                        onRpeChange = { value ->
-                            coolDownDrafts = coolDownDrafts.toMutableList().also { it[index] = draft.copy(rpeInput = value.filter { c -> c.isDigit() }.take(2)) }
-                        },
-                        onNotesChange = { value ->
-                            coolDownDrafts = coolDownDrafts.toMutableList().also { it[index] = draft.copy(notesInput = value) }
-                        }
+                        cardIndex = globalIndex,
+                        activeTimer = uiState.activeTimer,
+                        onStatusSelected = { status -> onCoolDownDraftChange(index, draft.copy(status = status)) },
+                        onDurationChange = { value -> onCoolDownDraftChange(index, draft.copy(durationInput = value.filter { c -> c.isDigit() })) },
+                        onRpeChange = { value -> onCoolDownDraftChange(index, draft.copy(rpeInput = value.filter { c -> c.isDigit() }.take(2))) },
+                        onNotesChange = { value -> onCoolDownDraftChange(index, draft.copy(notesInput = value)) },
+                        onTimerStart = { onTimerStart(globalIndex) },
+                        onTimerPause = onTimerPause,
+                        onTimerResume = onTimerResume,
+                        onTimerSkip = onTimerSkip
                     )
                 }
             }
@@ -673,7 +702,7 @@ private fun ActiveWorkoutScreen(
                 minLines = 2,
                 modifier = Modifier.fillMaxWidth()
             )
-            PrimaryBlueButton(text = "Save Workout", onClick = { onSaveWorkout(warmUpDrafts, coolDownDrafts) }, modifier = Modifier.fillMaxWidth())
+            PrimaryBlueButton(text = "Save Workout", onClick = onSaveWorkout, modifier = Modifier.fillMaxWidth())
         }
     }
         FloatingTitlePill(text = "Active Workout", modifier = Modifier.align(Alignment.TopCenter))
@@ -682,22 +711,24 @@ private fun ActiveWorkoutScreen(
 
 @Composable
 private fun PlanSessionScreen(
-    workoutPlan: WorkoutPlanUiState?,
+    uiState: WorkoutUiState,
     onBack: () -> Unit,
-    onSaveSession: (List<ActivityDraft>, String) -> Unit
+    onSaveSession: () -> Unit,
+    onActivityDraftChange: (Int, ActivityDraft) -> Unit,
+    onNotesChange: (String) -> Unit,
+    onTimerStart: (Int) -> Unit,
+    onTimerPause: () -> Unit,
+    onTimerResume: () -> Unit,
+    onTimerSkip: () -> Unit
 ) {
-    val sessionTitle = when (workoutPlan?.focus) {
+    val sessionTitle = when (uiState.workoutPlan?.focus) {
         "Active Recovery" -> "Recovery Session"
         "Walking & Mobility" -> "Mobility Session"
         "Rest Day" -> "Rest Day Log"
-        else -> workoutPlan?.focus ?: "Session"
+        else -> uiState.workoutPlan?.focus ?: "Session"
     }
-    var activityDrafts: List<ActivityDraft> by remember(workoutPlan) {
-        mutableStateOf(
-            workoutPlan?.nonStrengthActivities?.map { ActivityDraft(name = it) } ?: emptyList<ActivityDraft>()
-        )
-    }
-    var overallNotes by remember { mutableStateOf("") }
+    val activityDrafts = uiState.nonStrengthDrafts
+    val overallNotes = uiState.nonStrengthOverallNotes
 
     Box(modifier = Modifier.fillMaxWidth()) {
         MainFeatureCard(modifier = Modifier.padding(top = 22.dp)) {
@@ -719,30 +750,28 @@ private fun PlanSessionScreen(
                 activityDrafts.forEachIndexed { index, draft ->
                     ActivityDraftCard(
                         draft = draft,
-                        onStatusSelected = { status ->
-                            activityDrafts = activityDrafts.toMutableList().also { it[index] = draft.copy(status = status) }
-                        },
-                        onDurationChange = { value ->
-                            activityDrafts = activityDrafts.toMutableList().also { it[index] = draft.copy(durationInput = value.filter { c -> c.isDigit() }) }
-                        },
-                        onRpeChange = { value ->
-                            activityDrafts = activityDrafts.toMutableList().also { it[index] = draft.copy(rpeInput = value.filter { c -> c.isDigit() }.take(2)) }
-                        },
-                        onNotesChange = { value ->
-                            activityDrafts = activityDrafts.toMutableList().also { it[index] = draft.copy(notesInput = value) }
-                        }
+                        cardIndex = index,
+                        activeTimer = uiState.activeTimer,
+                        onStatusSelected = { status -> onActivityDraftChange(index, draft.copy(status = status)) },
+                        onDurationChange = { value -> onActivityDraftChange(index, draft.copy(durationInput = value.filter { c -> c.isDigit() })) },
+                        onRpeChange = { value -> onActivityDraftChange(index, draft.copy(rpeInput = value.filter { c -> c.isDigit() }.take(2))) },
+                        onNotesChange = { value -> onActivityDraftChange(index, draft.copy(notesInput = value)) },
+                        onTimerStart = { onTimerStart(index) },
+                        onTimerPause = onTimerPause,
+                        onTimerResume = onTimerResume,
+                        onTimerSkip = onTimerSkip
                     )
                 }
                 OutlinedTextField(
                     value = overallNotes,
-                    onValueChange = { overallNotes = it },
+                    onValueChange = onNotesChange,
                     label = { Text("Overall notes (optional)") },
                     minLines = 2,
                     modifier = Modifier.fillMaxWidth()
                 )
                 PrimaryBlueButton(
                     text = "Save Session",
-                    onClick = { onSaveSession(activityDrafts, overallNotes) },
+                    onClick = onSaveSession,
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -754,16 +783,26 @@ private fun PlanSessionScreen(
 @Composable
 private fun ActivityDraftCard(
     draft: ActivityDraft,
+    cardIndex: Int = 0,
+    activeTimer: TimerState? = null,
     onStatusSelected: (WorkoutStatus) -> Unit,
     onDurationChange: (String) -> Unit,
     onRpeChange: (String) -> Unit,
-    onNotesChange: (String) -> Unit
+    onNotesChange: (String) -> Unit,
+    onTimerStart: () -> Unit = {},
+    onTimerPause: () -> Unit = {},
+    onTimerResume: () -> Unit = {},
+    onTimerSkip: () -> Unit = {}
 ) {
     val statusColor = when (draft.status) {
+        WorkoutStatus.NOT_STARTED -> MutedText
         WorkoutStatus.COMPLETED -> PositiveAccent
         WorkoutStatus.PARTIAL -> WarningAccent
         WorkoutStatus.SKIPPED -> MutedText
     }
+    val isThisTimerActive = activeTimer?.activityIndex == cardIndex
+    val isRunning = isThisTimerActive && activeTimer?.phase == TimerPhase.RUNNING
+    val isPaused = isThisTimerActive && activeTimer?.phase == TimerPhase.PAUSED
     ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(18.dp),
@@ -800,7 +839,7 @@ private fun ActivityDraftCard(
                 }
             }
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                WorkoutStatus.entries.forEach { status ->
+                WorkoutStatus.entries.filter { it != WorkoutStatus.NOT_STARTED }.forEach { status ->
                     FilterChip(
                         selected = draft.status == status,
                         onClick = { onStatusSelected(status) },
@@ -810,6 +849,7 @@ private fun ActivityDraftCard(
                                 WorkoutStatus.COMPLETED -> PositiveAccent
                                 WorkoutStatus.PARTIAL -> WarningAccent
                                 WorkoutStatus.SKIPPED -> MutedControl
+                                else -> MutedControl
                             },
                             selectedLabelColor = PrimaryText,
                             labelColor = MutedText
@@ -819,20 +859,67 @@ private fun ActivityDraftCard(
                     )
                 }
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                OutlinedTextField(
-                    value = draft.durationInput,
-                    onValueChange = onDurationChange,
-                    label = { Text("Duration (min)") },
-                    singleLine = true,
-                    modifier = Modifier.weight(1f)
-                )
+            if (draft.isTimedActivity) {
+                val displaySeconds = if (isThisTimerActive) activeTimer?.remainingSeconds ?: draft.durationSeconds ?: 30
+                                     else draft.durationSeconds ?: 30
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = formatTimerSeconds(displaySeconds),
+                        color = if (isRunning) CyanAccent else PrimaryText,
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        when {
+                            isRunning -> {
+                                OutlinedButton(onClick = onTimerPause) { Text("Pause") }
+                                OutlinedButton(onClick = onTimerSkip) { Text("Skip") }
+                            }
+                            isPaused -> {
+                                androidx.compose.material3.Button(
+                                    onClick = onTimerResume,
+                                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(containerColor = CyanAccent)
+                                ) { Text("Resume") }
+                                OutlinedButton(onClick = onTimerSkip) { Text("Skip") }
+                            }
+                            else -> {
+                                androidx.compose.material3.Button(
+                                    onClick = onTimerStart,
+                                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(containerColor = CyanAccent)
+                                ) { Text("▶ Start") }
+                            }
+                        }
+                    }
+                }
+            } else {
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    OutlinedTextField(
+                        value = draft.durationInput,
+                        onValueChange = onDurationChange,
+                        label = { Text("Duration (min)") },
+                        singleLine = true,
+                        modifier = Modifier.weight(1f)
+                    )
+                    OutlinedTextField(
+                        value = draft.rpeInput,
+                        onValueChange = onRpeChange,
+                        label = { Text("Effort (RPE)") },
+                        singleLine = true,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+            if (draft.isTimedActivity) {
                 OutlinedTextField(
                     value = draft.rpeInput,
                     onValueChange = onRpeChange,
                     label = { Text("Effort (RPE)") },
                     singleLine = true,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
             OutlinedTextField(
@@ -846,13 +933,19 @@ private fun ActivityDraftCard(
     }
 }
 
+private fun formatTimerSeconds(seconds: Int): String {
+    val mins = seconds / 60
+    val secs = seconds % 60
+    return if (mins > 0) "$mins:${"%02d".format(secs)}" else "${secs}s"
+}
+
 @Composable
 private fun WorkoutStatusChips(
     selectedStatus: WorkoutStatus,
     onStatusSelected: (WorkoutStatus) -> Unit
 ) {
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        WorkoutStatus.entries.forEach { status ->
+        WorkoutStatus.entries.filter { it != WorkoutStatus.NOT_STARTED }.forEach { status ->
             FilterChip(
                 selected = selectedStatus == status,
                 onClick = { onStatusSelected(status) },
@@ -862,6 +955,7 @@ private fun WorkoutStatusChips(
                         WorkoutStatus.COMPLETED -> PositiveAccent
                         WorkoutStatus.PARTIAL -> WarningAccent
                         WorkoutStatus.SKIPPED -> MutedControl
+                        else -> MutedControl
                     },
                     selectedLabelColor = PrimaryText,
                     labelColor = MutedText
@@ -1073,7 +1167,7 @@ private fun ExerciseCard(
                         color = MutedText,
                         style = MaterialTheme.typography.bodySmall
                     )
-                    if (exercise.sets.isEmpty() && exercise.prescribedSets > 0) {
+                    if (exercise.sets.size < exercise.prescribedSets && exercise.prescribedSets > 0) {
                         val prescriptionText = buildString {
                             append("${exercise.prescribedSets} sets")
                             if (exercise.prescribedRepsRange.isNotBlank()) append(" · ${exercise.prescribedRepsRange} reps")
@@ -1090,78 +1184,85 @@ private fun ExerciseCard(
                     }
                 }
                 Text(
-                    text = setCountLabel(exercise.sets.size),
+                    text = if (exercise.prescribedSets > 0) "${exercise.sets.size} / ${exercise.prescribedSets} sets" else setCountLabel(exercise.sets.size),
                     color = CyanAccent,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(start = 12.dp)
                 )
             }
             if (exercise.isExpanded) {
-                if (exercise.prescribedSets > 0) {
-                    if (exercise.progressionNote.isNotBlank()) {
+                if (exercise.prescribedSets > 0 && exercise.progressionNote.isNotBlank()) {
+                    Text(
+                        text = exercise.progressionNote,
+                        color = CyanAccent,
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+                exercise.sets.forEach { set ->
+                    SetRow(
+                        set = set,
+                        onRepsChange = { v -> onSetInlineRepsChange(exercise.exerciseId, set.setNumber, v) },
+                        onWeightChange = { v -> onSetInlineWeightChange(exercise.exerciseId, set.setNumber, v) },
+                        onRpeChange = { v -> onSetInlineRpeChange(exercise.exerciseId, set.setNumber, v) },
+                        onRemove = { onRemoveSet(exercise.exerciseId, set.setNumber) }
+                    )
+                }
+                val prescribed = exercise.prescribedSets
+                val logged = exercise.sets.size
+                if (prescribed == 0 || logged < prescribed) {
+                    if (prescribed > 0) {
                         Text(
-                            text = exercise.progressionNote,
+                            text = "Set ${logged + 1} of $prescribed",
                             color = CyanAccent,
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.SemiBold
                         )
                     }
-                    Text(
-                        text = "Adjust based on form, comfort, and safety.",
-                        color = MutedText,
-                        style = MaterialTheme.typography.labelSmall
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        OutlinedTextField(
+                            value = exercise.repsInput,
+                            onValueChange = { onSetRepsChange(exercise.exerciseId, it) },
+                            label = { Text("Reps") },
+                            singleLine = true,
+                            modifier = Modifier.weight(1f)
+                        )
+                        OutlinedTextField(
+                            value = exercise.weightInput,
+                            onValueChange = { onSetWeightChange(exercise.exerciseId, it) },
+                            label = { Text("Weight") },
+                            singleLine = true,
+                            modifier = Modifier.weight(1f)
+                        )
+                        OutlinedTextField(
+                            value = exercise.rpeInput,
+                            onValueChange = { onSetRpeChange(exercise.exerciseId, it) },
+                            label = { Text("RPE") },
+                            singleLine = true,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                    OutlinedTextField(
+                        value = exercise.setNotesInput,
+                        onValueChange = { onSetNotesChange(exercise.exerciseId, it) },
+                        label = { Text("Set notes") },
+                        modifier = Modifier.fillMaxWidth()
                     )
-                }
-                if (exercise.sets.isEmpty()) {
-                    Text(text = "No sets added yet.", color = MutedText)
+                    PrimaryBlueButton(
+                        text = if (prescribed > 0) "Log Set" else "Add Set",
+                        onClick = { onAddSet(exercise.exerciseId) },
+                        modifier = Modifier.fillMaxWidth()
+                    )
                 } else {
-                    if (exercise.prescribedSets > 0) {
-                        Text(
-                            text = "Edit suggested sets based on form and comfort.",
-                            color = MutedText,
-                            style = MaterialTheme.typography.labelSmall
-                        )
-                    }
-                    exercise.sets.forEach { set ->
-                        SetRow(
-                            set = set,
-                            onRepsChange = { v -> onSetInlineRepsChange(exercise.exerciseId, set.setNumber, v) },
-                            onWeightChange = { v -> onSetInlineWeightChange(exercise.exerciseId, set.setNumber, v) },
-                            onRpeChange = { v -> onSetInlineRpeChange(exercise.exerciseId, set.setNumber, v) },
-                            onRemove = { onRemoveSet(exercise.exerciseId, set.setNumber) }
-                        )
+                    OutlinedButton(
+                        onClick = { onAddSet(exercise.exerciseId) },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        border = BorderStroke(1.dp, MutedControl)
+                    ) {
+                        Text("+ Add Extra Set", color = MutedText)
                     }
                 }
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    OutlinedTextField(
-                        value = exercise.repsInput,
-                        onValueChange = { onSetRepsChange(exercise.exerciseId, it) },
-                        label = { Text("Reps") },
-                        singleLine = true,
-                        modifier = Modifier.weight(1f)
-                    )
-                    OutlinedTextField(
-                        value = exercise.weightInput,
-                        onValueChange = { onSetWeightChange(exercise.exerciseId, it) },
-                        label = { Text("Weight") },
-                        singleLine = true,
-                        modifier = Modifier.weight(1f)
-                    )
-                    OutlinedTextField(
-                        value = exercise.rpeInput,
-                        onValueChange = { onSetRpeChange(exercise.exerciseId, it) },
-                        label = { Text("RPE") },
-                        singleLine = true,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-                OutlinedTextField(
-                    value = exercise.setNotesInput,
-                    onValueChange = { onSetNotesChange(exercise.exerciseId, it) },
-                    label = { Text("Set notes") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-                PrimaryBlueButton(text = "Add Set", onClick = { onAddSet(exercise.exerciseId) }, modifier = Modifier.fillMaxWidth())
                 OutlinedTextField(
                     value = exercise.exerciseNotes,
                     onValueChange = { onExerciseNotesChange(exercise.exerciseId, it) },
@@ -1584,8 +1685,12 @@ private fun CalendarDayPreviewDialog(
     onNext: (() -> Unit)?
 ) {
     val plan = day.projectedPlan
-    val showStartEnabled = day.isToday && day.workoutTag != "REST" && day.workoutTag != "SKIPPED"
-    val startLabel = if (plan?.isStrengthDay == true) "Start Workout" else "Log Session"
+    val showStartEnabled = day.isToday && day.workoutTag != "SKIPPED"
+    val startLabel = when {
+        plan?.isStrengthDay == true -> "Start Workout"
+        day.workoutTag == "REST" -> "Start Workout Anyway"
+        else -> "Log Session"
+    }
     val headerTag = when {
         day.isToday -> "Today"
         day.isProjected -> "Projected"

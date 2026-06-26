@@ -1,6 +1,7 @@
 package com.dailyhealthcoach.domain.model
 
 enum class WorkoutStatus(val storageValue: String, val label: String) {
+    NOT_STARTED("NOT_STARTED", "Not Started"),
     COMPLETED("COMPLETED", "Completed"),
     PARTIAL("PARTIAL", "Partial"),
     SKIPPED("SKIPPED", "Skipped");

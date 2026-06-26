@@ -22,6 +22,8 @@ import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.format.TextStyle
 import java.util.Locale
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -29,6 +31,8 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+
+private const val DEFAULT_TIMED_ACTIVITY_SECONDS = 30
 
 class WorkoutViewModel(
     private val exerciseRepository: ExerciseRepository,
@@ -42,6 +46,8 @@ class WorkoutViewModel(
 ) : ViewModel() {
     private val draftState = MutableStateFlow(WorkoutDraftState())
     private val _pendingPrAchievements = MutableStateFlow<List<String>>(emptyList())
+    private val timerState = MutableStateFlow<TimerState?>(null)
+    private var timerJob: Job? = null
 
     private val rawWorkoutSets = workoutRepository.observeWorkoutSets()
         .stateIn(scope = viewModelScope, started = SharingStarted.Eagerly, initialValue = emptyList())
@@ -64,17 +70,42 @@ class WorkoutViewModel(
         mergeRecoveryLogs(state, allLogs)
     }.combine(_pendingPrAchievements) { state, prs ->
         if (prs.isEmpty()) state else state.copy(newPrAchievements = prs)
+    }.combine(timerState) { state, timer ->
+        state.copy(activeTimer = timer)
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
         initialValue = WorkoutUiState()
     )
 
-    fun startWorkout() {
-        draftState.update { it.copy(isWorkoutStarted = true) }
+    fun startWorkout(warmUpNames: List<String> = emptyList(), coolDownNames: List<String> = emptyList()) {
+        draftState.update { draft ->
+            val warmUps = warmUpNames.map { n -> ActivityDraft(name = n, isTimedActivity = true, durationSeconds = DEFAULT_TIMED_ACTIVITY_SECONDS, status = WorkoutStatus.NOT_STARTED) }
+            val coolDowns = coolDownNames.map { n -> ActivityDraft(name = n, isTimedActivity = true, durationSeconds = DEFAULT_TIMED_ACTIVITY_SECONDS, status = WorkoutStatus.NOT_STARTED) }
+            val updatedExercises = if (warmUps.isEmpty() && draft.selectedExercises.isNotEmpty()) {
+                draft.selectedExercises.mapIndexed { i, ex -> ex.copy(isExpanded = i == 0) }
+            } else {
+                draft.selectedExercises.map { it.copy(isExpanded = false) }
+            }
+            draft.copy(
+                isWorkoutStarted = true,
+                warmUpDrafts = warmUps,
+                coolDownDrafts = coolDowns,
+                selectedExercises = updatedExercises
+            )
+        }
+    }
+
+    fun startNonStrengthSession(planFocus: String, activities: List<String>) {
+        draftState.update { it.copy(
+            isNonStrengthSessionStarted = true,
+            workoutName = planFocus,
+            nonStrengthDrafts = activities.map { n -> ActivityDraft(name = n) }
+        ) }
     }
 
     fun closeActiveWorkout() {
+        cancelTimer()
         draftState.value = WorkoutDraftState()
     }
 
@@ -172,11 +203,16 @@ class WorkoutViewModel(
                     rpeText = exercise.setRpe,
                     notes = exercise.setNotes.ifBlank { null }
                 ),
-                setReps = "",
-                setWeight = "",
-                setRpe = "",
                 setNotes = ""
             )
+        }
+        val draft = draftState.value
+        val exerciseIndex = draft.selectedExercises.indexOfFirst { it.exerciseId == exerciseId }
+        if (exerciseIndex >= 0) {
+            val exercise = draft.selectedExercises[exerciseIndex]
+            if (exercise.prescribedSets > 0 && exercise.sets.size == exercise.prescribedSets) {
+                advanceWorkoutStep(draft.warmUpDrafts.size + exerciseIndex + 1)
+            }
         }
     }
 
@@ -206,32 +242,28 @@ class WorkoutViewModel(
         draftState.update { it.copy(calendarWeekOffset = (it.calendarWeekOffset + delta).coerceIn(-4, 4)) }
     }
 
-    fun startWorkoutWithPlan(suggestedExercises: List<SuggestedExerciseUiState>) {
+    fun startWorkoutWithPlan(
+        suggestedExercises: List<SuggestedExerciseUiState>,
+        warmUpNames: List<String> = emptyList(),
+        coolDownNames: List<String> = emptyList()
+    ) {
+        val warmUps = warmUpNames.map { n -> ActivityDraft(name = n, isTimedActivity = true, durationSeconds = DEFAULT_TIMED_ACTIVITY_SECONDS, status = WorkoutStatus.NOT_STARTED) }
+        val coolDowns = coolDownNames.map { n -> ActivityDraft(name = n, isTimedActivity = true, durationSeconds = DEFAULT_TIMED_ACTIVITY_SECONDS, status = WorkoutStatus.NOT_STARTED) }
         draftState.update { draft ->
             draft.copy(
                 isWorkoutStarted = true,
-                selectedExercises = suggestedExercises.map { suggestion ->
+                warmUpDrafts = warmUps,
+                coolDownDrafts = coolDowns,
+                selectedExercises = suggestedExercises.mapIndexed { exerciseIdx, suggestion ->
                     val defaultRepsText = parseRepsFromRange(suggestion.prescribedRepsRange)?.toString() ?: ""
                     val defaultWeightText = parseWeightFromText(suggestion.suggestedWeightText)?.let { w ->
                         if (w % 1.0 == 0.0) w.toInt().toString() else "%.1f".format(w)
                     } ?: ""
                     val defaultRpeText = parseRpeFromRange(suggestion.prescribedRpe)?.toString() ?: ""
-                    val preSets = if (suggestion.prescribedSets > 0) {
-                        (1..suggestion.prescribedSets).map { setNum ->
-                            DraftSetState(
-                                exerciseId = suggestion.exerciseId,
-                                setNumber = setNum,
-                                repsText = defaultRepsText,
-                                weightText = defaultWeightText,
-                                rpeText = defaultRpeText,
-                                notes = null
-                            )
-                        }
-                    } else emptyList()
                     DraftExerciseState(
                         exerciseId = suggestion.exerciseId,
-                        isExpanded = false,
-                        sets = preSets,
+                        isExpanded = warmUps.isEmpty() && exerciseIdx == 0,
+                        sets = emptyList(),
                         setReps = defaultRepsText,
                         setWeight = defaultWeightText,
                         setRpe = defaultRpeText,
@@ -285,11 +317,9 @@ class WorkoutViewModel(
         }
     }
 
-    fun saveWorkout(
-        warmUpActivities: List<ActivityDraft> = emptyList(),
-        coolDownActivities: List<ActivityDraft> = emptyList()
-    ) {
+    fun saveWorkout() {
         val draft = draftState.value
+        cancelTimer()
         val existingSets = rawWorkoutSets.value
         val exerciseMap = rawExercises.value.associateBy { it.id }
         val draftSetsForPr = draft.selectedExercises.flatMap { ex ->
@@ -325,16 +355,17 @@ class WorkoutViewModel(
                     }
                 }
             )
-            val allActivities = warmUpActivities + coolDownActivities
+            val allActivities = draft.warmUpDrafts + draft.coolDownDrafts
             if (allActivities.isNotEmpty()) {
                 recoveryActivityRepository.saveAll(
                     workoutId = workoutId,
                     activities = allActivities.map { d ->
+                        val savedStatus = if (d.status == WorkoutStatus.NOT_STARTED) WorkoutStatus.SKIPPED else d.status
                         RecoveryActivity(
                             workoutId = workoutId,
                             name = d.name,
-                            status = d.status.storageValue,
-                            durationMinutes = d.durationInput.toIntOrNull(),
+                            status = savedStatus.storageValue,
+                            durationSeconds = if (d.isTimedActivity) d.durationSeconds else d.durationInput.toIntOrNull()?.let { it * 60 },
                             rpe = d.rpeInput.toIntOrNull(),
                             notes = d.notesInput.ifBlank { null }
                         )
@@ -348,21 +379,27 @@ class WorkoutViewModel(
         }
     }
 
-    fun saveRecoverySession(activityDrafts: List<ActivityDraft>, overallNotes: String) {
+    fun saveRecoverySession() {
         val draft = draftState.value
+        cancelTimer()
+        val activityDrafts = draft.nonStrengthDrafts
+        val overallNotes = draft.nonStrengthOverallNotes
         val requiredDrafts = activityDrafts.filter { !it.name.startsWith("Optional") }
         val overallStatus = when {
-            activityDrafts.all { it.status == WorkoutStatus.SKIPPED } -> WorkoutStatus.SKIPPED
+            activityDrafts.all { it.status == WorkoutStatus.SKIPPED || it.status == WorkoutStatus.NOT_STARTED } -> WorkoutStatus.SKIPPED
             requiredDrafts.isNotEmpty() && requiredDrafts.all { it.status == WorkoutStatus.COMPLETED } -> WorkoutStatus.COMPLETED
             else -> WorkoutStatus.PARTIAL
         }
-        val totalDuration = activityDrafts.sumOf { it.durationInput.toIntOrNull() ?: 0 }.takeIf { it > 0 }
+        val totalDurationSeconds = activityDrafts.sumOf { d ->
+            if (d.isTimedActivity) d.durationSeconds ?: 0 else (d.durationInput.toIntOrNull() ?: 0) * 60
+        }
+        val totalDurationMinutes = (totalDurationSeconds / 60).takeIf { it > 0 }
         viewModelScope.launch {
             val workoutId = workoutRepository.saveWorkout(
                 date = LocalDate.now().toString(),
                 name = draft.workoutName.ifBlank { "Active Recovery" },
                 status = overallStatus,
-                durationMinutes = totalDuration,
+                durationMinutes = totalDurationMinutes,
                 overallRpe = null,
                 notes = overallNotes.ifBlank { null },
                 sets = emptyList()
@@ -370,17 +407,148 @@ class WorkoutViewModel(
             recoveryActivityRepository.saveAll(
                 workoutId = workoutId,
                 activities = activityDrafts.map { d ->
+                    val savedStatus = if (d.status == WorkoutStatus.NOT_STARTED) WorkoutStatus.SKIPPED else d.status
                     RecoveryActivity(
                         workoutId = workoutId,
                         name = d.name,
-                        status = d.status.storageValue,
-                        durationMinutes = d.durationInput.toIntOrNull(),
+                        status = savedStatus.storageValue,
+                        durationSeconds = if (d.isTimedActivity) d.durationSeconds else d.durationInput.toIntOrNull()?.let { it * 60 },
                         rpe = d.rpeInput.toIntOrNull(),
                         notes = d.notesInput.ifBlank { null }
                     )
                 }
             )
             draftState.value = WorkoutDraftState()
+        }
+    }
+
+    fun updateWarmUpDraft(index: Int, draft: ActivityDraft) {
+        draftState.update { it.copy(warmUpDrafts = it.warmUpDrafts.toMutableList().apply { this[index] = draft }) }
+    }
+
+    fun updateCoolDownDraft(index: Int, draft: ActivityDraft) {
+        draftState.update { it.copy(coolDownDrafts = it.coolDownDrafts.toMutableList().apply { this[index] = draft }) }
+    }
+
+    fun updateNonStrengthDraft(index: Int, draft: ActivityDraft) {
+        draftState.update { it.copy(nonStrengthDrafts = it.nonStrengthDrafts.toMutableList().apply { this[index] = draft }) }
+    }
+
+    fun updateNonStrengthNotes(notes: String) {
+        draftState.update { it.copy(nonStrengthOverallNotes = notes) }
+    }
+
+    fun startTimer(activityIndex: Int) {
+        val draft = draftState.value
+        val seconds = if (draft.isWorkoutStarted) {
+            val warmUpSize = draft.warmUpDrafts.size
+            val exerciseCount = draft.selectedExercises.size
+            when {
+                activityIndex < warmUpSize -> draft.warmUpDrafts[activityIndex].durationSeconds
+                else -> draft.coolDownDrafts.getOrNull(activityIndex - warmUpSize - exerciseCount)?.durationSeconds
+            }
+        } else {
+            draft.nonStrengthDrafts.getOrNull(activityIndex)?.durationSeconds
+        } ?: return
+        cancelTimer()
+        timerState.value = TimerState(activityIndex, seconds, TimerPhase.RUNNING)
+        launchTimerLoop()
+    }
+
+    fun pauseTimer() {
+        timerJob?.cancel()
+        timerJob = null
+        timerState.update { it?.copy(phase = TimerPhase.PAUSED) }
+    }
+
+    fun resumeTimer() {
+        val current = timerState.value ?: return
+        if (current.phase != TimerPhase.PAUSED) return
+        timerState.update { it?.copy(phase = TimerPhase.RUNNING) }
+        launchTimerLoop()
+    }
+
+    fun skipTimer() {
+        val index = timerState.value?.activityIndex
+        cancelTimer()
+        timerState.value = null
+        if (index != null) autoCompleteTimedActivity(index)
+    }
+
+    private fun cancelTimer() {
+        timerJob?.cancel()
+        timerJob = null
+    }
+
+    private fun launchTimerLoop() {
+        timerJob = viewModelScope.launch {
+            while (true) {
+                delay(1000)
+                val current = timerState.value ?: break
+                if (current.phase != TimerPhase.RUNNING) break
+                val newRemaining = current.remainingSeconds - 1
+                if (newRemaining <= 0) {
+                    timerState.value = null
+                    autoCompleteTimedActivity(current.activityIndex)
+                    break
+                } else {
+                    timerState.value = current.copy(remainingSeconds = newRemaining)
+                }
+            }
+        }
+    }
+
+    private fun autoCompleteTimedActivity(activityIndex: Int) {
+        val draft = draftState.value
+        when {
+            draft.isWorkoutStarted -> {
+                val warmUpSize = draft.warmUpDrafts.size
+                val exerciseCount = draft.selectedExercises.size
+                if (activityIndex < warmUpSize) {
+                    draftState.update { d ->
+                        d.copy(warmUpDrafts = d.warmUpDrafts.toMutableList().apply {
+                            if (activityIndex < size) this[activityIndex] = this[activityIndex].copy(status = WorkoutStatus.COMPLETED)
+                        })
+                    }
+                } else {
+                    val coolIdx = activityIndex - warmUpSize - exerciseCount
+                    draftState.update { d ->
+                        d.copy(coolDownDrafts = d.coolDownDrafts.toMutableList().apply {
+                            if (coolIdx >= 0 && coolIdx < size) this[coolIdx] = this[coolIdx].copy(status = WorkoutStatus.COMPLETED)
+                        })
+                    }
+                }
+                advanceWorkoutStep(activityIndex + 1)
+            }
+            draft.isNonStrengthSessionStarted -> {
+                draftState.update { d ->
+                    d.copy(nonStrengthDrafts = d.nonStrengthDrafts.toMutableList().apply {
+                        if (activityIndex < size) this[activityIndex] = this[activityIndex].copy(status = WorkoutStatus.COMPLETED)
+                    })
+                }
+            }
+        }
+    }
+
+    private fun advanceWorkoutStep(nextGlobalIndex: Int) {
+        val draft = draftState.value
+        val warmUpSize = draft.warmUpDrafts.size
+        val exerciseCount = draft.selectedExercises.size
+        val coolDownStart = warmUpSize + exerciseCount
+        when {
+            nextGlobalIndex in warmUpSize until coolDownStart -> {
+                val exerciseIndex = nextGlobalIndex - warmUpSize
+                draftState.update { d ->
+                    d.copy(selectedExercises = d.selectedExercises.mapIndexed { i, ex ->
+                        ex.copy(isExpanded = i == exerciseIndex)
+                    })
+                }
+            }
+            nextGlobalIndex >= coolDownStart -> {
+                draftState.update { d ->
+                    d.copy(selectedExercises = d.selectedExercises.map { it.copy(isExpanded = false) })
+                }
+            }
         }
     }
 
@@ -400,6 +568,7 @@ class WorkoutViewModel(
 
 private data class WorkoutDraftState(
     val isWorkoutStarted: Boolean = false,
+    val isNonStrengthSessionStarted: Boolean = false,
     val workoutName: String = "Strength Session",
     val durationMinutes: String = "",
     val overallRpe: String = "",
@@ -408,7 +577,11 @@ private data class WorkoutDraftState(
     val selectedStatus: WorkoutStatus = WorkoutStatus.COMPLETED,
     val selectedExercises: List<DraftExerciseState> = emptyList(),
     val selectedWorkoutId: Long? = null,
-    val calendarWeekOffset: Int = 0
+    val calendarWeekOffset: Int = 0,
+    val warmUpDrafts: List<ActivityDraft> = emptyList(),
+    val coolDownDrafts: List<ActivityDraft> = emptyList(),
+    val nonStrengthDrafts: List<ActivityDraft> = emptyList(),
+    val nonStrengthOverallNotes: String = ""
 )
 
 private data class DraftExerciseState(
@@ -527,6 +700,7 @@ private fun buildUiState(
 
     return WorkoutUiState(
         isWorkoutStarted = draft.isWorkoutStarted,
+        isNonStrengthSessionStarted = draft.isNonStrengthSessionStarted,
         workoutName = draft.workoutName,
         durationMinutes = draft.durationMinutes,
         overallRpe = draft.overallRpe,
@@ -581,7 +755,11 @@ private fun buildUiState(
         weeklyLoads = weeklyLoads,
         calendarDays = calendarDays,
         selectedWeekOffset = calendarWeekOffset,
-        calendarWeekLabel = calendarWeekLabel
+        calendarWeekLabel = calendarWeekLabel,
+        warmUpDrafts = draft.warmUpDrafts,
+        coolDownDrafts = draft.coolDownDrafts,
+        nonStrengthDrafts = draft.nonStrengthDrafts,
+        nonStrengthOverallNotes = draft.nonStrengthOverallNotes
     )
 }
 
@@ -1048,7 +1226,9 @@ private fun mergeRecoveryLogs(
                 RecoveryActivityDetailUiState(
                     name = log.name,
                     statusLabel = WorkoutStatus.fromStorageValue(log.status).label,
-                    durationText = log.durationMinutes?.let { "$it min" } ?: "",
+                    durationText = log.durationSeconds?.let { secs ->
+                        if (secs < 60) "${secs}s" else "${secs / 60} min"
+                    } ?: "",
                     rpe = log.rpe?.let { "RPE $it" } ?: "",
                     notes = log.notes
                 )

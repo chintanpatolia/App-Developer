@@ -32,6 +32,7 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -124,7 +125,7 @@ fun DailyHealthCoachApp(appContainer: AppContainer) {
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
-    var selectedScreen by remember { mutableStateOf(AppScreen.DASHBOARD) }
+    var selectedScreen by rememberSaveable { mutableStateOf(AppScreen.DASHBOARD) }
 
     AppBackground {
         Box(modifier = Modifier.fillMaxSize()) {
