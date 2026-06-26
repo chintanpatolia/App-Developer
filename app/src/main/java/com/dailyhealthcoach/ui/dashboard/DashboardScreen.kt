@@ -22,8 +22,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -83,10 +85,23 @@ fun DashboardRoute(
     viewModel: DashboardViewModel,
     onNavigateToProgress: () -> Unit,
     onNavigateToSettings: () -> Unit = {},
+    onNavigateToWorkout: () -> Unit = {},
+    onNavigateToNutrition: () -> Unit = {},
+    onNavigateToBody: () -> Unit = {},
+    onNavigateToHabits: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    DashboardScreen(uiState = uiState, onNavigateToProgress = onNavigateToProgress, onNavigateToSettings = onNavigateToSettings, modifier = modifier)
+    DashboardScreen(
+        uiState = uiState,
+        onNavigateToProgress = onNavigateToProgress,
+        onNavigateToSettings = onNavigateToSettings,
+        onNavigateToWorkout = onNavigateToWorkout,
+        onNavigateToNutrition = onNavigateToNutrition,
+        onNavigateToBody = onNavigateToBody,
+        onNavigateToHabits = onNavigateToHabits,
+        modifier = modifier
+    )
 }
 
 @Composable
@@ -94,6 +109,10 @@ fun DashboardScreen(
     uiState: DashboardUiState,
     onNavigateToProgress: () -> Unit,
     onNavigateToSettings: () -> Unit = {},
+    onNavigateToWorkout: () -> Unit = {},
+    onNavigateToNutrition: () -> Unit = {},
+    onNavigateToBody: () -> Unit = {},
+    onNavigateToHabits: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Surface(modifier = modifier.fillMaxSize(), color = Color.Transparent) {
@@ -107,8 +126,31 @@ fun DashboardScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             DashboardHeader(onNavigateToSettings = onNavigateToSettings)
-            RecoveryHeroCard(uiState = uiState)
-            SummaryGrid(uiState = uiState)
+            HeroWidget(uiState = uiState, onStartWorkout = onNavigateToWorkout)
+            RecoveryHeroCard(uiState = uiState, onNavigateToBody = onNavigateToBody)
+            WorkoutNutritionRow(uiState = uiState, onNavigateToWorkout = onNavigateToWorkout, onNavigateToNutrition = onNavigateToNutrition)
+            Row(modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                HealthMetricTile(
+                    icon = Icons.Default.Route,
+                    iconColor = AccentBlue,
+                    value = "${uiState.steps}",
+                    subValue = "/ ${uiState.stepGoal}",
+                    label = "Steps",
+                    progress = if (uiState.stepGoal > 0) (uiState.steps.toFloat() / uiState.stepGoal).coerceIn(0f, 1f) else 0f,
+                    modifier = Modifier.weight(1f).fillMaxHeight().clickable { onNavigateToBody() }
+                )
+                HealthMetricTile(
+                    icon = Icons.Default.DarkMode,
+                    iconColor = Color(0xFF9C77E0),
+                    value = String.format("%.1f h", uiState.sleepHours),
+                    label = "Sleep",
+                    modifier = Modifier.weight(1f).fillMaxHeight().clickable { onNavigateToBody() }
+                )
+            }
+            HabitsWidget(uiState = uiState, onNavigateToHabits = onNavigateToHabits)
+            if (uiState.weightKg != null || uiState.bodyFatPercent != null) {
+                BodyWidget(uiState = uiState, onNavigateToBody = onNavigateToBody)
+            }
             RecommendationCard(recommendation = uiState.nextDayRecommendation, workoutCompletedToday = uiState.workoutCompletedToday)
             ViewProgressCard(onClick = onNavigateToProgress)
             Text(
@@ -175,44 +217,207 @@ private fun ProfileAvatarButton(onClick: () -> Unit) {
 }
 
 @Composable
-private fun SummaryGrid(uiState: DashboardUiState) {
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Row(modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            HealthMetricTile(
-                icon = Icons.Default.AutoAwesome,
-                iconColor = CyanAccent,
-                value = "${uiState.completedHabits} / ${uiState.totalHabits}",
-                label = "Habits",
-                progress = progress(uiState.completedHabits, uiState.totalHabits),
-                modifier = Modifier.weight(1f).fillMaxHeight()
-            )
-            HealthMetricTile(
-                icon = Icons.Default.LocalDining,
-                iconColor = PositiveAccent,
-                value = "${uiState.proteinConsumedGrams}g",
-                subValue = "goal ${uiState.proteinMinGoalGrams}g",
-                label = "Protein",
-                progress = progress(uiState.proteinConsumedGrams, uiState.proteinMinGoalGrams),
-                modifier = Modifier.weight(1f).fillMaxHeight()
-            )
+private fun HeroWidget(uiState: DashboardUiState, onStartWorkout: () -> Unit) {
+    val scoreColor = healthScoreColor(uiState.healthScore)
+    ElevatedCard(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(28.dp),
+        colors = CardDefaults.elevatedCardColors(containerColor = MainCard),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 8.dp)
+    ) {
+        Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "TODAY",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MutedText,
+                    fontWeight = FontWeight.SemiBold
+                )
+                if (uiState.coachLine != null) {
+                    Surface(shape = RoundedCornerShape(999.dp), color = CyanAccent.copy(alpha = 0.12f)) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = CyanAccent, modifier = Modifier.size(12.dp))
+                            Text(text = "Coach", style = MaterialTheme.typography.labelSmall, color = CyanAccent, fontWeight = FontWeight.SemiBold)
+                        }
+                    }
+                }
+            }
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(20.dp), verticalAlignment = Alignment.CenterVertically) {
+                ProgressRing(
+                    progress = (uiState.healthScore / 100f).coerceIn(0f, 1f),
+                    modifier = Modifier.size(96.dp),
+                    strokeWidth = 14.dp,
+                    color = scoreColor
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(text = "${uiState.healthScore}", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = scoreColor)
+                        Text(text = "/ 100", style = MaterialTheme.typography.labelSmall, color = MutedText)
+                    }
+                }
+                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(text = "HEALTH SCORE", style = MaterialTheme.typography.labelSmall, color = MutedText, fontWeight = FontWeight.SemiBold)
+                    Text(text = healthScoreLabel(uiState.healthScore), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = scoreColor)
+                    val focus = uiState.nextDayRecommendation?.suggestedFocus
+                    if (focus != null) {
+                        Text(text = "Focus: $focus", style = MaterialTheme.typography.bodySmall, color = MutedText)
+                    }
+                    if (uiState.coachLine != null) {
+                        Text(text = uiState.coachLine, style = MaterialTheme.typography.bodySmall, color = CyanAccent)
+                    }
+                }
+            }
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                HeroMiniBar(label = "Recovery", progress = ((uiState.recoveryScore ?: 0) / 100f).coerceIn(0f, 1f), color = recoveryColor(uiState.recoveryScore ?: 0), modifier = Modifier.weight(1f))
+                HeroMiniBar(label = "Nutrition", progress = progress(uiState.caloriesToday, uiState.calorieGoal), color = PositiveAccent, modifier = Modifier.weight(1f))
+                HeroMiniBar(label = "Habits", progress = progress(uiState.completedHabits, uiState.totalHabits), color = CyanAccent, modifier = Modifier.weight(1f))
+            }
+            if (!uiState.workoutCompletedToday) {
+                Button(
+                    onClick = onStartWorkout,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(containerColor = AccentBlue)
+                ) {
+                    Text("Start Today's Workout", color = PrimaryText, fontWeight = FontWeight.Bold)
+                }
+            } else if (uiState.todayWorkoutName != null) {
+                Surface(shape = RoundedCornerShape(12.dp), color = PositiveAccent.copy(alpha = 0.12f), modifier = Modifier.fillMaxWidth()) {
+                    Row(modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                        Text(text = uiState.todayWorkoutName, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = PositiveAccent)
+                        Text(text = uiState.todayWorkoutStatusLabel ?: "Done", style = MaterialTheme.typography.labelSmall, color = PositiveAccent)
+                    }
+                }
+            }
         }
-        Row(modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            HealthMetricTile(
-                icon = Icons.Default.DarkMode,
-                iconColor = Color(0xFF9C77E0),
-                value = String.format("%.1f h", uiState.sleepHours),
-                label = "Sleep",
-                modifier = Modifier.weight(1f).fillMaxHeight()
-            )
-            HealthMetricTile(
-                icon = Icons.Default.Route,
-                iconColor = AccentBlue,
-                value = "${uiState.steps}",
-                subValue = "/ ${uiState.stepGoal}",
-                label = "Steps",
-                progress = if (uiState.stepGoal > 0) (uiState.steps.toFloat() / uiState.stepGoal).coerceIn(0f, 1f) else 0f,
-                modifier = Modifier.weight(1f).fillMaxHeight()
-            )
+    }
+}
+
+@Composable
+private fun HeroMiniBar(label: String, progress: Float, color: Color, modifier: Modifier = Modifier) {
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(text = label, style = MaterialTheme.typography.labelSmall, color = MutedText)
+        Box(modifier = Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(999.dp)).background(MutedControl.copy(alpha = 0.4f))) {
+            Box(modifier = Modifier.fillMaxWidth(progress.coerceIn(0f, 1f)).height(4.dp).clip(RoundedCornerShape(999.dp)).background(color))
+        }
+    }
+}
+
+@Composable
+private fun WorkoutNutritionRow(
+    uiState: DashboardUiState,
+    onNavigateToWorkout: () -> Unit,
+    onNavigateToNutrition: () -> Unit
+) {
+    Row(modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        ElevatedCard(
+            modifier = Modifier.weight(1f).fillMaxHeight().clickable { onNavigateToWorkout() },
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.elevatedCardColors(containerColor = SecondaryCard),
+            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 3.dp)
+        ) {
+            Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Icon(Icons.Default.Bolt, contentDescription = null, tint = AccentBlue, modifier = Modifier.size(16.dp))
+                    Text(text = "Workout", style = MaterialTheme.typography.labelSmall, color = MutedText, fontWeight = FontWeight.SemiBold)
+                }
+                if (uiState.todayWorkoutName != null) {
+                    Text(text = uiState.todayWorkoutName, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = PrimaryText, maxLines = 2)
+                    Text(text = uiState.todayWorkoutStatusLabel ?: "", style = MaterialTheme.typography.labelSmall, color = PositiveAccent)
+                } else {
+                    Text(text = "No workout yet", style = MaterialTheme.typography.bodyMedium, color = MutedText)
+                    Text(text = "Tap to start →", style = MaterialTheme.typography.labelSmall, color = AccentBlue)
+                }
+            }
+        }
+        ElevatedCard(
+            modifier = Modifier.weight(1f).fillMaxHeight().clickable { onNavigateToNutrition() },
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.elevatedCardColors(containerColor = SecondaryCard),
+            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 3.dp)
+        ) {
+            Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Icon(Icons.Default.LocalDining, contentDescription = null, tint = PositiveAccent, modifier = Modifier.size(16.dp))
+                    Text(text = "Nutrition", style = MaterialTheme.typography.labelSmall, color = MutedText, fontWeight = FontWeight.SemiBold)
+                }
+                Text(text = "${uiState.caloriesToday} kcal", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = PrimaryText)
+                Text(text = "goal ${uiState.calorieGoal}", style = MaterialTheme.typography.labelSmall, color = MutedText)
+                Box(modifier = Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(999.dp)).background(MutedControl.copy(alpha = 0.4f))) {
+                    Box(modifier = Modifier.fillMaxWidth(progress(uiState.caloriesToday, uiState.calorieGoal)).height(4.dp).clip(RoundedCornerShape(999.dp)).background(PositiveAccent))
+                }
+                Text(text = "Protein: ${uiState.proteinConsumedGrams}g / ${uiState.proteinMinGoalGrams}g", style = MaterialTheme.typography.labelSmall, color = MutedText)
+            }
+        }
+    }
+}
+
+@Composable
+private fun HabitsWidget(uiState: DashboardUiState, onNavigateToHabits: () -> Unit) {
+    ElevatedCard(
+        modifier = Modifier.fillMaxWidth().clickable { onNavigateToHabits() },
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.elevatedCardColors(containerColor = SecondaryCard),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 3.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = CyanAccent, modifier = Modifier.size(16.dp))
+                    Text(text = "Habits", style = MaterialTheme.typography.labelSmall, color = MutedText, fontWeight = FontWeight.SemiBold)
+                }
+                Text(
+                    text = "${uiState.completedHabits} / ${uiState.totalHabits}",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = if (uiState.totalHabits > 0 && uiState.completedHabits == uiState.totalHabits) PositiveAccent else PrimaryText
+                )
+            }
+            Box(modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(999.dp)).background(MutedControl.copy(alpha = 0.4f))) {
+                Box(modifier = Modifier.fillMaxWidth(progress(uiState.completedHabits, uiState.totalHabits)).height(6.dp).clip(RoundedCornerShape(999.dp)).background(CyanAccent))
+            }
+            if (uiState.totalHabits == 0) {
+                Text(text = "No habits set. Tap to add some.", style = MaterialTheme.typography.bodySmall, color = MutedText)
+            } else if (uiState.completedHabits == uiState.totalHabits) {
+                Text(text = "All habits complete today.", style = MaterialTheme.typography.bodySmall, color = PositiveAccent)
+            } else {
+                Text(text = "${uiState.totalHabits - uiState.completedHabits} remaining", style = MaterialTheme.typography.bodySmall, color = MutedText)
+            }
+        }
+    }
+}
+
+@Composable
+private fun BodyWidget(uiState: DashboardUiState, onNavigateToBody: () -> Unit) {
+    Row(modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        if (uiState.weightKg != null) {
+            ElevatedCard(
+                modifier = Modifier.weight(1f).fillMaxHeight().clickable { onNavigateToBody() },
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.elevatedCardColors(containerColor = SecondaryCard),
+                elevation = CardDefaults.elevatedCardElevation(defaultElevation = 3.dp)
+            ) {
+                Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(text = "Weight", style = MaterialTheme.typography.labelSmall, color = MutedText, fontWeight = FontWeight.SemiBold)
+                    Text(text = String.format("%.1f kg", uiState.weightKg), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = PrimaryText)
+                }
+            }
+        }
+        if (uiState.bodyFatPercent != null) {
+            ElevatedCard(
+                modifier = Modifier.weight(1f).fillMaxHeight().clickable { onNavigateToBody() },
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.elevatedCardColors(containerColor = SecondaryCard),
+                elevation = CardDefaults.elevatedCardElevation(defaultElevation = 3.dp)
+            ) {
+                Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(text = "Body Fat", style = MaterialTheme.typography.labelSmall, color = MutedText, fontWeight = FontWeight.SemiBold)
+                    Text(text = String.format("%.1f%%", uiState.bodyFatPercent), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = PrimaryText)
+                }
+            }
         }
     }
 }
@@ -290,10 +495,10 @@ private fun ThinProgressBar(progress: Float, color: Color, modifier: Modifier = 
 }
 
 @Composable
-private fun RecoveryHeroCard(uiState: DashboardUiState) {
+private fun RecoveryHeroCard(uiState: DashboardUiState, onNavigateToBody: () -> Unit = {}) {
     var showBreakdown by remember { mutableStateOf(false) }
     ElevatedCard(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().clickable { onNavigateToBody() },
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.elevatedCardColors(containerColor = MainCard),
         elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp)
@@ -590,6 +795,22 @@ private fun recoveryColor(score: Int): Color = when {
     score >= 60 -> CyanAccent
     score >= 40 -> WarningAccent
     else -> Color(0xFFFF6B6B)
+}
+
+private fun healthScoreColor(score: Int): Color = when {
+    score >= 80 -> PositiveAccent
+    score >= 60 -> CyanAccent
+    score >= 40 -> WarningAccent
+    score > 0 -> Color(0xFFFF6B6B)
+    else -> MutedText
+}
+
+private fun healthScoreLabel(score: Int): String = when {
+    score >= 80 -> "Excellent"
+    score >= 60 -> "Good"
+    score >= 40 -> "Fair"
+    score > 0 -> "Needs attention"
+    else -> "Log data to unlock"
 }
 
 private fun progress(value: Int, target: Int): Float {

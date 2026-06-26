@@ -15,7 +15,15 @@ data class DashboardUiState(
     val recoveryReasons: List<String> = emptyList(),
     val recoveryContributors: List<RecoveryContributorUiState> = emptyList(),
     val nextDayRecommendation: DailyRecommendationUiState? = null,
-    val workoutCompletedToday: Boolean = false
+    val workoutCompletedToday: Boolean = false,
+    val caloriesToday: Int = 0,
+    val calorieGoal: Int = 2000,
+    val weightKg: Double? = null,
+    val bodyFatPercent: Double? = null,
+    val todayWorkoutName: String? = null,
+    val todayWorkoutStatusLabel: String? = null,
+    val healthScore: Int = 0,
+    val coachLine: String? = null
 )
 
 data class RecoveryContributorUiState(

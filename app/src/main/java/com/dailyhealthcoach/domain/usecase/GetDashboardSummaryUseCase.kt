@@ -82,8 +82,11 @@ class GetDashboardSummaryUseCase(
                 .map { it.habitDefinitionId }
                 .toSet()
             val proteinConsumed = inputs.foodEntries.sumOf { it.proteinGrams ?: 0.0 }.toInt()
+            val caloriesToday = inputs.foodEntries.sumOf { it.calories ?: 0 }
+            val calorieGoal = inputs.macroTarget?.calorieTarget ?: 2000
             val todayWorkouts = workoutInputs.workouts.filter { it.date == date }
             val workoutCompletedToday = todayWorkouts.any { WorkoutStatus.fromStorageValue(it.status) != WorkoutStatus.SKIPPED }
+            val todayActiveWorkout = todayWorkouts.firstOrNull { WorkoutStatus.fromStorageValue(it.status) != WorkoutStatus.SKIPPED }
             val recentWorkouts = workoutInputs.workouts.filter { it.date in twoDaysAgo..date }
             val weeklyWorkouts = workoutInputs.workouts.filter { it.date in sixDaysAgo..date }
             val recovery = recoveryScoreCalculator.calculate(
@@ -115,21 +118,47 @@ class GetDashboardSummaryUseCase(
                 )
             )
 
+            val completedHabits = todayHabits.count { it.id in completedHabitIds }
+            val sleepHours = inputs.bodyMetricLog?.sleepHours ?: 0.0
+            val healthScore = computeHealthScore(
+                recoveryScore = recovery?.score,
+                caloriesToday = caloriesToday,
+                calorieGoal = calorieGoal,
+                completedHabits = completedHabits,
+                totalHabits = todayHabits.size,
+                sleepHours = sleepHours
+            )
             DashboardSummary(
                 totalHabits = todayHabits.size,
-                completedHabits = todayHabits.count { it.id in completedHabitIds },
+                completedHabits = completedHabits,
                 proteinConsumedGrams = proteinConsumed,
                 proteinMinGoalGrams = inputs.macroTarget?.proteinMinGrams ?: 170,
                 proteinMaxGoalGrams = inputs.macroTarget?.proteinMaxGrams ?: 200,
                 steps = inputs.bodyMetricLog?.stepCount ?: 0,
                 stepGoal = userProfile?.stepMinTarget ?: 8_000,
-                sleepHours = inputs.bodyMetricLog?.sleepHours ?: 6.8,
+                sleepHours = sleepHours,
                 recoveryScore = recovery?.score,
                 recoveryLabel = recovery?.label ?: "Recovery not calculated",
                 recoveryReasons = recovery?.reasons.orEmpty(),
                 recoveryContributors = recovery?.contributors.orEmpty(),
                 nextDayRecommendation = recommendation,
-                workoutCompletedToday = workoutCompletedToday
+                workoutCompletedToday = workoutCompletedToday,
+                caloriesToday = caloriesToday,
+                calorieGoal = calorieGoal,
+                weightKg = inputs.bodyMetricLog?.bodyWeight,
+                bodyFatPercent = inputs.bodyMetricLog?.bodyFatPercentage,
+                todayWorkoutName = todayActiveWorkout?.name,
+                todayWorkoutStatusLabel = todayActiveWorkout?.let { WorkoutStatus.fromStorageValue(it.status).label },
+                healthScore = healthScore,
+                coachLine = selectCoachLine(
+                    recoveryScore = recovery?.score,
+                    workoutCompletedToday = workoutCompletedToday,
+                    proteinConsumed = proteinConsumed,
+                    proteinGoal = inputs.macroTarget?.proteinMinGrams ?: 170,
+                    totalHabits = todayHabits.size,
+                    completedHabits = completedHabits,
+                    sleepHours = sleepHours
+                )
             )
         }.onEach { summary ->
             val score = summary.recoveryScore ?: return@onEach
@@ -144,6 +173,41 @@ class GetDashboardSummaryUseCase(
             }
         }
     }
+}
+
+private fun computeHealthScore(
+    recoveryScore: Int?,
+    caloriesToday: Int,
+    calorieGoal: Int,
+    completedHabits: Int,
+    totalHabits: Int,
+    sleepHours: Double
+): Int {
+    val recoveryPart = ((recoveryScore ?: 0) / 100.0) * 40
+    val nutritionPart = if (calorieGoal > 0 && caloriesToday > 0)
+        (caloriesToday.toDouble() / calorieGoal).coerceIn(0.0, 1.0) * 25 else 0.0
+    val habitPart = if (totalHabits > 0)
+        (completedHabits.toDouble() / totalHabits) * 20 else 0.0
+    val sleepPart = (sleepHours / 8.0).coerceIn(0.0, 1.0) * 15
+    return (recoveryPart + nutritionPart + habitPart + sleepPart).toInt()
+}
+
+private fun selectCoachLine(
+    recoveryScore: Int?,
+    workoutCompletedToday: Boolean,
+    proteinConsumed: Int,
+    proteinGoal: Int,
+    totalHabits: Int,
+    completedHabits: Int,
+    sleepHours: Double
+): String? = when {
+    recoveryScore != null && recoveryScore >= 80 -> "You're well recovered. Good day to push hard."
+    recoveryScore != null && recoveryScore <= 40 -> "Your body needs rest today. Honor that."
+    workoutCompletedToday -> "Workout logged. Recovery window starts now."
+    totalHabits > 0 && completedHabits == totalHabits -> "Clean sweep today. Rare."
+    proteinGoal > 0 && proteinConsumed >= proteinGoal -> "Protein dialed in. Recovery starts here."
+    sleepHours in 0.01..5.99 -> "Sleep debt showing. Protect tonight."
+    else -> null
 }
 
 private data class DashboardInputs(

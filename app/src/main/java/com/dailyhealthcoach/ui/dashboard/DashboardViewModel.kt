@@ -54,7 +54,15 @@ private fun DashboardSummary.toUiState(): DashboardUiState {
                 reasons = it.reasonBullets
             )
         },
-        workoutCompletedToday = workoutCompletedToday
+        workoutCompletedToday = workoutCompletedToday,
+        caloriesToday = caloriesToday,
+        calorieGoal = calorieGoal,
+        weightKg = weightKg,
+        bodyFatPercent = bodyFatPercent,
+        todayWorkoutName = todayWorkoutName,
+        todayWorkoutStatusLabel = todayWorkoutStatusLabel,
+        healthScore = healthScore,
+        coachLine = coachLine
     )
 }
 
