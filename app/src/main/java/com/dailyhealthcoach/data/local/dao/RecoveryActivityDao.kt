@@ -17,4 +17,7 @@ interface RecoveryActivityDao {
 
     @Query("SELECT * FROM recovery_activity_logs ORDER BY id ASC")
     fun observeAll(): Flow<List<RecoveryActivityEntity>>
+
+    @Query("DELETE FROM recovery_activity_logs WHERE workout_id = :workoutId")
+    suspend fun deleteForWorkout(workoutId: Long)
 }

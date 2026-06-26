@@ -15,9 +15,15 @@ interface WorkoutDao {
     @Query("SELECT * FROM workouts WHERE date = :date")
     fun observeWorkoutsForDate(date: String): Flow<List<WorkoutEntity>>
 
+    @Query("SELECT * FROM workouts WHERE id = :id LIMIT 1")
+    suspend fun getById(id: Long): WorkoutEntity?
+
     @Insert
     suspend fun insert(workout: WorkoutEntity): Long
 
     @Upsert
     suspend fun upsert(workout: WorkoutEntity)
+
+    @Query("DELETE FROM workouts WHERE id = :id")
+    suspend fun deleteById(id: Long)
 }

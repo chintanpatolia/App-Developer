@@ -49,6 +49,9 @@ class WorkoutViewModel(
     private val timerState = MutableStateFlow<TimerState?>(null)
     private var timerJob: Job? = null
 
+    private val rawWorkouts = workoutRepository.observeWorkouts()
+        .stateIn(scope = viewModelScope, started = SharingStarted.Eagerly, initialValue = emptyList())
+
     private val rawWorkoutSets = workoutRepository.observeWorkoutSets()
         .stateIn(scope = viewModelScope, started = SharingStarted.Eagerly, initialValue = emptyList())
 
@@ -234,6 +237,172 @@ class WorkoutViewModel(
         draftState.update { it.copy(selectedWorkoutId = null) }
     }
 
+    fun startEditWorkout(workoutId: Long) {
+        val workout = rawWorkouts.value.firstOrNull { it.id == workoutId } ?: return
+        val allSets = rawWorkoutSets.value.filter { it.workoutId == workoutId }
+        val exerciseDrafts = allSets
+            .groupBy { it.exerciseId }
+            .map { (exerciseId, sets) ->
+                val sortedSets = sets.sortedBy { it.setNumber }
+                val lastSet = sortedSets.lastOrNull()
+                DraftExerciseState(
+                    exerciseId = exerciseId,
+                    isExpanded = false,
+                    sets = sortedSets.map { set ->
+                        DraftSetState(
+                            exerciseId = exerciseId,
+                            setNumber = set.setNumber,
+                            repsText = set.reps?.toString() ?: "",
+                            weightText = set.weight?.let {
+                                if (it % 1.0 == 0.0) it.toInt().toString() else "%.1f".format(it)
+                            } ?: "",
+                            rpeText = set.rpe?.toString() ?: "",
+                            notes = set.notes
+                        )
+                    },
+                    setReps = lastSet?.reps?.toString() ?: "",
+                    setWeight = lastSet?.weight?.let {
+                        if (it % 1.0 == 0.0) it.toInt().toString() else "%.1f".format(it)
+                    } ?: "",
+                    setRpe = lastSet?.rpe?.toString() ?: ""
+                )
+            }
+        draftState.update { draft ->
+            draft.copy(
+                editingWorkoutId = workoutId,
+                workoutName = workout.name,
+                durationMinutes = workout.durationMinutes?.toString() ?: "",
+                overallRpe = workout.overallRpe?.toString() ?: "",
+                overallRpeError = null,
+                workoutNotes = workout.notes ?: "",
+                selectedStatus = WorkoutStatus.fromStorageValue(workout.status),
+                selectedExercises = exerciseDrafts
+            )
+        }
+    }
+
+    fun saveEditedWorkout() {
+        val draft = draftState.value
+        val workoutId = draft.editingWorkoutId ?: return
+        viewModelScope.launch {
+            workoutRepository.updateWorkout(
+                id = workoutId,
+                name = draft.workoutName.ifBlank { "Strength Session" },
+                status = draft.selectedStatus,
+                durationMinutes = draft.durationMinutes.toIntOrNull(),
+                overallRpe = draft.overallRpe.toIntOrNull(),
+                notes = draft.combinedWorkoutNotes(),
+                sets = draft.selectedExercises.flatMap { exercise ->
+                    exercise.sets.map { set ->
+                        WorkoutSetInput(
+                            exerciseId = set.exerciseId,
+                            setNumber = set.setNumber,
+                            reps = set.repsText.toIntOrNull(),
+                            weight = set.weightText.toDoubleOrNull(),
+                            rpe = set.rpeText.toIntOrNull(),
+                            notes = set.notes
+                        )
+                    }
+                }
+            )
+            draftState.update { it.copy(
+                editingWorkoutId = null,
+                workoutName = "Strength Session",
+                durationMinutes = "",
+                overallRpe = "",
+                overallRpeError = null,
+                workoutNotes = "",
+                selectedStatus = WorkoutStatus.COMPLETED,
+                selectedExercises = emptyList()
+            ) }
+        }
+    }
+
+    fun cancelEditWorkout() {
+        draftState.update { it.copy(
+            editingWorkoutId = null,
+            workoutName = "Strength Session",
+            durationMinutes = "",
+            overallRpe = "",
+            overallRpeError = null,
+            workoutNotes = "",
+            selectedStatus = WorkoutStatus.COMPLETED,
+            selectedExercises = emptyList()
+        ) }
+    }
+
+    fun resumeWorkout(workoutId: Long) {
+        val workout = rawWorkouts.value.firstOrNull { it.id == workoutId } ?: return
+        val allSets = rawWorkoutSets.value.filter { it.workoutId == workoutId }
+        val exerciseDrafts = allSets
+            .groupBy { it.exerciseId }
+            .entries
+            .sortedBy { (_, sets) -> sets.minOf { it.id } }
+            .map { (exerciseId, sets) ->
+                val sortedSets = sets.sortedBy { it.setNumber }
+                val lastSet = sortedSets.lastOrNull()
+                DraftExerciseState(
+                    exerciseId = exerciseId,
+                    isExpanded = false,
+                    sets = sortedSets.map { set ->
+                        DraftSetState(
+                            exerciseId = exerciseId,
+                            setNumber = set.setNumber,
+                            repsText = set.reps?.toString() ?: "",
+                            weightText = set.weight?.let {
+                                if (it % 1.0 == 0.0) it.toInt().toString() else "%.1f".format(it)
+                            } ?: "",
+                            rpeText = set.rpe?.toString() ?: "",
+                            notes = set.notes
+                        )
+                    },
+                    setReps = lastSet?.reps?.toString() ?: "",
+                    setWeight = lastSet?.weight?.let {
+                        if (it % 1.0 == 0.0) it.toInt().toString() else "%.1f".format(it)
+                    } ?: "",
+                    setRpe = lastSet?.rpe?.toString() ?: ""
+                )
+            }
+        val expandIndex = exerciseDrafts.lastIndex.coerceAtLeast(0)
+        val exerciseDraftsWithExpand = exerciseDrafts.mapIndexed { i, ex ->
+            ex.copy(isExpanded = i == expandIndex)
+        }
+        draftState.update { draft ->
+            draft.copy(
+                resumingWorkoutId = workoutId,
+                selectedWorkoutId = null,
+                isWorkoutStarted = true,
+                workoutName = workout.name,
+                durationMinutes = workout.durationMinutes?.toString() ?: "",
+                overallRpe = workout.overallRpe?.toString() ?: "",
+                overallRpeError = null,
+                workoutNotes = workout.notes ?: "",
+                selectedStatus = WorkoutStatus.fromStorageValue(workout.status),
+                selectedExercises = exerciseDraftsWithExpand,
+                warmUpDrafts = emptyList(),
+                coolDownDrafts = emptyList()
+            )
+        }
+    }
+
+    fun requestDeleteWorkout() {
+        draftState.update { it.copy(isDeleteConfirmShowing = true) }
+    }
+
+    fun cancelDeleteWorkout() {
+        draftState.update { it.copy(isDeleteConfirmShowing = false) }
+    }
+
+    fun confirmDeleteWorkout() {
+        val workoutId = draftState.value.selectedWorkoutId ?: return
+        draftState.update { it.copy(isDeleteConfirmShowing = false) }
+        viewModelScope.launch {
+            recoveryActivityRepository.deleteForWorkout(workoutId)
+            workoutRepository.deleteWorkout(workoutId)
+            draftState.update { it.copy(selectedWorkoutId = null) }
+        }
+    }
+
     fun dismissPrCelebration() {
         _pendingPrAchievements.value = emptyList()
     }
@@ -320,6 +489,70 @@ class WorkoutViewModel(
     fun saveWorkout() {
         val draft = draftState.value
         cancelTimer()
+
+        val resumingId = draft.resumingWorkoutId
+        if (resumingId != null) {
+            val existingSetsExcludingThis = rawWorkoutSets.value.filter { it.workoutId != resumingId }
+            val exerciseMap = rawExercises.value.associateBy { it.id }
+            val draftSetsForPr = draft.selectedExercises.flatMap { ex ->
+                ex.sets.mapNotNull { set ->
+                    val w = set.weightText.toDoubleOrNull() ?: return@mapNotNull null
+                    val r = set.repsText.toIntOrNull() ?: return@mapNotNull null
+                    if (w <= 0 || r <= 0) return@mapNotNull null
+                    WorkoutExercise(
+                        id = 0, workoutId = 0, exerciseId = ex.exerciseId,
+                        setNumber = set.setNumber, reps = r, weight = w,
+                        rpe = set.rpeText.toIntOrNull(), restSeconds = null, notes = null
+                    )
+                }
+            }
+            viewModelScope.launch {
+                workoutRepository.updateWorkout(
+                    id = resumingId,
+                    name = draft.workoutName.ifBlank { "Strength Session" },
+                    status = draft.selectedStatus,
+                    durationMinutes = draft.durationMinutes.toIntOrNull(),
+                    overallRpe = draft.overallRpe.toIntOrNull(),
+                    notes = draft.combinedWorkoutNotes(),
+                    sets = draft.selectedExercises.flatMap { exercise ->
+                        exercise.sets.map { set ->
+                            WorkoutSetInput(
+                                exerciseId = set.exerciseId,
+                                setNumber = set.setNumber,
+                                reps = set.repsText.toIntOrNull(),
+                                weight = set.weightText.toDoubleOrNull(),
+                                rpe = set.rpeText.toIntOrNull(),
+                                notes = set.notes
+                            )
+                        }
+                    }
+                )
+                val allActivities = draft.warmUpDrafts + draft.coolDownDrafts
+                if (allActivities.isNotEmpty()) {
+                    recoveryActivityRepository.deleteForWorkout(resumingId)
+                    recoveryActivityRepository.saveAll(
+                        workoutId = resumingId,
+                        activities = allActivities.map { d ->
+                            val savedStatus = if (d.status == WorkoutStatus.NOT_STARTED) WorkoutStatus.SKIPPED else d.status
+                            RecoveryActivity(
+                                workoutId = resumingId,
+                                name = d.name,
+                                status = savedStatus.storageValue,
+                                durationSeconds = if (d.isTimedActivity) d.durationSeconds else d.durationInput.toIntOrNull()?.let { it * 60 },
+                                rpe = d.rpeInput.toIntOrNull(),
+                                notes = d.notesInput.ifBlank { null }
+                            )
+                        }
+                    )
+                }
+                val achievements = detectNewPrs(existingSetsExcludingThis, draftSetsForPr, exerciseMap)
+                if (achievements.isNotEmpty()) _pendingPrAchievements.value = achievements
+                habitAutoUpdateUseCase(today)
+                draftState.value = WorkoutDraftState()
+            }
+            return
+        }
+
         val existingSets = rawWorkoutSets.value
         val exerciseMap = rawExercises.value.associateBy { it.id }
         val draftSetsForPr = draft.selectedExercises.flatMap { ex ->
@@ -577,6 +810,9 @@ private data class WorkoutDraftState(
     val selectedStatus: WorkoutStatus = WorkoutStatus.COMPLETED,
     val selectedExercises: List<DraftExerciseState> = emptyList(),
     val selectedWorkoutId: Long? = null,
+    val editingWorkoutId: Long? = null,
+    val resumingWorkoutId: Long? = null,
+    val isDeleteConfirmShowing: Boolean = false,
     val calendarWeekOffset: Int = 0,
     val warmUpDrafts: List<ActivityDraft> = emptyList(),
     val coolDownDrafts: List<ActivityDraft> = emptyList(),
@@ -657,6 +893,7 @@ private fun buildUiState(
             statusLabel = WorkoutStatus.fromStorageValue(workout.status).label,
             durationText = workout.durationMinutes?.let { "$it min" } ?: "",
             notes = workout.notes,
+            overallRpe = workout.overallRpe,
             exercises = sets.groupBy { it.exerciseId }.map { (exerciseId, exerciseSets) ->
                 val exercise = exerciseById[exerciseId]
                 ExerciseDetailUiState(
@@ -701,6 +938,8 @@ private fun buildUiState(
     return WorkoutUiState(
         isWorkoutStarted = draft.isWorkoutStarted,
         isNonStrengthSessionStarted = draft.isNonStrengthSessionStarted,
+        editingWorkoutId = draft.editingWorkoutId,
+        isDeleteConfirmShowing = draft.isDeleteConfirmShowing,
         workoutName = draft.workoutName,
         durationMinutes = draft.durationMinutes,
         overallRpe = draft.overallRpe,

@@ -73,6 +73,50 @@ class WorkoutRepositoryImpl(
         )
         return workoutId
     }
+
+    override suspend fun updateWorkout(
+        id: Long,
+        name: String,
+        status: WorkoutStatus,
+        durationMinutes: Int?,
+        overallRpe: Int?,
+        notes: String?,
+        sets: List<WorkoutSetInput>
+    ) {
+        val existing = workoutDao.getById(id) ?: return
+        val now = Instant.now().toString()
+        workoutDao.upsert(
+            WorkoutEntity(
+                id = id,
+                date = existing.date,
+                name = name,
+                durationMinutes = durationMinutes,
+                status = status.storageValue,
+                overallRpe = overallRpe,
+                notes = notes,
+                createdAt = existing.createdAt,
+                updatedAt = now
+            )
+        )
+        workoutExerciseDao.deleteForWorkout(id)
+        workoutExerciseDao.insertAll(
+            sets.map { set ->
+                WorkoutExerciseEntity(
+                    workoutId = id,
+                    exerciseId = set.exerciseId,
+                    setNumber = set.setNumber,
+                    reps = set.reps,
+                    weight = set.weight,
+                    rpe = set.rpe,
+                    notes = set.notes
+                )
+            }
+        )
+    }
+
+    override suspend fun deleteWorkout(id: Long) {
+        workoutDao.deleteById(id)
+    }
 }
 
 private fun WorkoutEntity.toDomain(): Workout {

@@ -13,6 +13,8 @@ data class TimerState(
 data class WorkoutUiState(
     val isWorkoutStarted: Boolean = false,
     val isNonStrengthSessionStarted: Boolean = false,
+    val editingWorkoutId: Long? = null,
+    val isDeleteConfirmShowing: Boolean = false,
     val workoutName: String = "Strength Session",
     val durationMinutes: String = "",
     val overallRpe: String = "",
@@ -187,5 +189,6 @@ data class WorkoutDetailUiState(
     val recoveryActivities: List<RecoveryActivityDetailUiState> = emptyList(),
     val totalVolumeText: String = "",
     val totalSetsText: String = "",
-    val avgRpeText: String = ""
+    val avgRpeText: String = "",
+    val overallRpe: Int? = null
 )

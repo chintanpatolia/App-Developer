@@ -20,4 +20,16 @@ interface WorkoutRepository {
         notes: String?,
         sets: List<WorkoutSetInput>
     ): Long
+
+    suspend fun updateWorkout(
+        id: Long,
+        name: String,
+        status: WorkoutStatus,
+        durationMinutes: Int?,
+        overallRpe: Int?,
+        notes: String?,
+        sets: List<WorkoutSetInput>
+    )
+
+    suspend fun deleteWorkout(id: Long)
 }

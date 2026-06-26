@@ -26,6 +26,10 @@ class RecoveryActivityRepositoryImpl(
             )
         })
     }
+
+    override suspend fun deleteForWorkout(workoutId: Long) {
+        dao.deleteForWorkout(workoutId)
+    }
 }
 
 private fun RecoveryActivityEntity.toDomain() = RecoveryActivity(

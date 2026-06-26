@@ -199,7 +199,14 @@ fun PremiumWorkoutRoute(viewModel: WorkoutViewModel) {
         onTimerPause = viewModel::pauseTimer,
         onTimerResume = viewModel::resumeTimer,
         onTimerSkip = viewModel::skipTimer,
-        onStartWorkoutAnyway = { viewModel.startWorkout() }
+        onStartWorkoutAnyway = { viewModel.startWorkout() },
+        onStartEditWorkout = viewModel::startEditWorkout,
+        onSaveEditedWorkout = viewModel::saveEditedWorkout,
+        onCancelEditWorkout = viewModel::cancelEditWorkout,
+        onRequestDeleteWorkout = viewModel::requestDeleteWorkout,
+        onCancelDeleteWorkout = viewModel::cancelDeleteWorkout,
+        onConfirmDeleteWorkout = viewModel::confirmDeleteWorkout,
+        onResumeWorkout = viewModel::resumeWorkout
     )
 }
 
@@ -240,7 +247,14 @@ private fun PremiumWorkoutScreen(
     onTimerPause: () -> Unit = {},
     onTimerResume: () -> Unit = {},
     onTimerSkip: () -> Unit = {},
-    onStartWorkoutAnyway: () -> Unit = {}
+    onStartWorkoutAnyway: () -> Unit = {},
+    onStartEditWorkout: (Long) -> Unit = {},
+    onSaveEditedWorkout: () -> Unit = {},
+    onCancelEditWorkout: () -> Unit = {},
+    onRequestDeleteWorkout: () -> Unit = {},
+    onCancelDeleteWorkout: () -> Unit = {},
+    onConfirmDeleteWorkout: () -> Unit = {},
+    onResumeWorkout: (Long) -> Unit = {}
 ) {
     Column(modifier = Modifier.padding(bottom = 40.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
         when {
@@ -283,9 +297,36 @@ private fun PremiumWorkoutScreen(
                 onTimerResume = onTimerResume,
                 onTimerSkip = onTimerSkip
             )
+            uiState.editingWorkoutId != null -> WorkoutEditView(
+                uiState = uiState,
+                onBack = onCancelEditWorkout,
+                onSave = onSaveEditedWorkout,
+                onWorkoutNameChange = onWorkoutNameChange,
+                onDurationChange = onDurationChange,
+                onOverallRpeChange = onOverallRpeChange,
+                onWorkoutNotesChange = onWorkoutNotesChange,
+                onStatusSelected = onStatusSelected,
+                onExerciseExpandedToggle = onExerciseExpandedToggle,
+                onSetRepsChange = onSetRepsChange,
+                onSetWeightChange = onSetWeightChange,
+                onSetRpeChange = onSetRpeChange,
+                onSetNotesChange = onSetNotesChange,
+                onExerciseNotesChange = onExerciseNotesChange,
+                onAddSet = onAddSet,
+                onRemoveSet = onRemoveSet,
+                onSetInlineRepsChange = onSetInlineRepsChange,
+                onSetInlineWeightChange = onSetInlineWeightChange,
+                onSetInlineRpeChange = onSetInlineRpeChange
+            )
             uiState.selectedWorkoutDetail != null -> WorkoutDetailView(
                 detail = uiState.selectedWorkoutDetail,
-                onBack = onClearWorkout
+                onBack = onClearWorkout,
+                onEdit = { onStartEditWorkout(uiState.selectedWorkoutDetail.id) },
+                onDelete = onRequestDeleteWorkout,
+                onContinueWorkout = { onResumeWorkout(uiState.selectedWorkoutDetail.id) },
+                isDeleteConfirmShowing = uiState.isDeleteConfirmShowing,
+                onCancelDelete = onCancelDeleteWorkout,
+                onConfirmDelete = onConfirmDeleteWorkout
             )
             else -> {
                 if (uiState.newPrAchievements.isNotEmpty()) {
@@ -1399,8 +1440,30 @@ private fun WorkoutHistoryCard(
 @Composable
 private fun WorkoutDetailView(
     detail: WorkoutDetailUiState,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onEdit: () -> Unit = {},
+    onDelete: () -> Unit = {},
+    onContinueWorkout: () -> Unit = {},
+    isDeleteConfirmShowing: Boolean = false,
+    onCancelDelete: () -> Unit = {},
+    onConfirmDelete: () -> Unit = {}
 ) {
+    if (isDeleteConfirmShowing) {
+        AlertDialog(
+            onDismissRequest = onCancelDelete,
+            title = { Text("Delete workout?") },
+            text = { Text("This will permanently delete this workout and all its sets. This cannot be undone.") },
+            confirmButton = {
+                Button(
+                    onClick = onConfirmDelete,
+                    colors = ButtonDefaults.buttonColors(containerColor = WarningAccent)
+                ) { Text("Delete", color = PrimaryText) }
+            },
+            dismissButton = {
+                TextButton(onClick = onCancelDelete) { Text("Cancel", color = CyanAccent) }
+            }
+        )
+    }
     Box(modifier = Modifier.fillMaxWidth()) {
         MainFeatureCard(modifier = Modifier.padding(top = 22.dp)) {
             Column(
@@ -1415,14 +1478,36 @@ private fun WorkoutDetailView(
                     TextButton(onClick = onBack) {
                         Text(text = "< Back", color = CyanAccent, fontWeight = FontWeight.Bold)
                     }
+                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
+                        TextButton(onClick = onEdit) {
+                            Text(text = "Edit", color = CyanAccent, fontWeight = FontWeight.SemiBold)
+                        }
+                        TextButton(onClick = onDelete) {
+                            Text(text = "Delete", color = WarningAccent, fontWeight = FontWeight.SemiBold)
+                        }
+                    }
+                }
+                OutlinedButton(
+                    onClick = onContinueWorkout,
+                    modifier = Modifier.fillMaxWidth(),
+                    border = BorderStroke(1.dp, CyanAccent)
+                ) {
+                    Text("Continue Workout", color = CyanAccent, fontWeight = FontWeight.SemiBold)
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(text = detail.name, color = PrimaryText, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
                     Text(
                         text = detail.statusLabel,
                         color = statusColor(detail.statusLabel),
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.SemiBold
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.padding(start = 8.dp)
                     )
                 }
-                Text(text = detail.name, color = PrimaryText, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                 Text(
                     text = buildString {
                         append(detail.date)
@@ -1481,6 +1566,108 @@ private fun WorkoutDetailView(
             }
         }
         FloatingTitlePill(text = "Workout Details", modifier = Modifier.align(Alignment.TopCenter))
+    }
+}
+
+@Composable
+private fun WorkoutEditView(
+    uiState: WorkoutUiState,
+    onBack: () -> Unit,
+    onSave: () -> Unit,
+    onWorkoutNameChange: (String) -> Unit,
+    onDurationChange: (String) -> Unit,
+    onOverallRpeChange: (String) -> Unit,
+    onWorkoutNotesChange: (String) -> Unit,
+    onStatusSelected: (WorkoutStatus) -> Unit,
+    onExerciseExpandedToggle: (Long) -> Unit,
+    onSetRepsChange: (Long, String) -> Unit,
+    onSetWeightChange: (Long, String) -> Unit,
+    onSetRpeChange: (Long, String) -> Unit,
+    onSetNotesChange: (Long, String) -> Unit,
+    onExerciseNotesChange: (Long, String) -> Unit,
+    onAddSet: (Long) -> Unit,
+    onRemoveSet: (Long, Int) -> Unit,
+    onSetInlineRepsChange: (Long, Int, String) -> Unit,
+    onSetInlineWeightChange: (Long, Int, String) -> Unit,
+    onSetInlineRpeChange: (Long, Int, String) -> Unit
+) {
+    Box(modifier = Modifier.fillMaxWidth()) {
+        MainFeatureCard(modifier = Modifier.padding(top = 22.dp)) {
+            Column(
+                modifier = Modifier.padding(top = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    TextButton(onClick = onBack) {
+                        Text(text = "< Cancel", color = MutedText, fontWeight = FontWeight.Bold)
+                    }
+                    TextButton(onClick = onSave) {
+                        Text(text = "Save Changes", color = CyanAccent, fontWeight = FontWeight.Bold)
+                    }
+                }
+                OutlinedTextField(
+                    value = uiState.workoutName,
+                    onValueChange = onWorkoutNameChange,
+                    label = { Text("Workout name") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    OutlinedTextField(
+                        value = uiState.durationMinutes,
+                        onValueChange = onDurationChange,
+                        label = { Text("Min") },
+                        singleLine = true,
+                        modifier = Modifier.weight(1f)
+                    )
+                    OutlinedTextField(
+                        value = uiState.overallRpe,
+                        onValueChange = onOverallRpeChange,
+                        label = { Text("RPE 1–10") },
+                        singleLine = true,
+                        isError = uiState.overallRpeError != null,
+                        supportingText = uiState.overallRpeError?.let { err ->
+                            { Text(err, color = WarningAccent, style = MaterialTheme.typography.bodySmall) }
+                        },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+                WorkoutStatusChips(selectedStatus = uiState.selectedStatus, onStatusSelected = onStatusSelected)
+                if (uiState.selectedExercises.isNotEmpty()) {
+                    Text("Exercises", color = CyanAccent, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+                    uiState.selectedExercises.forEach { exercise ->
+                        ExerciseCard(
+                            exercise = exercise,
+                            onExerciseSelected = { id -> onExerciseExpandedToggle(id) },
+                            onExerciseExpandedToggle = onExerciseExpandedToggle,
+                            onSetRepsChange = onSetRepsChange,
+                            onSetWeightChange = onSetWeightChange,
+                            onSetRpeChange = onSetRpeChange,
+                            onSetNotesChange = onSetNotesChange,
+                            onExerciseNotesChange = onExerciseNotesChange,
+                            onAddSet = onAddSet,
+                            onRemoveSet = onRemoveSet,
+                            onSetInlineRepsChange = onSetInlineRepsChange,
+                            onSetInlineWeightChange = onSetInlineWeightChange,
+                            onSetInlineRpeChange = onSetInlineRpeChange
+                        )
+                    }
+                }
+                OutlinedTextField(
+                    value = uiState.workoutNotes,
+                    onValueChange = onWorkoutNotesChange,
+                    label = { Text("Workout notes") },
+                    minLines = 2,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                PrimaryBlueButton(text = "Save Changes", onClick = onSave, modifier = Modifier.fillMaxWidth())
+            }
+        }
+        FloatingTitlePill(text = "Edit Workout", modifier = Modifier.align(Alignment.TopCenter))
     }
 }
 

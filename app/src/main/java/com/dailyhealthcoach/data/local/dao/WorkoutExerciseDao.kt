@@ -20,4 +20,7 @@ interface WorkoutExerciseDao {
 
     @Upsert
     suspend fun upsert(workoutExercise: WorkoutExerciseEntity)
+
+    @Query("DELETE FROM workout_exercises WHERE workoutId = :workoutId")
+    suspend fun deleteForWorkout(workoutId: Long)
 }
