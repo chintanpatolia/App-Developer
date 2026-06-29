@@ -141,13 +141,18 @@ fun DailyHealthCoachApp(appContainer: AppContainer) {
                     }
                     val dashboardViewModel: DashboardViewModel = viewModel(
                         factory = DashboardViewModelFactory(
-                            getDashboardSummaryUseCase = appContainer.getDashboardSummaryUseCase
+                            getDashboardSummaryUseCase = appContainer.getDashboardSummaryUseCase,
+                            prefsRepository = appContainer.dashboardPreferencesRepository
                         )
                     )
                     DashboardRoute(
                         viewModel = dashboardViewModel,
                         onNavigateToProgress = { selectedScreen = AppScreen.PROGRESS },
                         onNavigateToSettings = { selectedScreen = AppScreen.SETTINGS },
+                        onNavigateToWorkout = { selectedScreen = AppScreen.WORKOUT },
+                        onNavigateToNutrition = { selectedScreen = AppScreen.NUTRITION },
+                        onNavigateToBody = { selectedScreen = AppScreen.BODY },
+                        onNavigateToHabits = { selectedScreen = AppScreen.HABITS },
                         modifier = Modifier
                             .fillMaxSize()
                             .padding(bottom = 112.dp)

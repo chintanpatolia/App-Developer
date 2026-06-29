@@ -39,3 +39,9 @@ data class DailyRecommendationUiState(
     val suggestedFocus: String,
     val reasons: List<String>
 )
+
+data class DashboardLayoutState(
+    val cardConfigs: List<DashboardCardConfig> = DashboardPreferencesRepository.DEFAULT_LAYOUT,
+    val isEditMode: Boolean = false,
+    val showResetConfirm: Boolean = false
+)

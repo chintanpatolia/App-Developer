@@ -38,6 +38,7 @@ import com.dailyhealthcoach.data.repository.AuthRepositoryImpl
 import com.dailyhealthcoach.data.repository.PlannedMealRepositoryImpl
 import com.dailyhealthcoach.domain.repository.AuthRepository
 import com.dailyhealthcoach.domain.repository.PlannedMealRepository
+import com.dailyhealthcoach.ui.dashboard.DashboardPreferencesRepository
 
 class AppContainer(context: Context) {
     private val database = AppDatabaseProvider.getDatabase(context)
@@ -127,6 +128,8 @@ class AppContainer(context: Context) {
 
     val dataExportService: DataExportService = DataExportService(database)
     val dataRestoreService: DataRestoreService = DataRestoreService(database)
+
+    val dashboardPreferencesRepository = DashboardPreferencesRepository(context)
 
     // TODO: Supabase disabled — local-first build.
     val authRepository: AuthRepository? = null
