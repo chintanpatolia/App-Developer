@@ -1,11 +1,10 @@
 package com.dailyhealthcoach.ui.dashboard
 
 import android.graphics.BitmapFactory
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,16 +25,12 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.LocalDining
 import androidx.compose.material.icons.filled.NightlightRound
 import androidx.compose.material.icons.filled.Route
-import androidx.compose.material3.Button
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -47,29 +42,38 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import com.dailyhealthcoach.ui.premium.ActionChip
+import com.dailyhealthcoach.ui.premium.CoachBadge
+import com.dailyhealthcoach.ui.premium.GlassButton
 import com.dailyhealthcoach.ui.premium.HealthMetricTile
-import com.dailyhealthcoach.ui.premium.ProgressRing
+import com.dailyhealthcoach.ui.premium.MetricHeader
+import com.dailyhealthcoach.ui.premium.MetricProgressBar
+import com.dailyhealthcoach.ui.premium.MetricRing
+import com.dailyhealthcoach.ui.premium.MetricValue
+import com.dailyhealthcoach.ui.premium.PremiumCard
+import com.dailyhealthcoach.ui.premium.PremiumCornerRadius
+import com.dailyhealthcoach.ui.premium.PremiumElevation
+import com.dailyhealthcoach.ui.premium.PremiumFeatureCard
+import com.dailyhealthcoach.ui.premium.PremiumHeroCard
+import com.dailyhealthcoach.ui.premium.PremiumSpacing
+import com.dailyhealthcoach.ui.premium.SectionTitle
+import com.dailyhealthcoach.ui.premium.SoftIllustrationContainer
+import com.dailyhealthcoach.ui.premium.SupportingText
+import com.dailyhealthcoach.ui.premium.rememberFloatAnimation
+import com.dailyhealthcoach.ui.premium.rememberGlowPulse
 import com.dailyhealthcoach.ui.theme.AccentBlue
 import com.dailyhealthcoach.ui.theme.CyanAccent
 import com.dailyhealthcoach.ui.theme.MainCard
@@ -267,115 +271,44 @@ private fun ProfileAvatarButton(onClick: () -> Unit) {
 @Composable
 private fun HeroWidget(uiState: DashboardUiState, onStartWorkout: () -> Unit) {
     val scoreColor = healthScoreColor(uiState.healthScore)
-    val btnInteraction = remember { MutableInteractionSource() }
-    val isBtnPressed by btnInteraction.collectIsPressedAsState()
-    val btnScale by animateFloatAsState(
-        targetValue = if (isBtnPressed) 0.97f else 1f,
-        animationSpec = tween(durationMillis = 100),
-        label = "hero_btn_scale"
-    )
-    ElevatedCard(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(28.dp),
-        colors = CardDefaults.elevatedCardColors(containerColor = MainCard),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 8.dp)
-    ) {
-        Box(
-            modifier = Modifier.fillMaxWidth().background(
-                Brush.verticalGradient(listOf(Color.White.copy(alpha = 0.07f), Color.Transparent))
-            )
-        ) {
-            Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+    PremiumHeroCard {
+        Column(modifier = Modifier.padding(PremiumSpacing.heroPadding), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                SectionTitle(text = "TODAY", letterSpacing = true)
+                if (uiState.coachLine != null) CoachBadge()
+            }
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(20.dp), verticalAlignment = Alignment.CenterVertically) {
+                MetricRing(
+                    progress = (uiState.healthScore / 100f).coerceIn(0f, 1f),
+                    modifier = Modifier.size(88.dp),
+                    strokeWidth = 10.dp,
+                    color = scoreColor
                 ) {
-                    Text(
-                        text = "TODAY",
-                        style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 2.sp),
-                        color = MutedText,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    if (uiState.coachLine != null) {
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(999.dp))
-                                .background(
-                                    Brush.horizontalGradient(
-                                        listOf(CyanAccent.copy(alpha = 0.28f), AccentBlue.copy(alpha = 0.14f))
-                                    )
-                                )
-                                .padding(horizontal = 10.dp, vertical = 4.dp)
-                        ) {
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(5.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = CyanAccent, modifier = Modifier.size(11.dp))
-                                Text(text = "Coach", style = MaterialTheme.typography.labelSmall, color = CyanAccent, fontWeight = FontWeight.Bold)
-                            }
-                        }
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        MetricValue(text = "${uiState.healthScore}", style = MaterialTheme.typography.headlineLarge, color = scoreColor)
+                        Text(text = "/ 100", style = MaterialTheme.typography.labelSmall, color = MutedText)
                     }
                 }
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(20.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    ProgressRing(
-                        progress = (uiState.healthScore / 100f).coerceIn(0f, 1f),
-                        modifier = Modifier.size(88.dp),
-                        strokeWidth = 10.dp,
-                        color = scoreColor
-                    ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(text = "${uiState.healthScore}", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold, color = scoreColor)
-                            Text(text = "/ 100", style = MaterialTheme.typography.labelSmall, color = MutedText)
-                        }
-                    }
-                    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text(text = "HEALTH SCORE", style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.sp), color = MutedText, fontWeight = FontWeight.SemiBold)
-                        Text(text = healthScoreLabel(uiState.healthScore), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = scoreColor)
-                        val focus = uiState.nextDayRecommendation?.suggestedFocus
-                        if (focus != null) {
-                            Text(text = "Focus: $focus", style = MaterialTheme.typography.bodySmall, color = MutedText)
-                        }
-                        if (uiState.coachLine != null) {
-                            Text(text = uiState.coachLine, style = MaterialTheme.typography.bodySmall, color = CyanAccent)
-                        }
-                    }
+                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    SectionTitle(text = "HEALTH SCORE")
+                    Text(text = healthScoreLabel(uiState.healthScore), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = scoreColor)
+                    val focus = uiState.nextDayRecommendation?.suggestedFocus
+                    if (focus != null) SupportingText(text = "Focus: $focus")
+                    if (uiState.coachLine != null) SupportingText(text = uiState.coachLine, color = CyanAccent)
                 }
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    HeroMiniBar(label = "Recovery", progress = ((uiState.recoveryScore ?: 0) / 100f).coerceIn(0f, 1f), color = recoveryColor(uiState.recoveryScore ?: 0), modifier = Modifier.weight(1f))
-                    HeroMiniBar(label = "Nutrition", progress = progress(uiState.caloriesToday, uiState.calorieGoal), color = PositiveAccent, modifier = Modifier.weight(1f))
-                    HeroMiniBar(label = "Habits", progress = progress(uiState.completedHabits, uiState.totalHabits), color = CyanAccent, modifier = Modifier.weight(1f))
-                }
-                if (!uiState.workoutCompletedToday) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .scale(btnScale)
-                            .clip(RoundedCornerShape(14.dp))
-                            .background(
-                                Brush.horizontalGradient(listOf(Color(0xFF3DB8FF), AccentBlue))
-                            )
-                            .clickable(interactionSource = btnInteraction, indication = null) { onStartWorkout() }
-                            .padding(vertical = 13.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text("Start Today's Workout", color = PrimaryText, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
-                    }
-                } else if (uiState.todayWorkoutName != null) {
-                    Surface(shape = RoundedCornerShape(12.dp), color = PositiveAccent.copy(alpha = 0.12f), modifier = Modifier.fillMaxWidth()) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(text = uiState.todayWorkoutName, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = PositiveAccent)
-                            Text(text = uiState.todayWorkoutStatusLabel ?: "Done", style = MaterialTheme.typography.labelSmall, color = PositiveAccent)
-                        }
+            }
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                HeroMiniBar(label = "Recovery", progress = ((uiState.recoveryScore ?: 0) / 100f).coerceIn(0f, 1f), color = recoveryColor(uiState.recoveryScore ?: 0), modifier = Modifier.weight(1f))
+                HeroMiniBar(label = "Nutrition", progress = progress(uiState.caloriesToday, uiState.calorieGoal), color = PositiveAccent, modifier = Modifier.weight(1f))
+                HeroMiniBar(label = "Habits", progress = progress(uiState.completedHabits, uiState.totalHabits), color = CyanAccent, modifier = Modifier.weight(1f))
+            }
+            if (!uiState.workoutCompletedToday) {
+                GlassButton(text = "Start Today's Workout", onClick = onStartWorkout)
+            } else if (uiState.todayWorkoutName != null) {
+                Surface(shape = RoundedCornerShape(PremiumCornerRadius.md), color = PositiveAccent.copy(alpha = 0.12f), modifier = Modifier.fillMaxWidth()) {
+                    Row(modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                        Text(text = uiState.todayWorkoutName, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = PositiveAccent)
+                        Text(text = uiState.todayWorkoutStatusLabel ?: "Done", style = MaterialTheme.typography.labelSmall, color = PositiveAccent)
                     }
                 }
             }
@@ -385,87 +318,108 @@ private fun HeroWidget(uiState: DashboardUiState, onStartWorkout: () -> Unit) {
 
 @Composable
 private fun HeroMiniBar(label: String, progress: Float, color: Color, modifier: Modifier = Modifier) {
-    val animatedProgress by animateFloatAsState(
-        targetValue = progress.coerceIn(0f, 1f),
-        animationSpec = tween(durationMillis = 700, easing = FastOutSlowInEasing),
-        label = "minibar_${label}_progress"
-    )
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(text = label, style = MaterialTheme.typography.labelSmall, color = MutedText)
-        Box(modifier = Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(999.dp)).background(MutedControl.copy(alpha = 0.4f))) {
-            Box(modifier = Modifier.fillMaxWidth(animatedProgress).height(4.dp).clip(RoundedCornerShape(999.dp)).background(color))
-        }
+        MetricProgressBar(progress = progress, color = color, height = 4.dp)
     }
 }
 
 @Composable
 private fun WorkoutWidget(uiState: DashboardUiState, onNavigateToWorkout: () -> Unit) {
-    val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.collectIsPressedAsState()
-    val cardScale by animateFloatAsState(
-        targetValue = if (isPressed) 0.98f else 1f,
-        animationSpec = tween(durationMillis = 120),
-        label = "workout_scale"
-    )
-    ElevatedCard(
-        modifier = Modifier.fillMaxWidth().fillMaxHeight().scale(cardScale)
-            .clickable(interactionSource = interactionSource, indication = null) { onNavigateToWorkout() },
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.elevatedCardColors(containerColor = SecondaryCard),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
+    PremiumCard(
+        modifier = Modifier.fillMaxWidth().fillMaxHeight(),
+        onClick = onNavigateToWorkout,
+        elevation = PremiumElevation.widget
     ) {
-        Box(modifier = Modifier.fillMaxWidth().background(Brush.verticalGradient(listOf(Color.White.copy(alpha = 0.05f), Color.Transparent)))) {
-            Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Icon(Icons.Default.Bolt, contentDescription = null, tint = AccentBlue, modifier = Modifier.size(15.dp))
-                    Text(text = "Workout", style = MaterialTheme.typography.labelSmall, color = MutedText, fontWeight = FontWeight.SemiBold)
+        Box(modifier = Modifier.fillMaxWidth().fillMaxHeight()) {
+            DumbbellIllustration(modifier = Modifier.size(90.dp).align(Alignment.BottomEnd))
+            Column(
+                modifier = Modifier.fillMaxHeight().padding(PremiumSpacing.cardPadding),
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(PremiumSpacing.xs)
+                ) {
+                    Icon(imageVector = Icons.Default.Bolt, contentDescription = null, tint = AccentBlue, modifier = Modifier.size(13.dp))
+                    SectionTitle(text = "WORKOUT", letterSpacing = true)
                 }
                 if (uiState.todayWorkoutName != null) {
-                    Text(text = uiState.todayWorkoutName, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = PrimaryText, maxLines = 2)
-                    Text(text = uiState.todayWorkoutStatusLabel ?: "", style = MaterialTheme.typography.labelSmall, color = PositiveAccent)
+                    Column(verticalArrangement = Arrangement.spacedBy(PremiumSpacing.xs)) {
+                        MetricValue(text = uiState.todayWorkoutName, style = MaterialTheme.typography.titleMedium)
+                        Surface(shape = RoundedCornerShape(PremiumCornerRadius.pill), color = PositiveAccent.copy(alpha = 0.18f)) {
+                            Text(
+                                text = uiState.todayWorkoutStatusLabel ?: "Done ✓",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.SemiBold,
+                                color = PositiveAccent,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                            )
+                        }
+                    }
                 } else {
-                    Text(text = "No workout yet", style = MaterialTheme.typography.bodySmall, color = MutedText)
-                    Text(text = "Tap to start →", style = MaterialTheme.typography.labelSmall, color = AccentBlue)
+                    Column(verticalArrangement = Arrangement.spacedBy(PremiumSpacing.sm)) {
+                        SupportingText(text = "No workout yet")
+                        Surface(shape = RoundedCornerShape(PremiumCornerRadius.pill), color = AccentBlue) {
+                            Text(
+                                text = "Start →",
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White,
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 5.dp)
+                            )
+                        }
+                    }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun DumbbellIllustration(modifier: Modifier = Modifier) {
+    Canvas(modifier = modifier) {
+        val glow = AccentBlue.copy(alpha = 0.07f)
+        val shape = AccentBlue.copy(alpha = 0.20f)
+        val bar = AccentBlue.copy(alpha = 0.30f)
+        val w = size.width; val h = size.height
+        val cx = w * 0.5f; val cy = h * 0.5f
+
+        rotate(-22f, pivot = Offset(cx, cy)) {
+            // Soft background glow
+            drawCircle(glow, radius = h * 0.46f, center = Offset(cx, cy))
+
+            val plateW = w * 0.09f; val plateH = h * 0.44f
+            val colW = w * 0.07f; val colH = h * 0.18f
+            val gripHW = w * 0.26f; val gripH = h * 0.09f
+
+            // Left plate (tall disc silhouette)
+            drawRect(shape, Offset(cx - gripHW - colW - plateW, cy - plateH / 2f), Size(plateW, plateH))
+            // Left collar
+            drawRect(shape, Offset(cx - gripHW - colW, cy - colH / 2f), Size(colW, colH))
+            // Grip bar (brighter to suggest metal)
+            drawRect(bar, Offset(cx - gripHW, cy - gripH / 2f), Size(gripHW * 2f, gripH))
+            // Right collar
+            drawRect(shape, Offset(cx + gripHW, cy - colH / 2f), Size(colW, colH))
+            // Right plate
+            drawRect(shape, Offset(cx + gripHW + colW, cy - plateH / 2f), Size(plateW, plateH))
         }
     }
 }
 
 @Composable
 private fun NutritionWidget(uiState: DashboardUiState, onNavigateToNutrition: () -> Unit) {
-    val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.collectIsPressedAsState()
-    val cardScale by animateFloatAsState(
-        targetValue = if (isPressed) 0.98f else 1f,
-        animationSpec = tween(durationMillis = 120),
-        label = "nutrition_scale"
-    )
-    val calorieProgress by animateFloatAsState(
-        targetValue = progress(uiState.caloriesToday, uiState.calorieGoal),
-        animationSpec = tween(durationMillis = 700, easing = FastOutSlowInEasing),
-        label = "calorie_progress"
-    )
-    ElevatedCard(
-        modifier = Modifier.fillMaxWidth().fillMaxHeight().scale(cardScale)
-            .clickable(interactionSource = interactionSource, indication = null) { onNavigateToNutrition() },
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.elevatedCardColors(containerColor = SecondaryCard),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
+    PremiumCard(
+        modifier = Modifier.fillMaxWidth().fillMaxHeight(),
+        onClick = onNavigateToNutrition,
+        elevation = PremiumElevation.widget
     ) {
-        Box(modifier = Modifier.fillMaxWidth().background(Brush.verticalGradient(listOf(Color.White.copy(alpha = 0.05f), Color.Transparent)))) {
-            Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
-                    Icon(Icons.Default.LocalDining, contentDescription = null, tint = PositiveAccent, modifier = Modifier.size(14.dp))
-                    Text(text = "Nutrition", style = MaterialTheme.typography.labelSmall, color = MutedText, fontWeight = FontWeight.SemiBold)
-                }
-                Text(text = "${uiState.caloriesToday} kcal", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = PrimaryText)
-                Text(text = "goal ${uiState.calorieGoal}", style = MaterialTheme.typography.labelSmall, color = MutedText)
-                Box(modifier = Modifier.fillMaxWidth().height(3.dp).clip(RoundedCornerShape(999.dp)).background(MutedControl.copy(alpha = 0.4f))) {
-                    Box(modifier = Modifier.fillMaxWidth(calorieProgress).height(3.dp).clip(RoundedCornerShape(999.dp)).background(PositiveAccent))
-                }
-                Text(text = "P ${uiState.proteinConsumedGrams}g / ${uiState.proteinMinGoalGrams}g", style = MaterialTheme.typography.labelSmall, color = MutedText)
-            }
+        Column(modifier = Modifier.padding(PremiumSpacing.cardPadding), verticalArrangement = Arrangement.spacedBy(PremiumSpacing.sm)) {
+            MetricHeader(text = "Nutrition", icon = Icons.Default.LocalDining, iconColor = PositiveAccent)
+            MetricValue(text = "${uiState.caloriesToday} kcal", style = MaterialTheme.typography.titleLarge)
+            SupportingText(text = "goal ${uiState.calorieGoal}")
+            MetricProgressBar(progress = progress(uiState.caloriesToday, uiState.calorieGoal), color = PositiveAccent)
+            SupportingText(text = "P ${uiState.proteinConsumedGrams}g / ${uiState.proteinMinGoalGrams}g")
         }
     }
 }
@@ -495,121 +449,55 @@ private fun SleepWidget(uiState: DashboardUiState, onNavigateToBody: () -> Unit)
 }
 
 @Composable
-private fun WeightWidget(
-    uiState: DashboardUiState,
-    onNavigateToBody: () -> Unit,
-    isEditMode: Boolean = false
-) {
+private fun WeightWidget(uiState: DashboardUiState, onNavigateToBody: () -> Unit, isEditMode: Boolean = false) {
     if (uiState.weightKg == null && !isEditMode) return
-    val weightInteraction = remember { MutableInteractionSource() }
-    val isWeightPressed by weightInteraction.collectIsPressedAsState()
-    val weightScale by animateFloatAsState(
-        targetValue = if (isWeightPressed) 0.98f else 1f,
-        animationSpec = tween(durationMillis = 120),
-        label = "weight_scale"
-    )
-    ElevatedCard(
-        modifier = Modifier.fillMaxWidth().fillMaxHeight().scale(weightScale)
-            .clickable(interactionSource = weightInteraction, indication = null) { onNavigateToBody() },
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.elevatedCardColors(containerColor = SecondaryCard),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
-    ) {
-        Box(modifier = Modifier.fillMaxWidth().background(Brush.verticalGradient(listOf(Color.White.copy(alpha = 0.05f), Color.Transparent)))) {
-            Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(text = "Weight", style = MaterialTheme.typography.labelSmall, color = MutedText, fontWeight = FontWeight.SemiBold)
-                if (uiState.weightKg != null) {
-                    Text(text = String.format("%.1f kg", uiState.weightKg), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = PrimaryText)
-                } else {
-                    Text(text = "No data logged yet", style = MaterialTheme.typography.bodySmall, color = MutedText)
-                }
-            }
+    PremiumCard(modifier = Modifier.fillMaxWidth().fillMaxHeight(), onClick = onNavigateToBody, elevation = PremiumElevation.widget) {
+        Column(modifier = Modifier.fillMaxSize().padding(PremiumSpacing.cardPadding), verticalArrangement = Arrangement.SpaceBetween) {
+            SectionTitle(text = "Weight")
+            if (uiState.weightKg != null) MetricValue(text = String.format("%.1f kg", uiState.weightKg), style = MaterialTheme.typography.titleLarge)
+            else SupportingText(text = "No data")
         }
     }
 }
 
 @Composable
-private fun BodyFatWidget(
-    uiState: DashboardUiState,
-    onNavigateToBody: () -> Unit,
-    isEditMode: Boolean = false
-) {
+private fun BodyFatWidget(uiState: DashboardUiState, onNavigateToBody: () -> Unit, isEditMode: Boolean = false) {
     if (uiState.bodyFatPercent == null && !isEditMode) return
-    val bfInteraction = remember { MutableInteractionSource() }
-    val isBfPressed by bfInteraction.collectIsPressedAsState()
-    val bfScale by animateFloatAsState(
-        targetValue = if (isBfPressed) 0.98f else 1f,
-        animationSpec = tween(durationMillis = 120),
-        label = "bodyfat_scale"
-    )
-    ElevatedCard(
-        modifier = Modifier.fillMaxWidth().fillMaxHeight().scale(bfScale)
-            .clickable(interactionSource = bfInteraction, indication = null) { onNavigateToBody() },
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.elevatedCardColors(containerColor = SecondaryCard),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
-    ) {
-        Box(modifier = Modifier.fillMaxWidth().background(Brush.verticalGradient(listOf(Color.White.copy(alpha = 0.05f), Color.Transparent)))) {
-            Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(text = "Body Fat", style = MaterialTheme.typography.labelSmall, color = MutedText, fontWeight = FontWeight.SemiBold)
-                if (uiState.bodyFatPercent != null) {
-                    Text(text = String.format("%.1f%%", uiState.bodyFatPercent), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = PrimaryText)
-                } else {
-                    Text(text = "No data logged yet", style = MaterialTheme.typography.bodySmall, color = MutedText)
-                }
-            }
+    PremiumCard(modifier = Modifier.fillMaxWidth().fillMaxHeight(), onClick = onNavigateToBody, elevation = PremiumElevation.widget) {
+        Column(modifier = Modifier.fillMaxSize().padding(PremiumSpacing.cardPadding), verticalArrangement = Arrangement.SpaceBetween) {
+            SectionTitle(text = "Body Fat")
+            if (uiState.bodyFatPercent != null) MetricValue(text = String.format("%.1f%%", uiState.bodyFatPercent), style = MaterialTheme.typography.titleLarge)
+            else SupportingText(text = "No data")
         }
     }
 }
 
 @Composable
 private fun HabitsWidget(uiState: DashboardUiState, onNavigateToHabits: () -> Unit) {
-    val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.collectIsPressedAsState()
-    val cardScale by animateFloatAsState(
-        targetValue = if (isPressed) 0.98f else 1f,
-        animationSpec = tween(durationMillis = 120),
-        label = "habits_scale"
-    )
-    val habitsProgress by animateFloatAsState(
-        targetValue = progress(uiState.completedHabits, uiState.totalHabits),
-        animationSpec = tween(durationMillis = 700, easing = FastOutSlowInEasing),
-        label = "habits_progress"
-    )
-    ElevatedCard(
-        modifier = Modifier.fillMaxWidth().scale(cardScale)
-            .clickable(interactionSource = interactionSource, indication = null) { onNavigateToHabits() },
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.elevatedCardColors(containerColor = SecondaryCard),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 3.dp)
+    PremiumCard(
+        modifier = Modifier.fillMaxWidth(),
+        onClick = onNavigateToHabits,
+        cornerRadius = PremiumCornerRadius.xl,
+        elevation = PremiumElevation.widget
     ) {
-        Box(modifier = Modifier.fillMaxWidth().background(Brush.verticalGradient(listOf(Color.White.copy(alpha = 0.05f), Color.Transparent)))) {
-            Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = CyanAccent, modifier = Modifier.size(14.dp))
-                        Text(text = "Habits", style = MaterialTheme.typography.labelSmall, color = MutedText, fontWeight = FontWeight.SemiBold)
-                    }
-                    Text(
-                        text = "${uiState.completedHabits} / ${uiState.totalHabits}",
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = if (uiState.totalHabits > 0 && uiState.completedHabits == uiState.totalHabits) PositiveAccent else PrimaryText
-                    )
-                }
-                Box(modifier = Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(999.dp)).background(MutedControl.copy(alpha = 0.4f))) {
-                    Box(modifier = Modifier.fillMaxWidth(habitsProgress).height(4.dp).clip(RoundedCornerShape(999.dp)).background(CyanAccent))
-                }
-                when {
-                    uiState.totalHabits == 0 -> Text(text = "No habits set. Tap to add some.", style = MaterialTheme.typography.bodySmall, color = MutedText)
-                    uiState.completedHabits == uiState.totalHabits -> Text(text = "All habits complete today.", style = MaterialTheme.typography.bodySmall, color = PositiveAccent)
-                    else -> Text(text = "${uiState.totalHabits - uiState.completedHabits} remaining", style = MaterialTheme.typography.bodySmall, color = MutedText)
-                }
+        Column(modifier = Modifier.padding(PremiumSpacing.widgetPadding), verticalArrangement = Arrangement.spacedBy(PremiumSpacing.sm)) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                MetricHeader(text = "Habits", icon = Icons.Default.FavoriteBorder, iconColor = CyanAccent)
+                Text(
+                    text = "${uiState.completedHabits} / ${uiState.totalHabits}",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = if (uiState.totalHabits > 0 && uiState.completedHabits == uiState.totalHabits) PositiveAccent else PrimaryText
+                )
             }
+            MetricProgressBar(progress = progress(uiState.completedHabits, uiState.totalHabits), color = CyanAccent, height = 4.dp)
+            val statusText = when {
+                uiState.totalHabits == 0 -> "No habits set. Tap to add some."
+                uiState.completedHabits == uiState.totalHabits -> "All habits complete today."
+                else -> "${uiState.totalHabits - uiState.completedHabits} remaining"
+            }
+            val statusColor = if (uiState.completedHabits == uiState.totalHabits && uiState.totalHabits > 0) PositiveAccent else MutedText
+            SupportingText(text = statusText, color = statusColor)
         }
     }
 }
@@ -617,23 +505,15 @@ private fun HabitsWidget(uiState: DashboardUiState, onNavigateToHabits: () -> Un
 @Composable
 private fun RecoveryHeroCard(uiState: DashboardUiState, onNavigateToBody: () -> Unit = {}) {
     var showBreakdown by remember { mutableStateOf(false) }
-    val recoveryInteraction = remember { MutableInteractionSource() }
-    val isRecoveryPressed by recoveryInteraction.collectIsPressedAsState()
-    val recoveryCardScale by animateFloatAsState(
-        targetValue = if (isRecoveryPressed) 0.98f else 1f,
-        animationSpec = tween(durationMillis = 120),
-        label = "recovery_scale"
-    )
-    ElevatedCard(
-        modifier = Modifier.fillMaxWidth().scale(recoveryCardScale)
-            .clickable(interactionSource = recoveryInteraction, indication = null) { onNavigateToBody() },
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.elevatedCardColors(containerColor = MainCard),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp)
+    PremiumCard(
+        modifier = Modifier.fillMaxWidth(),
+        onClick = onNavigateToBody,
+        containerColor = MainCard,
+        cornerRadius = PremiumCornerRadius.xl,
+        elevation = PremiumElevation.raised
     ) {
-        Box(modifier = Modifier.fillMaxWidth().background(Brush.verticalGradient(listOf(Color.White.copy(alpha = 0.05f), Color.Transparent)))) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(text = "Recovery", style = MaterialTheme.typography.labelSmall, color = MutedText, fontWeight = FontWeight.SemiBold)
+        Column(modifier = Modifier.padding(PremiumSpacing.lg), verticalArrangement = Arrangement.spacedBy(PremiumSpacing.sm)) {
+            SectionTitle(text = "Recovery")
             if (uiState.recoveryScore == null) {
                 Text(
                     text = "Log sleep, nutrition, and workouts to see your recovery score.",
@@ -647,14 +527,14 @@ private fun RecoveryHeroCard(uiState: DashboardUiState, onNavigateToBody: () -> 
                     horizontalArrangement = Arrangement.spacedBy(14.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    ProgressRing(
+                    MetricRing(
                         progress = (uiState.recoveryScore / 100f).coerceIn(0f, 1f),
                         modifier = Modifier.size(72.dp),
                         strokeWidth = 7.dp,
                         color = ringColor
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(text = "${uiState.recoveryScore}", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = ringColor)
+                            MetricValue(text = "${uiState.recoveryScore}", style = MaterialTheme.typography.titleLarge, color = ringColor)
                             Text(text = "/ 100", style = MaterialTheme.typography.labelSmall, color = MutedText)
                         }
                     }
@@ -713,92 +593,47 @@ private fun RecoveryHeroCard(uiState: DashboardUiState, onNavigateToBody: () -> 
                 }
             }
         }
-        } // gradient Box
     }
 }
 
 @Composable
 private fun RecommendationCard(recommendation: DailyRecommendationUiState?, workoutCompletedToday: Boolean = false) {
-    ElevatedCard(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.elevatedCardColors(containerColor = MainCard),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp)
-    ) {
-        Box(modifier = Modifier.fillMaxWidth().background(Brush.verticalGradient(listOf(Color.White.copy(alpha = 0.05f), Color.Transparent)))) {
-        Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            if (workoutCompletedToday) {
-                Surface(shape = RoundedCornerShape(999.dp), color = PositiveAccent.copy(alpha = 0.15f)) {
-                    Text(
-                        text = "WORKOUT DONE TODAY",
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = PositiveAccent,
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
-                    )
-                }
-            }
-            Text(text = "TOMORROW", style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 2.sp), color = MutedText, fontWeight = FontWeight.SemiBold)
-            if (recommendation == null) {
-                Text(
-                    text = "Log body metrics, nutrition, and workouts to unlock your daily recommendation.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MutedText
-                )
-            } else {
-                val badgeColor = when {
-                    recommendation.title.contains("Rest", ignoreCase = true) -> Color(0xFF9C77E0)
-                    recommendation.title.contains("Strength", ignoreCase = true) -> AccentBlue
-                    recommendation.title.contains("Active", ignoreCase = true) || recommendation.title.contains("Recovery", ignoreCase = true) -> PositiveAccent
-                    recommendation.title.contains("Walk", ignoreCase = true) || recommendation.title.contains("Mobility", ignoreCase = true) -> CyanAccent
-                    else -> CyanAccent
-                }
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(14.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Surface(shape = RoundedCornerShape(999.dp), color = badgeColor.copy(alpha = 0.18f)) {
-                            Text(
-                                text = recommendation.title.uppercase(),
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.Bold,
-                                color = badgeColor,
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 5.dp)
-                            )
-                        }
-                        Text(text = recommendation.suggestedFocus, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = PrimaryText)
-                        recommendation.reasons.take(2).forEach { reason ->
-                            Text(text = "· $reason", style = MaterialTheme.typography.bodySmall, color = MutedText)
-                        }
-                    }
-                    RecommendationIllustration(title = recommendation.title)
-                }
+    PremiumFeatureCard {
+        if (workoutCompletedToday) {
+            Surface(shape = RoundedCornerShape(PremiumCornerRadius.pill), color = PositiveAccent.copy(alpha = 0.15f)) {
+                Text(text = "WORKOUT DONE TODAY", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = PositiveAccent, modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp))
             }
         }
-        } // gradient Box
+        SectionTitle(text = "TOMORROW", letterSpacing = true)
+        if (recommendation == null) {
+            SupportingText(text = "Log body metrics, nutrition, and workouts to unlock your daily recommendation.")
+        } else {
+            val badgeColor = when {
+                recommendation.title.contains("Rest", ignoreCase = true) -> Color(0xFF9C77E0)
+                recommendation.title.contains("Strength", ignoreCase = true) -> AccentBlue
+                recommendation.title.contains("Active", ignoreCase = true) || recommendation.title.contains("Recovery", ignoreCase = true) -> PositiveAccent
+                recommendation.title.contains("Walk", ignoreCase = true) || recommendation.title.contains("Mobility", ignoreCase = true) -> CyanAccent
+                else -> CyanAccent
+            }
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Surface(shape = RoundedCornerShape(PremiumCornerRadius.pill), color = badgeColor.copy(alpha = 0.18f)) {
+                        Text(text = recommendation.title.uppercase(), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = badgeColor, modifier = Modifier.padding(horizontal = 12.dp, vertical = 5.dp))
+                    }
+                    MetricValue(text = recommendation.suggestedFocus, style = MaterialTheme.typography.titleLarge)
+                    recommendation.reasons.take(2).forEach { reason ->
+                        SupportingText(text = "· $reason")
+                    }
+                }
+                RecommendationIllustration(title = recommendation.title)
+            }
+        }
     }
 }
 
 @Composable
 private fun ViewProgressCard(onClick: () -> Unit) {
-    val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.collectIsPressedAsState()
-    val scale by animateFloatAsState(
-        targetValue = if (isPressed) 0.97f else 1f,
-        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
-        label = "progress_card_scale"
-    )
-    ElevatedCard(
-        modifier = Modifier
-            .fillMaxWidth()
-            .scale(scale)
-            .clickable(interactionSource = interactionSource, indication = null, onClick = onClick),
-        shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.elevatedCardColors(containerColor = SecondaryCard),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
-    ) {
+    PremiumCard(modifier = Modifier.fillMaxWidth(), onClick = onClick) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 12.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -812,41 +647,16 @@ private fun ViewProgressCard(onClick: () -> Unit) {
 
 @Composable
 private fun RecommendationIllustration(title: String) {
-    val infiniteTransition = rememberInfiniteTransition(label = "rec_anim")
-    val floatY by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 4f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 2400, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "rec_float"
-    )
-    val pulse by infiniteTransition.animateFloat(
-        initialValue = 1f,
-        targetValue = 1.07f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 1800, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "rec_pulse"
-    )
+    val floatY = rememberFloatAnimation()
+    val pulse = rememberGlowPulse()
     val (icon, iconColor) = when {
         title.contains("Rest", ignoreCase = true) -> Pair(Icons.Default.NightlightRound, Color(0xFF9C77E0))
         title.contains("Strength", ignoreCase = true) -> Pair(Icons.Default.Bolt, AccentBlue)
         title.contains("Walk", ignoreCase = true) || title.contains("Mobility", ignoreCase = true) -> Pair(Icons.Default.Route, CyanAccent)
         title.contains("Active", ignoreCase = true) || title.contains("Recovery", ignoreCase = true) -> Pair(Icons.Default.FavoriteBorder, PositiveAccent)
-        else -> Pair(Icons.Default.AutoAwesome, WarningAccent)
+        else -> Pair(Icons.Default.FavoriteBorder, WarningAccent)
     }
-    Box(
-        modifier = Modifier
-            .size(68.dp)
-            .scale(pulse)
-            .offset(y = (-floatY).dp)
-            .clip(CircleShape)
-            .background(iconColor.copy(alpha = 0.14f)),
-        contentAlignment = Alignment.Center
-    ) {
+    SoftIllustrationContainer(size = 68.dp, color = iconColor, modifier = Modifier.scale(pulse).offset(y = (-floatY).dp)) {
         Icon(imageVector = icon, contentDescription = null, tint = iconColor, modifier = Modifier.size(34.dp))
     }
 }

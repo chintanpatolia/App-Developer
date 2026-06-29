@@ -50,7 +50,12 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AutoAwesome
 import com.dailyhealthcoach.ui.theme.AccentBlue
 import com.dailyhealthcoach.ui.theme.AppBackground as PremiumBackground
 import com.dailyhealthcoach.ui.theme.CyanAccent
@@ -348,7 +353,208 @@ fun HealthMetricTile(
     }
 }
 
-// Samsung Health-style macro progress row: icon circle + label + bar + current/goal
+// ─── Premium Design System — Dashboard Components ────────────────────────────
+
+/** Uppercase section label with optional letter-spacing for dashboard headers (TODAY, HEALTH SCORE). */
+@Composable
+fun SectionTitle(
+    text: String,
+    modifier: Modifier = Modifier,
+    letterSpacing: Boolean = false
+) {
+    val style = if (letterSpacing)
+        MaterialTheme.typography.labelSmall.copy(letterSpacing = 2.sp)
+    else
+        MaterialTheme.typography.labelSmall
+    Text(text = text, style = style, color = MutedText, fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold, modifier = modifier)
+}
+
+/** Widget header row: optional icon chip or inline icon + label text. */
+@Composable
+fun MetricHeader(
+    text: String,
+    modifier: Modifier = Modifier,
+    icon: ImageVector? = null,
+    iconColor: Color = MutedText,
+    showIconChip: Boolean = false
+) {
+    Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        if (icon != null) {
+            if (showIconChip) {
+                Box(
+                    modifier = Modifier.size(26.dp).clip(RoundedCornerShape(8.dp)).background(iconColor.copy(alpha = 0.15f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(imageVector = icon, contentDescription = null, tint = iconColor, modifier = Modifier.size(14.dp))
+                }
+            } else {
+                Icon(imageVector = icon, contentDescription = null, tint = iconColor, modifier = Modifier.size(14.dp))
+            }
+        }
+        Text(text = text, style = MaterialTheme.typography.labelSmall, color = MutedText, fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold)
+    }
+}
+
+/** Primary metric value text. */
+@Composable
+fun MetricValue(
+    text: String,
+    modifier: Modifier = Modifier,
+    style: TextStyle = MaterialTheme.typography.titleMedium,
+    color: Color = PrimaryText
+) {
+    Text(text = text, style = style, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold, color = color, modifier = modifier)
+}
+
+/** Muted secondary / supporting text. */
+@Composable
+fun SupportingText(
+    text: String,
+    modifier: Modifier = Modifier,
+    color: Color = MutedText
+) {
+    Text(text = text, style = MaterialTheme.typography.bodySmall, color = color, modifier = modifier)
+}
+
+/** Animated progress bar. Animates from current displayed value to [progress] automatically. */
+@Composable
+fun MetricProgressBar(
+    progress: Float,
+    color: Color,
+    modifier: Modifier = Modifier,
+    height: Dp = 3.dp
+) {
+    val animated by animateFloatAsState(
+        targetValue = progress.coerceIn(0f, 1f),
+        animationSpec = tween(durationMillis = 700, easing = FastOutSlowInEasing),
+        label = "metric_progress_bar"
+    )
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(height)
+            .clip(RoundedCornerShape(999.dp))
+            .background(MutedControl.copy(alpha = 0.4f))
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth(animated)
+                .height(height)
+                .clip(RoundedCornerShape(999.dp))
+                .background(color)
+        )
+    }
+}
+
+/** Thin wrapper around [ProgressRing] with consistent premium defaults. */
+@Composable
+fun MetricRing(
+    progress: Float,
+    modifier: Modifier = Modifier,
+    strokeWidth: Dp = 10.dp,
+    color: Color = CyanAccent,
+    centerContent: @Composable () -> Unit
+) = ProgressRing(progress = progress, modifier = modifier, strokeWidth = strokeWidth, color = color, centerContent = centerContent)
+
+/** Small pill chip for CTA affordances ("Tap to start →"). */
+@Composable
+fun ActionChip(
+    text: String,
+    color: Color,
+    modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null
+) {
+    val chipModifier = if (onClick != null) modifier.clickable(onClick = onClick) else modifier
+    Box(
+        modifier = chipModifier
+            .clip(RoundedCornerShape(6.dp))
+            .background(color.copy(alpha = 0.12f))
+            .padding(horizontal = 8.dp, vertical = 4.dp)
+    ) {
+        Text(text = text, style = MaterialTheme.typography.labelSmall, color = color, fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold)
+    }
+}
+
+/** Full-width gradient CTA button with built-in press scale animation. */
+@Composable
+fun GlassButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    gradient: List<Color> = listOf(Color(0xFF3DB8FF), AccentBlue)
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.97f else 1f,
+        animationSpec = tween(durationMillis = 100),
+        label = "glass_btn_scale"
+    )
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .scale(scale)
+            .clip(RoundedCornerShape(14.dp))
+            .background(Brush.horizontalGradient(gradient))
+            .clickable(interactionSource = interactionSource, indication = null, onClick = onClick)
+            .padding(vertical = 13.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(text = text, color = PrimaryText, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
+    }
+}
+
+/** Horizontal gradient "Coach" badge chip. */
+@Composable
+fun CoachBadge(modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(999.dp))
+            .background(Brush.horizontalGradient(listOf(CyanAccent.copy(alpha = 0.28f), AccentBlue.copy(alpha = 0.14f))))
+            .padding(horizontal = 10.dp, vertical = 4.dp)
+    ) {
+        Row(horizontalArrangement = Arrangement.spacedBy(5.dp), verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = CyanAccent, modifier = Modifier.size(11.dp))
+            Text(text = "Coach", style = MaterialTheme.typography.labelSmall, color = CyanAccent, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+        }
+    }
+}
+
+/** Subtle horizontal line divider. */
+@Composable
+fun PremiumDivider(
+    modifier: Modifier = Modifier,
+    color: Color = MutedControl,
+    alpha: Float = 0.3f
+) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(1.dp)
+            .background(color.copy(alpha = alpha))
+    )
+}
+
+/** Circular background container for illustration icons. Matches the RecommendationIllustration style. */
+@Composable
+fun SoftIllustrationContainer(
+    size: Dp = 68.dp,
+    color: Color,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit
+) {
+    Box(
+        modifier = modifier
+            .size(size)
+            .clip(CircleShape)
+            .background(color.copy(alpha = 0.14f)),
+        contentAlignment = Alignment.Center
+    ) {
+        content()
+    }
+}
+
+// ─── Samsung Health-style macro progress row: icon circle + label + bar + current/goal ───
 @Composable
 fun MacroProgressRow(
     icon: ImageVector,
