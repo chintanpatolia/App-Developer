@@ -1,0 +1,1630 @@
+package com.dailyhealthcoach.ui.recipes
+
+import android.content.Intent
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.Box
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import com.dailyhealthcoach.ui.premium.MainFeatureCard
+import com.dailyhealthcoach.ui.theme.AccentBlue
+import com.dailyhealthcoach.ui.theme.CyanAccent
+import com.dailyhealthcoach.ui.theme.MainCard
+import com.dailyhealthcoach.ui.theme.MutedControl
+import com.dailyhealthcoach.ui.theme.MutedText
+import com.dailyhealthcoach.ui.theme.PositiveAccent
+import com.dailyhealthcoach.ui.theme.PrimaryText
+import com.dailyhealthcoach.ui.theme.SecondaryCard
+import com.dailyhealthcoach.ui.theme.WarningAccent
+
+@Composable
+fun RecipesRoute(viewModel: RecipesViewModel) {
+    val uiState by viewModel.uiState.collectAsState()
+    val calState by viewModel.mealCalendarUiState.collectAsState()
+    val draftState by viewModel.draftPlanUiState.collectAsState()
+    val context = LocalContext.current
+    val clipboard = LocalClipboardManager.current
+
+    // ── Recipe selection grocery list ──────────────────────────────────────
+    if (uiState.groceryListOpen) {
+        GroceryListDialog(
+            title = "Grocery List",
+            items = uiState.groceryItems,
+            checkedKeys = uiState.checkedGroceryKeys,
+            onToggleItem = viewModel::toggleGroceryItem,
+            onCopy = { clipboard.setText(AnnotatedString(viewModel.getGroceryShareText())) },
+            onShare = {
+                val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                    type = "text/plain"
+                    putExtra(Intent.EXTRA_TEXT, viewModel.getGroceryShareText())
+                }
+                context.startActivity(Intent.createChooser(shareIntent, "Share Grocery List"))
+            },
+            onDismiss = viewModel::closeGroceryList
+        )
+    }
+
+    // ── Week plan grocery list ─────────────────────────────────────────────
+    if (calState.weekGroceryListOpen) {
+        GroceryListDialog(
+            title = "Grocery List",
+            items = calState.weekGroceryItems,
+            checkedKeys = calState.weekGroceryCheckedKeys,
+            onToggleItem = viewModel::toggleWeekGroceryItem,
+            onCopy = { clipboard.setText(AnnotatedString(viewModel.getWeekGroceryShareText())) },
+            onShare = {
+                val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                    type = "text/plain"
+                    putExtra(Intent.EXTRA_TEXT, viewModel.getWeekGroceryShareText())
+                }
+                context.startActivity(Intent.createChooser(shareIntent, "Share Grocery List"))
+            },
+            onDismiss = viewModel::closeWeekGroceryList,
+            emptyMessage = "Select meals to build a grocery list."
+        )
+    }
+
+    // ── Recipe detail (from browse/recommendations) ────────────────────────
+    uiState.selectedRecipe?.let { recipe ->
+        RecipeDetailDialog(
+            recipe = recipe,
+            onDismiss = viewModel::deselectRecipe,
+            onLog = { mealName -> viewModel.logRecipe(recipe, mealName) }
+        )
+    }
+
+    // ── Calendar meal detail ───────────────────────────────────────────────
+    calState.selectedSlot?.let { slot ->
+        slot.recipe?.let { recipe ->
+            CalendarMealDetailDialog(
+                slot = slot,
+                recipe = recipe,
+                replacementCandidates = calState.replacementCandidates,
+                onDismiss = viewModel::dismissCalendarMeal,
+                onLog = { mealName -> viewModel.logCalendarMeal(recipe, mealName) },
+                onLoadAlternatives = { viewModel.loadCalendarMealAlternatives(slot.date, slot.mealType) },
+                onReplaceWith = { chosen -> viewModel.replaceCalendarMealWith(slot.date, slot.mealType, chosen) },
+                onClearAlternatives = viewModel::clearCalendarAlternatives
+            )
+        }
+    }
+
+    // ── Draft plan review ─────────────────────────────────────────────────
+    draftState?.let { draft ->
+        PlanReviewDialog(
+            draft = draft,
+            calorieTarget = uiState.calorieTarget,
+            proteinTarget = uiState.proteinTarget,
+            onAccept = viewModel::acceptDraftPlan,
+            onRegenerate = viewModel::regenerateWeekPlan,
+            onCancel = viewModel::cancelDraftPlan,
+            onReplaceMeal = { date, mealType -> viewModel.replaceDraftMeal(date, mealType) }
+        )
+    }
+
+    MainFeatureCard(modifier = Modifier.padding(top = 22.dp)) {
+        Column(
+            modifier = Modifier.padding(top = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
+            ) {
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        "Recipes",
+                        color = PrimaryText,
+                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.titleLarge
+                    )
+                    Text(
+                        "Meal ideas based on your goals and remaining macros.",
+                        color = MutedText,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+                OutlinedButton(
+                    onClick = viewModel::openWeekGroceryList,
+                    shape = RoundedCornerShape(999.dp),
+                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
+                ) {
+                    Text(
+                        "Grocery List",
+                        color = CyanAccent,
+                        fontWeight = FontWeight.SemiBold,
+                        style = MaterialTheme.typography.labelMedium
+                    )
+                }
+            }
+
+            DailyPlanSummary(
+                consumedCalories = uiState.consumedCalories,
+                consumedProtein = uiState.consumedProtein,
+                consumedCarbs = uiState.consumedCarbs,
+                consumedFat = uiState.consumedFat,
+                consumedFiber = uiState.consumedFiber,
+                calorieTarget = uiState.calorieTarget,
+                proteinTarget = uiState.proteinTarget,
+                carbTarget = uiState.carbTarget,
+                fatTarget = uiState.fatTarget,
+                fiberTarget = uiState.fiberTarget
+            )
+
+            WeeklyMealCalendarSection(
+                calState = calState,
+                onPrevWeek = { viewModel.navigateCalendarWeek(-1) },
+                onNextWeek = { viewModel.navigateCalendarWeek(1) },
+                onGenerate = viewModel::generateWeekPlan,
+                onRegenerate = viewModel::regenerateWeekPlan,
+                onViewMeal = { date, mealType -> viewModel.selectCalendarMeal(date, mealType) },
+                onLogMeal = { date, mealType -> viewModel.quickLogCalendarMeal(date, mealType) },
+                onStartReplace = { date, mealType -> viewModel.startInlineReplace(date, mealType) },
+                onReplaceWith = { date, mealType, recipe -> viewModel.replaceInlineCalendarMeal(date, mealType, recipe) },
+                onClearReplace = viewModel::clearInlineReplace,
+                onWeekGrocery = viewModel::openWeekGroceryList,
+                onModeChange = viewModel::setMealPlanMode,
+                onToggleGrocerySlot = { date, mealType -> viewModel.toggleGrocerySlot(date, mealType) },
+                onSelectAllGrocery = viewModel::selectAllGrocerySlots,
+                onClearGrocery = viewModel::clearGrocerySlots
+            )
+
+            uiState.noAlternateMessage?.let { msg ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(msg, color = MutedText, style = MaterialTheme.typography.bodySmall)
+                    TextButton(
+                        onClick = viewModel::dismissNoAlternate,
+                        contentPadding = PaddingValues(4.dp)
+                    ) {
+                        Text("✕", color = MutedText, style = MaterialTheme.typography.labelSmall)
+                    }
+                }
+            }
+
+            uiState.logSuccessMessage?.let { msg ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(msg, color = PositiveAccent, style = MaterialTheme.typography.bodySmall)
+                    TextButton(onClick = viewModel::dismissLogMessage) {
+                        Text("Dismiss", color = MutedText, style = MaterialTheme.typography.labelSmall)
+                    }
+                }
+            }
+
+            if (!calState.isGenerated && draftState == null) {
+                if (uiState.recommendedRecipes.isNotEmpty()) {
+                    RecipeSection(
+                        title = "Recommended for Today",
+                        recipes = uiState.recommendedRecipes,
+                        onViewRecipe = viewModel::selectRecipe,
+                        onTryAnother = viewModel::tryAnother,
+                        highlightFirst = true
+                    )
+                }
+
+                if (uiState.breakfastRecipes.isNotEmpty()) {
+                    RecipeSection(
+                        title = "Breakfast",
+                        recipes = uiState.breakfastRecipes,
+                        onViewRecipe = viewModel::selectRecipe,
+                        onTryAnother = null
+                    )
+                }
+
+                if (uiState.lunchRecipes.isNotEmpty()) {
+                    RecipeSection(
+                        title = "Lunch",
+                        recipes = uiState.lunchRecipes,
+                        onViewRecipe = viewModel::selectRecipe,
+                        onTryAnother = null
+                    )
+                }
+
+                if (uiState.dinnerRecipes.isNotEmpty()) {
+                    RecipeSection(
+                        title = "Dinner",
+                        recipes = uiState.dinnerRecipes,
+                        onViewRecipe = viewModel::selectRecipe,
+                        onTryAnother = null
+                    )
+                }
+
+                if (uiState.snackRecipes.isNotEmpty()) {
+                    RecipeSection(
+                        title = "Snacks",
+                        recipes = uiState.snackRecipes,
+                        onViewRecipe = viewModel::selectRecipe,
+                        onTryAnother = null
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DailyPlanSummary(
+    consumedCalories: Int,
+    consumedProtein: Double,
+    consumedCarbs: Double,
+    consumedFat: Double,
+    consumedFiber: Double,
+    calorieTarget: Int,
+    proteinTarget: Double,
+    carbTarget: Int,
+    fatTarget: Int,
+    fiberTarget: Int
+) {
+    val proteinColor = when {
+        proteinTarget <= 0 -> MutedText
+        consumedProtein >= proteinTarget * 0.9 -> PositiveAccent
+        consumedProtein >= proteinTarget * 0.6 -> WarningAccent
+        else -> Color(0xFFE57373)
+    }
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            MacroHeroTile(
+                value = "$consumedCalories",
+                label = if (calorieTarget > 0) "/ $calorieTarget kcal" else "kcal",
+                progress = if (calorieTarget > 0)
+                    (consumedCalories.toFloat() / calorieTarget).coerceIn(0f, 1f) else 0f,
+                color = AccentBlue,
+                modifier = Modifier.weight(1f)
+            )
+            MacroHeroTile(
+                value = "${consumedProtein.clean()}g",
+                label = if (proteinTarget > 0) "/ ${proteinTarget.clean()}g protein" else "protein",
+                progress = if (proteinTarget > 0)
+                    (consumedProtein / proteinTarget).coerceIn(0.0, 1.0).toFloat() else 0f,
+                color = proteinColor,
+                modifier = Modifier.weight(1f)
+            )
+        }
+        val showSecondary = carbTarget > 0 || fatTarget > 0 || fiberTarget > 0
+        if (showSecondary) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (carbTarget > 0) {
+                    MacroMiniChip(
+                        label = "Carbs",
+                        value = "${consumedCarbs.clean()}g",
+                        target = "${carbTarget}g",
+                        color = CyanAccent,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+                if (fatTarget > 0) {
+                    MacroMiniChip(
+                        label = "Fat",
+                        value = "${consumedFat.clean()}g",
+                        target = "${fatTarget}g",
+                        color = WarningAccent,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+                if (fiberTarget > 0) {
+                    MacroMiniChip(
+                        label = "Fiber",
+                        value = "${consumedFiber.clean()}g",
+                        target = "${fiberTarget}g",
+                        color = PositiveAccent,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+        }
+        if (proteinTarget > 0 && consumedProtein < proteinTarget * 0.9) {
+            val gap = (proteinTarget - consumedProtein).coerceAtLeast(0.0)
+            Text(
+                "Protein short by ${gap.clean()}g — consider a higher-protein snack.",
+                color = WarningAccent,
+                style = MaterialTheme.typography.bodySmall
+            )
+        }
+    }
+}
+
+@Composable
+private fun MacroMiniChip(
+    label: String,
+    value: String,
+    target: String,
+    color: Color,
+    modifier: Modifier = Modifier
+) {
+    androidx.compose.material3.Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(10.dp),
+        color = SecondaryCard
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(2.dp)
+        ) {
+            Text(label, color = MutedText, style = MaterialTheme.typography.labelSmall)
+            Text(
+                "$value / $target",
+                color = color,
+                style = MaterialTheme.typography.bodySmall,
+                fontWeight = FontWeight.SemiBold
+            )
+        }
+    }
+}
+
+@Composable
+private fun MacroHeroTile(
+    value: String,
+    label: String,
+    progress: Float,
+    color: Color,
+    modifier: Modifier = Modifier
+) {
+    androidx.compose.material3.Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(16.dp),
+        color = SecondaryCard
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 14.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Text(
+                text = value,
+                color = color,
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold
+            )
+            Text(text = label, color = MutedText, style = MaterialTheme.typography.labelSmall)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(4.dp)
+                    .clip(RoundedCornerShape(999.dp))
+                    .background(MutedControl.copy(alpha = 0.4f))
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(progress)
+                        .height(4.dp)
+                        .clip(RoundedCornerShape(999.dp))
+                        .background(color)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun RecipeSection(
+    title: String,
+    recipes: List<Recipe>,
+    onViewRecipe: (Recipe) -> Unit,
+    onTryAnother: ((String) -> Unit)?,
+    highlightFirst: Boolean = false
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                title,
+                color = PrimaryText,
+                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.titleSmall
+            )
+            if (highlightFirst) {
+                androidx.compose.material3.Surface(
+                    shape = RoundedCornerShape(999.dp),
+                    color = AccentBlue.copy(alpha = 0.18f)
+                ) {
+                    Text(
+                        text = "AI Pick",
+                        color = AccentBlue,
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.padding(horizontal = 9.dp, vertical = 3.dp)
+                    )
+                }
+            }
+        }
+        recipes.forEach { recipe ->
+            RecipeCard(
+                recipe = recipe,
+                onView = { onViewRecipe(recipe) },
+                onTryAnother = onTryAnother?.let { { it(recipe.id) } }
+            )
+        }
+    }
+}
+
+@Composable
+private fun RecipeCard(
+    recipe: Recipe,
+    onView: () -> Unit,
+    onTryAnother: (() -> Unit)?
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(18.dp))
+            .background(SecondaryCard.copy(alpha = 0.72f))
+            .padding(14.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.Top
+        ) {
+            Text(
+                recipe.name,
+                color = PrimaryText,
+                fontWeight = FontWeight.SemiBold,
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.weight(1f)
+            )
+            Text(
+                "${recipe.prepMinutes}m",
+                color = MutedText,
+                style = MaterialTheme.typography.labelSmall
+            )
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(
+                "${recipe.calories} kcal  P${recipe.proteinGrams.clean()}g",
+                color = CyanAccent,
+                style = MaterialTheme.typography.bodySmall
+            )
+        }
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            recipe.tags.take(3).forEach { tag ->
+                Text(
+                    tag,
+                    color = MutedText,
+                    style = MaterialTheme.typography.labelSmall,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(MainCard)
+                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                )
+            }
+        }
+        Text(
+            recipe.ingredients.take(3).joinToString(" · "),
+            color = MutedText,
+            style = MaterialTheme.typography.bodySmall
+        )
+        OutlinedButton(
+            onClick = onView,
+            shape = RoundedCornerShape(999.dp),
+            contentPadding = PaddingValues(vertical = 8.dp)
+        ) {
+            Text(
+                "View Recipe",
+                color = CyanAccent,
+                fontWeight = FontWeight.SemiBold,
+                style = MaterialTheme.typography.labelMedium
+            )
+        }
+        if (onTryAnother != null) {
+            TextButton(
+                onClick = onTryAnother,
+                modifier = Modifier.fillMaxWidth(),
+                contentPadding = PaddingValues(vertical = 2.dp)
+            ) {
+                Text(
+                    "Try Another →",
+                    color = MutedText,
+                    style = MaterialTheme.typography.labelSmall
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun GroceryListDialog(
+    title: String = "Grocery List",
+    items: List<GroceryItem>,
+    checkedKeys: Set<String>,
+    onToggleItem: (String) -> Unit,
+    onCopy: () -> Unit,
+    onShare: () -> Unit,
+    onDismiss: () -> Unit,
+    emptyMessage: String = "Select recipes to build a grocery list."
+) {
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight(0.92f)
+                .padding(horizontal = 16.dp),
+            shape = RoundedCornerShape(20.dp),
+            color = MainCard
+        ) {
+            Column(modifier = Modifier.fillMaxSize().padding(20.dp)) {
+                Text(
+                    title,
+                    color = PrimaryText,
+                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Spacer(Modifier.height(12.dp))
+
+                if (items.isEmpty()) {
+                    Text(
+                        emptyMessage,
+                        color = MutedText,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                    Spacer(Modifier.weight(1f))
+                } else {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.padding(bottom = 12.dp)
+                    ) {
+                        OutlinedButton(
+                            onClick = onCopy,
+                            shape = RoundedCornerShape(999.dp),
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp)
+                        ) {
+                            Text("Copy", color = CyanAccent, style = MaterialTheme.typography.labelSmall)
+                        }
+                        OutlinedButton(
+                            onClick = onShare,
+                            shape = RoundedCornerShape(999.dp),
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp)
+                        ) {
+                            Text("Share", color = CyanAccent, style = MaterialTheme.typography.labelSmall)
+                        }
+                    }
+
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .verticalScroll(rememberScrollState()),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        val grouped = items.groupBy { it.category }
+                        GroceryCategory.values().forEach { cat ->
+                            val catItems = grouped[cat] ?: return@forEach
+                            Column {
+                                Text(
+                                    cat.name.replace("_", "/")
+                                        .lowercase()
+                                        .replaceFirstChar { it.uppercase() },
+                                    color = PrimaryText,
+                                    fontWeight = FontWeight.SemiBold,
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                                catItems.forEach { item ->
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth().padding(vertical = 1.dp),
+                                        verticalAlignment = Alignment.Top,
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                    ) {
+                                        Checkbox(
+                                            checked = item.key in checkedKeys,
+                                            onCheckedChange = { onToggleItem(item.key) },
+                                            colors = CheckboxDefaults.colors(checkedColor = CyanAccent)
+                                        )
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(
+                                                item.displayLine,
+                                                color = if (item.key in checkedKeys) MutedText else PrimaryText,
+                                                style = MaterialTheme.typography.bodySmall,
+                                                textDecoration = if (item.key in checkedKeys)
+                                                    TextDecoration.LineThrough else null
+                                            )
+                                            if (item.recipeSources.isNotEmpty()) {
+                                                Text(
+                                                    item.recipeSources.joinToString("  ·  "),
+                                                    color = MutedText,
+                                                    style = MaterialTheme.typography.labelSmall
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                TextButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
+                ) {
+                    Text("Close", color = MutedText)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun RecipeDetailDialog(
+    recipe: Recipe,
+    onDismiss: () -> Unit,
+    onLog: (String) -> Unit
+) {
+    var selectedMeal by remember(recipe.id) { mutableStateOf(recipe.mealType) }
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight(0.92f)
+                .padding(horizontal = 16.dp),
+            shape = RoundedCornerShape(20.dp),
+            color = MainCard
+        ) {
+            Column(
+                modifier = Modifier
+                    .verticalScroll(rememberScrollState())
+                    .padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(
+                    recipe.name,
+                    color = PrimaryText,
+                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.titleMedium
+                )
+
+                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    recipe.tags.forEach { tag ->
+                        Text(
+                            tag,
+                            color = MutedText,
+                            style = MaterialTheme.typography.labelSmall,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(SecondaryCard)
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        )
+                    }
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    MacroChip("${recipe.calories}", "kcal")
+                    MacroChip("${recipe.proteinGrams.clean()}g", "protein")
+                    MacroChip("${recipe.carbGrams.clean()}g", "carbs")
+                    MacroChip("${recipe.fatGrams.clean()}g", "fat")
+                }
+
+                Text(
+                    "Prep: ${recipe.prepMinutes} min",
+                    color = MutedText,
+                    style = MaterialTheme.typography.bodySmall
+                )
+
+                Spacer(Modifier.height(4.dp))
+
+                Text("Ingredients", color = PrimaryText, fontWeight = FontWeight.Bold)
+                recipe.ingredients.forEach { ingredient ->
+                    Text("• $ingredient", color = MutedText, style = MaterialTheme.typography.bodySmall)
+                }
+
+                Spacer(Modifier.height(4.dp))
+
+                Text("Instructions", color = PrimaryText, fontWeight = FontWeight.Bold)
+                recipe.instructions.forEachIndexed { index, step ->
+                    Text(
+                        "${index + 1}. $step",
+                        color = PrimaryText,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+
+                Spacer(Modifier.height(8.dp))
+
+                Text("Log this meal", color = PrimaryText, fontWeight = FontWeight.Bold)
+
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    listOf("Breakfast", "Lunch", "Dinner", "Snack").forEach { meal ->
+                        FilterChip(
+                            selected = selectedMeal == meal,
+                            onClick = { selectedMeal = meal },
+                            label = {
+                                Text(meal.take(5), style = MaterialTheme.typography.labelSmall)
+                            },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = CyanAccent,
+                                selectedLabelColor = Color.Black
+                            )
+                        )
+                    }
+                }
+
+                Button(
+                    onClick = { onLog(selectedMeal) },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(999.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = CyanAccent)
+                ) {
+                    Text("Add to Nutrition Log", color = Color.Black, fontWeight = FontWeight.Bold)
+                }
+
+                TextButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Close", color = MutedText)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun MacroChip(value: String, label: String) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(value, color = CyanAccent, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium)
+        Text(label, color = MutedText, style = MaterialTheme.typography.labelSmall)
+    }
+}
+
+private fun Double.clean(): String =
+    if (this == kotlin.math.floor(this) && this < 1_000_000) this.toLong().toString()
+    else "%.1f".format(this).trimEnd('0').trimEnd('.')
+
+// ── Plan Review Dialog ──────────────────────────────────────────────────────
+
+@Composable
+private fun PlanReviewDialog(
+    draft: DraftPlanUiState,
+    calorieTarget: Int,
+    proteinTarget: Double,
+    onAccept: () -> Unit,
+    onRegenerate: () -> Unit,
+    onCancel: () -> Unit,
+    onReplaceMeal: (date: String, mealType: String) -> Unit
+) {
+    Dialog(
+        onDismissRequest = onCancel,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight(0.95f)
+                .padding(horizontal = 12.dp),
+            shape = RoundedCornerShape(20.dp),
+            color = MainCard
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+            ) {
+                // Header
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            "Review Weekly Meal Plan",
+                            color = PrimaryText, fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                        Text(
+                            draft.weekLabel,
+                            color = MutedText, style = MaterialTheme.typography.labelSmall
+                        )
+                    }
+                    TextButton(onClick = onCancel, contentPadding = PaddingValues(4.dp)) {
+                        Text("✕", color = MutedText, style = MaterialTheme.typography.titleMedium)
+                    }
+                }
+                Text(
+                    "Tap any meal to swap it before accepting.",
+                    color = MutedText,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                // Scrollable day list
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    draft.days.forEach { day ->
+                        DraftDayCard(
+                            day = day,
+                            calorieTarget = calorieTarget,
+                            proteinTarget = proteinTarget,
+                            onMealTap = { mealType -> onReplaceMeal(day.date, mealType) }
+                        )
+                    }
+                    Spacer(Modifier.height(4.dp))
+                }
+                Spacer(Modifier.height(10.dp))
+                // Action buttons
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = onRegenerate,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(999.dp),
+                        contentPadding = PaddingValues(vertical = 10.dp)
+                    ) {
+                        Text(
+                            "Regenerate",
+                            color = CyanAccent,
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                    Button(
+                        onClick = onAccept,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(999.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = CyanAccent),
+                        contentPadding = PaddingValues(vertical = 10.dp)
+                    ) {
+                        Text(
+                            "Accept Plan",
+                            color = Color.Black,
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DraftDayCard(
+    day: DayMealPlanUiState,
+    calorieTarget: Int,
+    proteinTarget: Double,
+    onMealTap: (mealType: String) -> Unit
+) {
+    val dayCalories = day.meals.values.filterNotNull().sumOf { it.calories }
+    val dayProtein = day.meals.values.filterNotNull().sumOf { it.proteinGrams }
+    val dayCarbs = day.meals.values.filterNotNull().sumOf { it.carbGrams }
+    val dayFat = day.meals.values.filterNotNull().sumOf { it.fatGrams }
+    val dayFiber = day.meals.values.filterNotNull().sumOf { it.fiberGrams ?: 0.0 }
+    val proteinColor = when {
+        proteinTarget <= 0 -> MutedText
+        dayProtein >= proteinTarget * 0.9 -> PositiveAccent
+        dayProtein >= proteinTarget * 0.6 -> WarningAccent
+        else -> Color(0xFFE57373)
+    }
+    androidx.compose.material3.Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(14.dp),
+        color = SecondaryCard
+    ) {
+        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    "${day.dayLabel}  ${day.dateNumber}",
+                    color = CyanAccent, fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.labelMedium
+                )
+                Text(
+                    "$dayCalories kcal${if (calorieTarget > 0) " / $calorieTarget" else ""}",
+                    color = if (calorieTarget > 0 && dayCalories >= (calorieTarget * 0.85).toInt()) PositiveAccent else MutedText,
+                    style = MaterialTheme.typography.labelSmall
+                )
+            }
+            Text(
+                "P ${dayProtein.clean()}g · C ${dayCarbs.clean()}g · F ${dayFat.clean()}g · Fiber ${dayFiber.clean()}g",
+                color = proteinColor,
+                style = MaterialTheme.typography.labelSmall
+            )
+            (listOf("Breakfast", "Lunch", "Dinner", "Snack") +
+             listOf("Protein Booster 1", "Protein Booster 2").filter { day.meals.containsKey(it) }
+            ).forEach { mealType ->
+                val recipe = day.meals[mealType]
+                val isBooster = mealType.startsWith("Protein Booster")
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(MainCard)
+                        .pointerInput(Unit) { detectTapGestures { onMealTap(mealType) } }
+                        .padding(horizontal = 10.dp, vertical = 6.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            mealType,
+                            color = if (isBooster) PositiveAccent else MutedText,
+                            style = MaterialTheme.typography.labelSmall
+                        )
+                        Text(
+                            recipe?.name ?: "—",
+                            color = if (recipe != null) PrimaryText else MutedText,
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = if (recipe != null) FontWeight.SemiBold else FontWeight.Normal
+                        )
+                    }
+                    if (recipe != null) {
+                        Text(
+                            "P${recipe.proteinGrams.clean()}g",
+                            color = CyanAccent, style = MaterialTheme.typography.labelSmall
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+// ── Weekly Meal Calendar ────────────────────────────────────────────────────
+
+@Composable
+private fun WeeklyMealCalendarSection(
+    calState: MealCalendarUiState,
+    onPrevWeek: () -> Unit,
+    onNextWeek: () -> Unit,
+    onGenerate: () -> Unit,
+    onRegenerate: () -> Unit,
+    onViewMeal: (date: String, mealType: String) -> Unit,
+    onLogMeal: (date: String, mealType: String) -> Unit,
+    onStartReplace: (date: String, mealType: String) -> Unit,
+    onReplaceWith: (date: String, mealType: String, Recipe) -> Unit,
+    onClearReplace: () -> Unit,
+    onWeekGrocery: () -> Unit,
+    onModeChange: (String) -> Unit = {},
+    onToggleGrocerySlot: (date: String, mealType: String) -> Unit = { _, _ -> },
+    onSelectAllGrocery: () -> Unit = {},
+    onClearGrocery: () -> Unit = {}
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        // Header row: label + week nav
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column {
+                Text(
+                    "Meal Calendar",
+                    color = PrimaryText, fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.titleSmall
+                )
+                Text(
+                    calState.weekLabel,
+                    color = MutedText, style = MaterialTheme.typography.labelSmall
+                )
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                TextButton(onClick = onPrevWeek, contentPadding = PaddingValues(4.dp)) {
+                    Text("‹", color = CyanAccent, style = MaterialTheme.typography.titleMedium)
+                }
+                TextButton(onClick = onNextWeek, contentPadding = PaddingValues(4.dp)) {
+                    Text("›", color = CyanAccent, style = MaterialTheme.typography.titleMedium)
+                }
+            }
+        }
+
+        // Meal Plan Mode toggle
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            listOf("Variety", "Repeat Weekly").forEach { mode ->
+                FilterChip(
+                    selected = calState.mealPlanMode == mode,
+                    onClick = { onModeChange(mode) },
+                    label = { Text(mode, style = MaterialTheme.typography.labelSmall, maxLines = 1) },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = CyanAccent,
+                        selectedLabelColor = androidx.compose.ui.graphics.Color.Black,
+                        labelColor = MutedText
+                    )
+                )
+            }
+        }
+        if (calState.mealPlanMode == "Repeat Weekly") {
+            Text(
+                "Repeat Weekly is useful for meal prep and bulk grocery shopping.",
+                color = MutedText,
+                style = MaterialTheme.typography.bodySmall
+            )
+        }
+        if (calState.todayHasPlan) {
+            Text(
+                "✓ Today's plan is active — view it on the Nutrition screen",
+                color = PositiveAccent,
+                style = MaterialTheme.typography.labelSmall
+            )
+        }
+
+        if (!calState.isGenerated) {
+            // Empty state — prompt to generate
+            androidx.compose.material3.Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                color = SecondaryCard
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Text(
+                        "No plan for ${calState.weekLabel.lowercase()}.",
+                        color = MutedText, style = MaterialTheme.typography.bodySmall
+                    )
+                    Button(
+                        onClick = onGenerate,
+                        shape = RoundedCornerShape(999.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = CyanAccent)
+                    ) {
+                        Text("Generate Plan", color = Color.Black, fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.labelMedium)
+                    }
+                }
+            }
+        } else {
+            // Grocery meal selection controls
+            val selectedCount = calState.selectedGrocerySlots.size
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    if (selectedCount == 0) "Select meals for grocery list"
+                    else "$selectedCount meal${if (selectedCount == 1) "" else "s"} selected",
+                    color = if (selectedCount > 0) CyanAccent else MutedText,
+                    style = MaterialTheme.typography.labelSmall
+                )
+                Row {
+                    TextButton(
+                        onClick = onSelectAllGrocery,
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                    ) {
+                        Text("Select All", color = CyanAccent, style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.SemiBold)
+                    }
+                    if (selectedCount > 0) {
+                        TextButton(
+                            onClick = onClearGrocery,
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                        ) {
+                            Text("Clear", color = MutedText, style = MaterialTheme.typography.labelSmall)
+                        }
+                    }
+                }
+            }
+
+            // Day cards
+            calState.days.forEach { day ->
+                CalendarDayCard(
+                    day = day,
+                    inlineReplaceSlot = calState.inlineReplaceSlot,
+                    replacementCandidates = calState.replacementCandidates,
+                    selectedGrocerySlots = calState.selectedGrocerySlots,
+                    onViewMeal = { mealType -> onViewMeal(day.date, mealType) },
+                    onLogMeal = { mealType -> onLogMeal(day.date, mealType) },
+                    onStartReplace = { mealType -> onStartReplace(day.date, mealType) },
+                    onReplaceWith = { mealType, recipe -> onReplaceWith(day.date, mealType, recipe) },
+                    onClearReplace = onClearReplace,
+                    onToggleGrocerySlot = { mealType -> onToggleGrocerySlot(day.date, mealType) }
+                )
+            }
+
+            // Action row: regenerate + grocery list
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                OutlinedButton(
+                    onClick = onRegenerate,
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(999.dp),
+                    contentPadding = PaddingValues(vertical = 8.dp)
+                ) {
+                    Text("Regenerate Week", color = CyanAccent,
+                        style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+                }
+                OutlinedButton(
+                    onClick = onWeekGrocery,
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(999.dp),
+                    contentPadding = PaddingValues(vertical = 8.dp)
+                ) {
+                    Text("Grocery List", color = CyanAccent,
+                        style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun CalendarDayCard(
+    day: DayMealPlanUiState,
+    inlineReplaceSlot: PlannedMealSlot?,
+    replacementCandidates: List<Recipe>,
+    selectedGrocerySlots: Set<String> = emptySet(),
+    onViewMeal: (mealType: String) -> Unit,
+    onLogMeal: (mealType: String) -> Unit,
+    onStartReplace: (mealType: String) -> Unit,
+    onReplaceWith: (mealType: String, recipe: Recipe) -> Unit,
+    onClearReplace: () -> Unit,
+    onToggleGrocerySlot: (mealType: String) -> Unit = {}
+) {
+    androidx.compose.material3.Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(14.dp),
+        color = SecondaryCard
+    ) {
+        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            val dayCalories = day.meals.values.filterNotNull().sumOf { it.calories }
+            val dayProtein = day.meals.values.filterNotNull().sumOf { it.proteinGrams }
+            val dayCarbs = day.meals.values.filterNotNull().sumOf { it.carbGrams }
+            val dayFat = day.meals.values.filterNotNull().sumOf { it.fatGrams }
+            val dayFiber = day.meals.values.filterNotNull().sumOf { it.fiberGrams ?: 0.0 }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    "${day.dayLabel}  ${day.dateNumber}",
+                    color = CyanAccent, fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.labelMedium
+                )
+                if (dayCalories > 0) {
+                    Text(
+                        "$dayCalories kcal",
+                        color = MutedText, style = MaterialTheme.typography.labelSmall
+                    )
+                }
+            }
+            if (dayCalories > 0) {
+                Text(
+                    "P${dayProtein.clean()}g  ·  C${dayCarbs.clean()}g  ·  F${dayFat.clean()}g  ·  Fiber${dayFiber.clean()}g",
+                    color = MutedText,
+                    style = MaterialTheme.typography.labelSmall
+                )
+            }
+            (listOf("Breakfast", "Lunch", "Dinner", "Snack") +
+             listOf("Protein Booster 1", "Protein Booster 2").filter { day.meals.containsKey(it) }
+            ).forEach { mealType ->
+                val recipe = day.meals[mealType]
+                val isBooster = mealType.startsWith("Protein Booster")
+                val slotKey = "${day.date}::$mealType"
+                val isGrocerySelected = slotKey in selectedGrocerySlots
+                val isReplacing = inlineReplaceSlot?.date == day.date &&
+                                  inlineReplaceSlot.mealType == mealType
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(
+                            if (isGrocerySelected) CyanAccent.copy(alpha = 0.09f) else MainCard
+                        )
+                        .padding(horizontal = 10.dp, vertical = 6.dp),
+                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                ) {
+                    // Meal info row with grocery checkbox
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Checkbox(
+                            checked = isGrocerySelected,
+                            onCheckedChange = { onToggleGrocerySlot(mealType) },
+                            colors = CheckboxDefaults.colors(
+                                checkedColor = CyanAccent,
+                                uncheckedColor = MutedText.copy(alpha = 0.4f)
+                            )
+                        )
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                mealType,
+                                color = if (isBooster) PositiveAccent else MutedText,
+                                style = MaterialTheme.typography.labelSmall
+                            )
+                            Text(
+                                recipe?.name ?: "—",
+                                color = if (recipe != null) PrimaryText else MutedText,
+                                style = MaterialTheme.typography.bodySmall,
+                                fontWeight = if (recipe != null) FontWeight.SemiBold else FontWeight.Normal
+                            )
+                        }
+                        if (recipe != null) {
+                            Text(
+                                "P${recipe.proteinGrams.clean()}g",
+                                color = CyanAccent, style = MaterialTheme.typography.labelSmall
+                            )
+                        }
+                    }
+
+                    // Action buttons (View · Log · Replace) — only when a recipe is assigned
+                    if (recipe != null) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(0.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            TextButton(
+                                onClick = { onViewMeal(mealType) },
+                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
+                            ) {
+                                Text(
+                                    "View",
+                                    color = CyanAccent,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
+                            Text("·", color = MutedText, style = MaterialTheme.typography.labelSmall)
+                            TextButton(
+                                onClick = { onLogMeal(mealType) },
+                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
+                            ) {
+                                Text(
+                                    "Log",
+                                    color = PositiveAccent,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
+                            Text("·", color = MutedText, style = MaterialTheme.typography.labelSmall)
+                            TextButton(
+                                onClick = {
+                                    if (isReplacing) onClearReplace() else onStartReplace(mealType)
+                                },
+                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
+                            ) {
+                                Text(
+                                    if (isReplacing) "Cancel" else "Replace",
+                                    color = if (isReplacing) MutedText else WarningAccent,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
+                        }
+
+                        // Inline alternatives — only for the slot currently in Replace mode
+                        if (isReplacing && replacementCandidates.isNotEmpty()) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(SecondaryCard)
+                                    .padding(8.dp),
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Text(
+                                    "Choose a replacement:",
+                                    color = MutedText,
+                                    style = MaterialTheme.typography.labelSmall
+                                )
+                                replacementCandidates.forEach { alt ->
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(
+                                                alt.name,
+                                                color = PrimaryText,
+                                                style = MaterialTheme.typography.bodySmall,
+                                                fontWeight = FontWeight.SemiBold
+                                            )
+                                            Text(
+                                                "P${alt.proteinGrams.clean()}g · ${alt.calories} kcal",
+                                                color = MutedText,
+                                                style = MaterialTheme.typography.labelSmall
+                                            )
+                                        }
+                                        TextButton(
+                                            onClick = { onReplaceWith(mealType, alt) },
+                                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                                        ) {
+                                            Text(
+                                                "Use This",
+                                                color = CyanAccent,
+                                                fontWeight = FontWeight.Bold,
+                                                style = MaterialTheme.typography.labelSmall
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun CalendarMealDetailDialog(
+    slot: PlannedMealSlot,
+    recipe: Recipe,
+    replacementCandidates: List<Recipe>,
+    onDismiss: () -> Unit,
+    onLog: (mealName: String) -> Unit,
+    onLoadAlternatives: () -> Unit,
+    onReplaceWith: (Recipe) -> Unit,
+    onClearAlternatives: () -> Unit
+) {
+    val logMealType = if (slot.mealType.startsWith("Protein Booster")) "Snack" else slot.mealType
+    var selectedMeal by remember(recipe.id) { mutableStateOf(logMealType) }
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight(0.92f)
+                .padding(horizontal = 16.dp),
+            shape = RoundedCornerShape(20.dp),
+            color = MainCard
+        ) {
+            Column(
+                modifier = Modifier
+                    .verticalScroll(rememberScrollState())
+                    .padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // Context badge
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    androidx.compose.material3.Surface(
+                        shape = RoundedCornerShape(999.dp),
+                        color = AccentBlue.copy(alpha = 0.15f)
+                    ) {
+                        Text(
+                            slot.mealType,
+                            color = AccentBlue, style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                        )
+                    }
+                    recipe.collection.forEach { col ->
+                        val colColor = if ("Metabolic" in col) PositiveAccent else WarningAccent
+                        androidx.compose.material3.Surface(
+                            shape = RoundedCornerShape(999.dp),
+                            color = colColor.copy(alpha = 0.15f)
+                        ) {
+                            Text(
+                                col,
+                                color = colColor, style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.SemiBold,
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                            )
+                        }
+                    }
+                }
+
+                Text(
+                    recipe.name,
+                    color = PrimaryText, fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.titleMedium
+                )
+
+                if (recipe.description.isNotBlank()) {
+                    Text(
+                        recipe.description,
+                        color = MutedText, style = MaterialTheme.typography.bodySmall
+                    )
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    MacroChip("${recipe.calories}", "kcal")
+                    MacroChip("${recipe.proteinGrams.clean()}g", "protein")
+                    MacroChip("${recipe.carbGrams.clean()}g", "carbs")
+                    MacroChip("${recipe.fatGrams.clean()}g", "fat")
+                }
+
+                val timeStr = buildString {
+                    if (recipe.prepMinutes > 0) append("Prep: ${recipe.prepMinutes} min")
+                    if (recipe.cookMinutes > 0) {
+                        if (isNotEmpty()) append("  ·  ")
+                        append("Cook: ${recipe.cookMinutes} min")
+                    }
+                }
+                if (timeStr.isNotBlank()) {
+                    Text(timeStr, color = MutedText, style = MaterialTheme.typography.bodySmall)
+                }
+
+                Spacer(Modifier.height(2.dp))
+
+                Text("Ingredients", color = PrimaryText, fontWeight = FontWeight.Bold)
+                recipe.ingredients.forEach { ingredient ->
+                    Text("• $ingredient", color = MutedText, style = MaterialTheme.typography.bodySmall)
+                }
+
+                Text("Instructions", color = PrimaryText, fontWeight = FontWeight.Bold)
+                recipe.instructions.forEachIndexed { i, step ->
+                    Text("${i + 1}. $step", color = PrimaryText, style = MaterialTheme.typography.bodySmall)
+                }
+
+                recipe.storageNotes?.let {
+                    Text("Storage: $it", color = MutedText, style = MaterialTheme.typography.bodySmall)
+                }
+                recipe.mealPrepNotes?.let {
+                    Text("Meal Prep: $it", color = MutedText, style = MaterialTheme.typography.bodySmall)
+                }
+
+                Spacer(Modifier.height(4.dp))
+                Text("Log this meal", color = PrimaryText, fontWeight = FontWeight.Bold)
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
+                    listOf("Breakfast", "Lunch", "Dinner", "Snack").forEach { meal ->
+                        FilterChip(
+                            selected = selectedMeal == meal,
+                            onClick = { selectedMeal = meal },
+                            label = { Text(meal.take(5), style = MaterialTheme.typography.labelSmall) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = CyanAccent, selectedLabelColor = Color.Black
+                            )
+                        )
+                    }
+                }
+
+                Button(
+                    onClick = { onLog(selectedMeal) },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(999.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = CyanAccent)
+                ) {
+                    Text("Add to Nutrition Log", color = Color.Black, fontWeight = FontWeight.Bold)
+                }
+
+                if (replacementCandidates.isNotEmpty()) {
+                    Text(
+                        "Choose a replacement",
+                        color = PrimaryText, fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.titleSmall
+                    )
+                    replacementCandidates.forEach { alt ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(SecondaryCard)
+                                .padding(horizontal = 12.dp, vertical = 8.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    alt.name,
+                                    color = PrimaryText,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                Text(
+                                    "P${alt.proteinGrams.clean()}g · ${alt.calories} kcal",
+                                    color = MutedText,
+                                    style = MaterialTheme.typography.labelSmall
+                                )
+                            }
+                            TextButton(
+                                onClick = { onReplaceWith(alt) },
+                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                            ) {
+                                Text(
+                                    "Use This",
+                                    color = CyanAccent,
+                                    fontWeight = FontWeight.Bold,
+                                    style = MaterialTheme.typography.labelSmall
+                                )
+                            }
+                        }
+                    }
+                    TextButton(onClick = onClearAlternatives, modifier = Modifier.fillMaxWidth()) {
+                        Text("Cancel", color = MutedText, style = MaterialTheme.typography.labelSmall)
+                    }
+                } else {
+                    OutlinedButton(
+                        onClick = onLoadAlternatives,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(999.dp)
+                    ) {
+                        Text(
+                            "Replace This Meal",
+                            color = CyanAccent, fontWeight = FontWeight.SemiBold,
+                            style = MaterialTheme.typography.labelMedium
+                        )
+                    }
+                }
+
+                TextButton(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) {
+                    Text("Close", color = MutedText)
+                }
+            }
+        }
+    }
+}
