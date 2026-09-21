@@ -6,6 +6,8 @@ import com.supplementtracker.data.entity.DailyOccurrenceEntity
 import com.supplementtracker.data.entity.ScheduleGroupEntity
 import com.supplementtracker.data.entity.SupplementEntity
 import com.supplementtracker.data.repository.SupplementRepository
+import com.supplementtracker.domain.DateProvider
+import com.supplementtracker.domain.SystemDateProvider
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -31,56 +33,72 @@ class SupplementsViewModel(
     private val alarmScheduler: (ScheduleGroupEntity) -> Unit,
     private val cancelAlarm: (Long) -> Unit,
     private val rescheduleAll: () -> Unit,
-    private val canScheduleExact: () -> Boolean
+    private val canScheduleExact: () -> Boolean,
+    private val dateProvider: DateProvider = SystemDateProvider
 ) : ViewModel() {
 
-    private fun today() = LocalDate.now().toString()
+    // Mutable date state; updated by onResume() when the date has advanced past midnight.
+    private val _currentDate = MutableStateFlow(dateProvider.today().toString())
 
     private val _state = MutableStateFlow(SupplementsUiState())
     val state: StateFlow<SupplementsUiState> = _state.asStateFlow()
 
     init {
-        val initDate = today()
-        viewModelScope.launch {
-            repo.ensureTodayOccurrences(initDate)
-        }
-
         @OptIn(ExperimentalCoroutinesApi::class)
         viewModelScope.launch {
-            combine(
-                repo.allGroups,
-                repo.activeSupplements,
-                repo.observeTodayOccurrences(initDate)
-            ) { groups, supplements, occurrences ->
-                val occurrenceMap = occurrences.associateBy { it.supplementId }
-                val grouped = groups.map { group ->
-                    val groupSupps = supplements.filter { it.scheduleGroupId == group.id }
-                    val groupOccs = groupSupps.associate { it.id to (occurrenceMap[it.id] ?: DailyOccurrenceEntity(supplementId = it.id, scheduledDate = initDate, scheduledHour = group.reminderHour, scheduledMinute = group.reminderMinute, scheduleGroupId = group.id)) }
-                    GroupWithSupplements(group, groupSupps, groupOccs)
-                }.filter { it.supplements.isNotEmpty() }
+            _currentDate.flatMapLatest { date ->
+                flow {
+                    // Ensure today's occurrences exist before subscribing to the live flow
+                    repo.ensureTodayOccurrences(date)
+                    emitAll(
+                        combine(
+                            repo.allGroups,
+                            repo.activeSupplements,
+                            repo.observeTodayOccurrences(date)
+                        ) { groups, supplements, occurrences ->
+                            val occurrenceMap = occurrences.associateBy { it.supplementId }
+                            val grouped = groups.map { group ->
+                                val groupSupps = supplements.filter { it.scheduleGroupId == group.id }
+                                val groupOccs = groupSupps.associate { s ->
+                                    s.id to (occurrenceMap[s.id] ?: DailyOccurrenceEntity(
+                                        supplementId = s.id,
+                                        scheduledDate = date,
+                                        scheduledHour = group.reminderHour,
+                                        scheduledMinute = group.reminderMinute,
+                                        scheduleGroupId = group.id
+                                    ))
+                                }
+                                GroupWithSupplements(group, groupSupps, groupOccs)
+                            }.filter { it.supplements.isNotEmpty() }
 
-                val totalScheduled = occurrences.size
-                val totalCompleted = occurrences.count { it.completed }
-
-                SupplementsUiState(
-                    today = initDate,
-                    groups = grouped,
-                    totalScheduled = totalScheduled,
-                    totalCompleted = totalCompleted,
-                    exactAlarmAvailable = canScheduleExact(),
-                    loading = false
-                )
+                            SupplementsUiState(
+                                today = date,
+                                groups = grouped,
+                                totalScheduled = occurrences.size,
+                                totalCompleted = occurrences.count { it.completed },
+                                exactAlarmAvailable = canScheduleExact(),
+                                loading = false
+                            )
+                        }
+                    )
+                }
             }.collect { _state.value = it }
         }
     }
 
-
+    /** Call from the screen's ON_RESUME lifecycle event to detect midnight rollover. */
+    fun onResume() {
+        val newDate = dateProvider.today().toString()
+        if (_currentDate.value != newDate) {
+            _currentDate.value = newDate
+        }
+    }
 
     fun toggleCompletionWithContext(supplementId: Long, currentlyCompleted: Boolean, cancelSnooze: (Long, String) -> Unit) {
         viewModelScope.launch {
-            val date = today()
+            val date = dateProvider.today().toString()
             repo.setCompleted(supplementId, date, !currentlyCompleted)
-            if (!currentlyCompleted) { // toggling TO completed
+            if (!currentlyCompleted) {
                 val groupId = _state.value.groups.find { g -> g.supplements.any { it.id == supplementId } }?.group?.id
                 if (groupId != null) {
                     val outstanding = repo.getOutstandingInGroup(groupId, date)
@@ -95,7 +113,7 @@ class SupplementsViewModel(
             val savedId = repo.upsertSupplement(supplement)
             if (isNew) {
                 val saved = repo.getSupplementById(savedId) ?: return@launch
-                repo.createOccurrencesForNewSupplement(saved, today())
+                repo.createOccurrencesForNewSupplement(saved, dateProvider.today().toString())
             }
             alarmScheduler(repo.getGroupById(supplement.scheduleGroupId) ?: return@launch)
         }

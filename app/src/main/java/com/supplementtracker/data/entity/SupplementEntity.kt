@@ -24,5 +24,9 @@ data class SupplementEntity(
     val scheduleGroupId: Long,
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis(),
-    val sortOrder: Int = 0
+    val sortOrder: Int = 0,
+    // Epoch-millis when the current scheduleGroupId assignment was set.
+    // Reconciliation only creates historical occurrences for dates on or after this date,
+    // because we cannot know which group the supplement was in before the last assignment.
+    val groupAssignedAt: Long = System.currentTimeMillis()
 )

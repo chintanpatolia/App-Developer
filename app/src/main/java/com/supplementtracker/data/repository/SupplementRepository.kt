@@ -7,14 +7,12 @@ import com.supplementtracker.data.entity.DailyOccurrenceEntity
 import com.supplementtracker.data.entity.ScheduleGroupEntity
 import com.supplementtracker.data.entity.SupplementEntity
 import kotlinx.coroutines.flow.Flow
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 
 class SupplementRepository(
     private val supplementDao: SupplementDao,
     private val scheduleGroupDao: ScheduleGroupDao,
     private val occurrenceDao: DailyOccurrenceDao
-) {
+) : com.supplementtracker.domain.ReconcileDataSource {
     val activeSupplements: Flow<List<SupplementEntity>> = supplementDao.observeActive()
     val allSupplements: Flow<List<SupplementEntity>> = supplementDao.observeAll()
     val allGroups: Flow<List<ScheduleGroupEntity>> = scheduleGroupDao.observeAll()
@@ -32,9 +30,20 @@ class SupplementRepository(
     }
 
     suspend fun upsertSupplement(supplement: SupplementEntity): Long {
-        return if (supplement.id == 0L) supplementDao.insert(supplement)
-        else {
-            supplementDao.update(supplement.copy(updatedAt = System.currentTimeMillis()))
+        return if (supplement.id == 0L) {
+            val now = System.currentTimeMillis()
+            supplementDao.insert(supplement.copy(createdAt = now, groupAssignedAt = now))
+        } else {
+            val existing = supplementDao.getById(supplement.id)
+            val groupAssignedAt = if (existing != null && existing.scheduleGroupId != supplement.scheduleGroupId) {
+                System.currentTimeMillis()
+            } else {
+                existing?.groupAssignedAt ?: supplement.groupAssignedAt
+            }
+            supplementDao.update(supplement.copy(
+                updatedAt = System.currentTimeMillis(),
+                groupAssignedAt = groupAssignedAt
+            ))
             supplement.id
         }
     }
@@ -61,6 +70,26 @@ class SupplementRepository(
             }
         if (toInsert.isNotEmpty()) occurrenceDao.insertAll(toInsert)
     }
+
+    /** Creates occurrences for a specific past date for the given supplement list.
+     *  Uses OnConflictStrategy.IGNORE — safe to call multiple times (idempotent). */
+    suspend fun createOccurrencesForDate(supplements: List<SupplementEntity>, date: String) {
+        val groups = scheduleGroupDao.getAll().associateBy { it.id }
+        val toInsert = supplements.mapNotNull { s ->
+            val group = groups[s.scheduleGroupId] ?: return@mapNotNull null
+            DailyOccurrenceEntity(
+                supplementId = s.id,
+                scheduledDate = date,
+                scheduledHour = group.reminderHour,
+                scheduledMinute = group.reminderMinute,
+                scheduleGroupId = group.id
+            )
+        }
+        if (toInsert.isNotEmpty()) occurrenceDao.insertAll(toInsert)
+    }
+
+    suspend fun getOccurrenceSupplementIdsForDate(date: String): Set<Long> =
+        occurrenceDao.getByDate(date).map { it.supplementId }.toSet()
 
     suspend fun setCompleted(supplementId: Long, date: String, completed: Boolean) {
         val completedAt = if (completed) System.currentTimeMillis() else null

@@ -4,8 +4,11 @@ import android.app.NotificationManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import com.supplementtracker.ReconcilePrefs
 import com.supplementtracker.data.db.AppDatabase
 import com.supplementtracker.data.repository.SupplementRepository
+import com.supplementtracker.domain.OccurrenceReconciler
+import com.supplementtracker.domain.SystemDateProvider
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -31,11 +34,11 @@ class AlarmReceiver : BroadcastReceiver() {
             try {
                 val db = AppDatabase.getInstance(context)
                 val repo = SupplementRepository(db.supplementDao(), db.scheduleGroupDao(), db.dailyOccurrenceDao())
-                val today = LocalDate.now().toString()
-                val date = intent.getStringExtra(EXTRA_DATE) ?: today
+                val today = SystemDateProvider.today()
+                val date = intent.getStringExtra(EXTRA_DATE) ?: today.toString()
 
                 when (intent.action) {
-                    ACTION_ALARM -> handleAlarm(context, repo, groupId, date)
+                    ACTION_ALARM -> handleAlarm(context, repo, groupId, today, date)
                     ACTION_COMPLETE -> handleComplete(context, repo, groupId, date)
                     ACTION_SNOOZE -> handleSnooze(context, repo, groupId, date)
                 }
@@ -45,15 +48,29 @@ class AlarmReceiver : BroadcastReceiver() {
         }
     }
 
-    private suspend fun handleAlarm(context: Context, repo: SupplementRepository, groupId: Long, date: String) {
+    private suspend fun handleAlarm(
+        context: Context,
+        repo: SupplementRepository,
+        groupId: Long,
+        today: LocalDate,
+        date: String
+    ) {
         val group = repo.getGroupById(groupId) ?: return
-        // Ensure today's occurrences exist before checking outstanding
+
+        // Reconcile missed days before showing the notification — ensures historical accuracy
+        // even if previous alarms were suppressed (e.g. app was force-stopped and user only
+        // opened it again today without opening the UI first).
+        OccurrenceReconciler.reconcile(
+            repo = repo,
+            today = today,
+            getLastReconciled = { ReconcilePrefs(context).getLastDate() },
+            setLastReconciled = { ReconcilePrefs(context).setLastDate(it) }
+        )
+
         repo.ensureTodayOccurrences(date)
 
         val outstanding = repo.getOutstandingInGroup(groupId, date)
         if (outstanding.isEmpty()) {
-            // All already completed — skip notification
-            // Re-schedule for next day
             AlarmScheduler.scheduleGroup(context, group)
             return
         }
@@ -66,7 +83,6 @@ class AlarmReceiver : BroadcastReceiver() {
         val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         nm.notify(NotificationHelper.notificationId(groupId), notification)
 
-        // Re-schedule for next day
         AlarmScheduler.scheduleGroup(context, group)
     }
 

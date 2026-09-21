@@ -15,6 +15,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.supplementtracker.data.entity.ScheduleGroupEntity
 import com.supplementtracker.data.entity.SupplementEntity
 import com.supplementtracker.notifications.AlarmScheduler
@@ -35,6 +38,16 @@ fun SupplementsScreen(
     val state by viewModel.state.collectAsState()
     val context = LocalContext.current
     val groups by viewModel.getGroups().collectAsState(initial = emptyList())
+
+    // Notify ViewModel on every resume so it detects midnight rollover
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner, viewModel) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) viewModel.onResume()
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
 
     var showAddSheet by remember { mutableStateOf(false) }
     var editingSupplement by remember { mutableStateOf<SupplementEntity?>(null) }
