@@ -57,11 +57,7 @@ class MainActivity : ComponentActivity() {
         ) { uri ->
             uri ?: return@rememberLauncherForActivityResult
             coroutineScope.launch {
-                val backup = BackupService(
-                    app.db.scheduleGroupDao(),
-                    app.db.supplementDao(),
-                    app.db.dailyOccurrenceDao()
-                ).export()
+                val backup = BackupService(app.db).export()
                 contentResolver.openOutputStream(uri)?.use { it.write(backup.toByteArray()) }
             }
         }
@@ -73,11 +69,7 @@ class MainActivity : ComponentActivity() {
             coroutineScope.launch {
                 val json = contentResolver.openInputStream(uri)
                     ?.bufferedReader()?.readText() ?: return@launch
-                BackupService(
-                    app.db.scheduleGroupDao(),
-                    app.db.supplementDao(),
-                    app.db.dailyOccurrenceDao()
-                ).import(json)
+                BackupService(app.db).import(json)
             }
         }
 

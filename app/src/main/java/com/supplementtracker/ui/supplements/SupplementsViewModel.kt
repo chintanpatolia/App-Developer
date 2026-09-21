@@ -34,29 +34,28 @@ class SupplementsViewModel(
     private val canScheduleExact: () -> Boolean
 ) : ViewModel() {
 
-    private val today = LocalDate.now().toString()
+    private fun today() = LocalDate.now().toString()
 
     private val _state = MutableStateFlow(SupplementsUiState())
     val state: StateFlow<SupplementsUiState> = _state.asStateFlow()
 
     init {
+        val initDate = today()
         viewModelScope.launch {
-            // Ensure today's occurrences exist
-            repo.ensureTodayOccurrences(today)
+            repo.ensureTodayOccurrences(initDate)
         }
 
-        // Combine groups, supplements, occurrences
         @OptIn(ExperimentalCoroutinesApi::class)
         viewModelScope.launch {
             combine(
                 repo.allGroups,
                 repo.activeSupplements,
-                repo.observeTodayOccurrences(today)
+                repo.observeTodayOccurrences(initDate)
             ) { groups, supplements, occurrences ->
                 val occurrenceMap = occurrences.associateBy { it.supplementId }
                 val grouped = groups.map { group ->
                     val groupSupps = supplements.filter { it.scheduleGroupId == group.id }
-                    val groupOccs = groupSupps.associate { it.id to (occurrenceMap[it.id] ?: DailyOccurrenceEntity(supplementId = it.id, scheduledDate = today, scheduledHour = group.reminderHour, scheduledMinute = group.reminderMinute, scheduleGroupId = group.id)) }
+                    val groupOccs = groupSupps.associate { it.id to (occurrenceMap[it.id] ?: DailyOccurrenceEntity(supplementId = it.id, scheduledDate = initDate, scheduledHour = group.reminderHour, scheduledMinute = group.reminderMinute, scheduleGroupId = group.id)) }
                     GroupWithSupplements(group, groupSupps, groupOccs)
                 }.filter { it.supplements.isNotEmpty() }
 
@@ -64,7 +63,7 @@ class SupplementsViewModel(
                 val totalCompleted = occurrences.count { it.completed }
 
                 SupplementsUiState(
-                    today = today,
+                    today = initDate,
                     groups = grouped,
                     totalScheduled = totalScheduled,
                     totalCompleted = totalCompleted,
@@ -79,12 +78,13 @@ class SupplementsViewModel(
 
     fun toggleCompletionWithContext(supplementId: Long, currentlyCompleted: Boolean, cancelSnooze: (Long, String) -> Unit) {
         viewModelScope.launch {
-            repo.setCompleted(supplementId, today, !currentlyCompleted)
+            val date = today()
+            repo.setCompleted(supplementId, date, !currentlyCompleted)
             if (!currentlyCompleted) { // toggling TO completed
                 val groupId = _state.value.groups.find { g -> g.supplements.any { it.id == supplementId } }?.group?.id
                 if (groupId != null) {
-                    val outstanding = repo.getOutstandingInGroup(groupId, today)
-                    if (outstanding.isEmpty()) cancelSnooze(groupId, today)
+                    val outstanding = repo.getOutstandingInGroup(groupId, date)
+                    if (outstanding.isEmpty()) cancelSnooze(groupId, date)
                 }
             }
         }
@@ -95,7 +95,7 @@ class SupplementsViewModel(
             val savedId = repo.upsertSupplement(supplement)
             if (isNew) {
                 val saved = repo.getSupplementById(savedId) ?: return@launch
-                repo.createOccurrencesForNewSupplement(saved, today)
+                repo.createOccurrencesForNewSupplement(saved, today())
             }
             alarmScheduler(repo.getGroupById(supplement.scheduleGroupId) ?: return@launch)
         }

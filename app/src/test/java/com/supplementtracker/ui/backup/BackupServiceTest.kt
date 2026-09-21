@@ -35,9 +35,9 @@ class BackupServiceTest {
     @Test fun `empty supplements in backup is valid structure`() {
         val data = BackupService.BackupData(
             version = 1,
-            scheduleGroups = emptyList(),
-            supplements = emptyList(),
-            occurrences = emptyList()
+            scheduleGroups = listOf(),
+            supplements = listOf(),
+            occurrences = listOf()
         )
         val json = Gson().toJson(data)
         assertTrue(json.contains("\"version\":1"))

@@ -1,18 +1,12 @@
 package com.supplementtracker.ui.backup
 
 import com.google.gson.*
-import com.supplementtracker.data.dao.DailyOccurrenceDao
-import com.supplementtracker.data.dao.ScheduleGroupDao
-import com.supplementtracker.data.dao.SupplementDao
+import com.supplementtracker.data.db.AppDatabase
 import com.supplementtracker.data.entity.DailyOccurrenceEntity
 import com.supplementtracker.data.entity.ScheduleGroupEntity
 import com.supplementtracker.data.entity.SupplementEntity
 
-class BackupService(
-    private val scheduleGroupDao: ScheduleGroupDao,
-    private val supplementDao: SupplementDao,
-    private val occurrenceDao: DailyOccurrenceDao
-) {
+class BackupService(private val db: AppDatabase) {
     data class BackupData(
         val version: Int = 1,
         val scheduleGroups: List<ScheduleGroupEntity> = emptyList(),
@@ -23,9 +17,9 @@ class BackupService(
     suspend fun export(): String {
         val data = BackupData(
             version = 1,
-            scheduleGroups = scheduleGroupDao.getAll(),
-            supplements = supplementDao.getActive(),
-            occurrences = occurrenceDao.getInRange("2000-01-01", "2999-12-31")
+            scheduleGroups = db.scheduleGroupDao().getAll(),
+            supplements = db.supplementDao().getActive(),
+            occurrences = db.dailyOccurrenceDao().getInRange("2000-01-01", "2999-12-31")
         )
         return Gson().toJson(data)
     }
@@ -41,8 +35,10 @@ class BackupService(
         if (data.version != 1) throw IllegalArgumentException("Unsupported backup version: ${data.version}")
         if (data.scheduleGroups.isEmpty()) throw IllegalArgumentException("Backup contains no schedule groups")
 
-        data.scheduleGroups.forEach { scheduleGroupDao.insert(it) }
-        data.supplements.forEach { supplementDao.insert(it) }
-        data.occurrences.forEach { occurrenceDao.insert(it) }
+        db.withTransaction {
+            data.scheduleGroups.forEach { db.scheduleGroupDao().insert(it) }
+            data.supplements.forEach { db.supplementDao().insert(it) }
+            data.occurrences.forEach { db.dailyOccurrenceDao().insert(it) }
+        }
     }
 }
