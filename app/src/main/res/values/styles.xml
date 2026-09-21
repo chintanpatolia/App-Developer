@@ -1,3 +1,3 @@
 <resources>
-    <style name="Theme.DailyHealthCoach" parent="android:style/Theme.Material.Light.NoActionBar" />
+    <style name="Theme.SupplementTracker" parent="android:Theme.Material.Light.NoActionBar" />
 </resources>
