@@ -73,7 +73,7 @@ class SupplementRepository(
 
     /** Creates occurrences for a specific past date for the given supplement list.
      *  Uses OnConflictStrategy.IGNORE — safe to call multiple times (idempotent). */
-    suspend fun createOccurrencesForDate(supplements: List<SupplementEntity>, date: String) {
+    override suspend fun createOccurrencesForDate(supplements: List<SupplementEntity>, date: String) {
         val groups = scheduleGroupDao.getAll().associateBy { it.id }
         val toInsert = supplements.mapNotNull { s ->
             val group = groups[s.scheduleGroupId] ?: return@mapNotNull null
@@ -88,7 +88,7 @@ class SupplementRepository(
         if (toInsert.isNotEmpty()) occurrenceDao.insertAll(toInsert)
     }
 
-    suspend fun getOccurrenceSupplementIdsForDate(date: String): Set<Long> =
+    override suspend fun getOccurrenceSupplementIdsForDate(date: String): Set<Long> =
         occurrenceDao.getByDate(date).map { it.supplementId }.toSet()
 
     suspend fun setCompleted(supplementId: Long, date: String, completed: Boolean) {
@@ -112,7 +112,7 @@ class SupplementRepository(
 
     suspend fun getEarliestDate(): String? = occurrenceDao.getEarliest()?.scheduledDate
 
-    suspend fun getActiveSupplementsList(): List<SupplementEntity> = supplementDao.getActive()
+    override suspend fun getActiveSupplementsList(): List<SupplementEntity> = supplementDao.getActive()
 
     suspend fun getActiveByGroup(groupId: Long): List<SupplementEntity> =
         supplementDao.getActiveByGroup(groupId)
